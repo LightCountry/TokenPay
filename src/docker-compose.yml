@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  app:
+    container_name: token-pay
+    restart: always
+    build:
+      context: .
+    image: token-pay:lastest

@@ -1,0 +1,95 @@
+
+using Exceptionless;
+using FreeSql;
+using FreeSql.DataAnnotations;
+using Serilog;
+using Serilog.Events;
+using System.Data.Common;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using TokenPay.BgServices;
+using TokenPay.Domains;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+var builder = WebApplication.CreateBuilder(args);
+var Services = builder.Services;
+var Configuration = builder.Configuration;
+
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+                    .ReadFrom.Configuration(context.Configuration)
+                    .ReadFrom.Services(services)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console()
+                    .WriteTo.Exceptionless(b => b.AddTags("Serilog"))
+                    );
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+var connectionString = Configuration.GetConnectionString("DB");
+
+IFreeSql fsql = new FreeSqlBuilder()
+    .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
+    .UseAutoSyncStructure(true) //自动同步实体结构
+    .Build();
+
+Services.AddSingleton(fsql);
+Services.AddScoped<UnitOfWorkManager>();
+Services.AddFreeRepository();
+
+Services.AddHostedService<OrderExpiredService>();
+var rate = Configuration.GetValue("Rate", 0m);
+if (rate <= 0)
+    Services.AddHostedService<UpdateRateService>();
+Services.AddHostedService<OrderNotifyService>();
+Services.AddHostedService<OrderCheckService>();
+Services.AddExceptionless(Configuration);
+Services.AddHttpContextAccessor();
+Services.AddEndpointsApiExplorer();
+Services.AddSwaggerGen(c =>
+{
+    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
+});
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+}
+else
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.UseStaticFiles();
+app.UseExceptionless();
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+try
+{
+    Log.Information("Starting web host");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Host terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

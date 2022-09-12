@@ -361,5 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/src/publish.sh
-/src/archive.sh
+/.editorconfig
+/TokenPay/appsettings.Development.json
