@@ -71,7 +71,7 @@ namespace TokenPay.BgServices
                 var req = BaseUrl
                     .AppendPathSegment($"v1/accounts/{address}/transactions")
                     .WithTimeout(15);
-                if (!env.IsProduction())
+                if (env.IsProduction())
                     req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue("TRON-PRO-API-KEY", ""));
                 var result = await req
                     .GetJsonAsync<BaseResponse<TrxTransaction>>();

@@ -22,7 +22,6 @@ namespace TokenPay.BgServices
             _serviceProvider = serviceProvider;
             client = new FlurlClient();
             client.Settings.Timeout = TimeSpan.FromSeconds(configuration.GetValue("NotifyTimeOut", 3));
-#if DEBUG
             client.Configure(settings =>
             {
                 settings.BeforeCall = c =>
@@ -34,15 +33,13 @@ namespace TokenPay.BgServices
                     _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, await c.Response.GetStringAsync());
                 };
             });
-
-#endif
         }
 
         protected override async Task ExecuteAsync()
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
-            var start = DateTime.Now.AddMinutes(-5);
+            var start = DateTime.Now.AddMinutes(-1);
             var Orders = await _repository
                 .Where(x => x.Status == OrderStatus.Paid)
                 .Where(x => !x.CallbackConfirm)
