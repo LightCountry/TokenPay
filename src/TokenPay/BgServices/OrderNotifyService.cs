@@ -30,7 +30,10 @@ namespace TokenPay.BgServices
                 };
                 settings.AfterCallAsync = async c =>
                 {
-                    _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, await c.Response.GetStringAsync());
+                    if (c.Response != null)
+                    {
+                        _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, await c.Response.GetStringAsync());
+                    }
                 };
             });
         }
@@ -102,7 +105,7 @@ namespace TokenPay.BgServices
                 }
                 catch (Exception e)
                 {
-                    _logger.LogInformation("订单异步通知失败：{msg}", e.Message);
+                    _logger.LogInformation (e, "订单异步通知失败：{msg}", e.Message);
                 }
             }
             return false;
