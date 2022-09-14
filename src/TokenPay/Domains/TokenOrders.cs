@@ -85,6 +85,7 @@ namespace TokenPay.Domains
         USDT_TRC20,
         [Description("USDT-ERC20")]
         USDT_ERC20,
+        TRX,
     }
     public enum OrderStatus
     {

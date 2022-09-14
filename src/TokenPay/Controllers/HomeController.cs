@@ -19,7 +19,30 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<TokenRate> _rateRepository;
         private readonly IBaseRepository<Tokens> _tokenRepository;
         private readonly IConfiguration _configuration;
-        private int Decimals => _configuration.GetValue("Decimals", 4);
+        private int DecimalsUSDT => _configuration.GetValue("Decimals:USDT", 4);
+        private int DecimalsTRX => _configuration.GetValue("Decimals:TRX", 2);
+        private int GetDecimals(Currency currency)
+        {
+            var decimals = currency switch
+            {
+                Currency.TRX => DecimalsTRX,
+                Currency.USDT_TRC20 => DecimalsUSDT,
+                _ => DecimalsUSDT,
+            };
+            return decimals;
+        }
+        private decimal RateUSDT => _configuration.GetValue("Rate:USDT", 0m);
+        private decimal RateTRX => _configuration.GetValue("Rate:TRX", 0m);
+        private decimal GetRate(Currency currency)
+        {
+            var value = currency switch
+            {
+                Currency.TRX => RateTRX,
+                Currency.USDT_TRC20 => RateUSDT,
+                _ => 0m,
+            };
+            return value;
+        }
         public HomeController(IBaseRepository<TokenOrders> repository,
             IBaseRepository<TokenRate> rateRepository,
             IBaseRepository<Tokens> tokenRepository,
@@ -45,7 +68,7 @@ namespace TokenPay.Controllers
             }
             ViewData["QrCode"] = Convert.ToBase64String(CreateQrCode(order.ToAddress));
             var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
-            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime);
+            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss");
             return View(order);
         }
         [Route("/{action}/{id}")]
@@ -157,7 +180,7 @@ namespace TokenPay.Controllers
         private async Task<(string, decimal)> GetUseTokenDynamicAdress(CreateOrderViewModel model)
         {
             var (UseTokenAdress, _) = await CreateTronWallet(model.OrderUserKey);
-            var rate = _configuration.GetValue("Rate", 0m);
+            var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
                 rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == FiatCurrency.CNY).FirstAsync(x => x.Rate);
@@ -166,7 +189,7 @@ namespace TokenPay.Controllers
             {
                 throw new TokenPayException("汇率有误！");
             }
-            var Amount = (model.ActualAmount / rate).ToRound(Decimals);
+            var Amount = (model.ActualAmount / rate).ToRound(GetDecimals(model.Currency));
             return (UseTokenAdress, Amount);
         }
         /// <summary>
@@ -208,18 +231,19 @@ namespace TokenPay.Controllers
         /// <exception cref="TokenPayException"></exception>
         private async Task<(string, decimal)> GetUseTokenStaticAdress(CreateOrderViewModel model)
         {
-            var USDT_TRC20 = _configuration.GetSection("USDT-TRC20-Address").Get<string[]>();
+            var TRON = _configuration.GetSection("TRON-Address").Get<string[]>();
 
             var CurrentAdress = model.Currency switch
             {
-                Currency.USDT_TRC20 => USDT_TRC20,
-                _ => new string[0]
+                Currency.USDT_TRC20 => TRON,
+                Currency.TRX => TRON,
+                _ => TRON
             };
             if (CurrentAdress.Length == 0)
             {
                 throw new TokenPayException("未配置收款地址！");
             }
-            var rate = _configuration.GetValue("Rate", 0m);
+            var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
                 rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == FiatCurrency.CNY).FirstAsync(x => x.Rate);
@@ -228,7 +252,7 @@ namespace TokenPay.Controllers
             {
                 throw new TokenPayException("汇率有误！");
             }
-            var Amount = (model.ActualAmount / rate).ToRound(Decimals);
+            var Amount = (model.ActualAmount / rate).ToRound(GetDecimals(model.Currency));
             //随机排序所有收款地址
             CurrentAdress = CurrentAdress.OrderBy(x => Guid.NewGuid()).ToArray();
             var UseTokenAdress = string.Empty;
@@ -251,23 +275,27 @@ namespace TokenPay.Controllers
             //所有地址都存在此金额
             if (string.IsNullOrEmpty(UseTokenAdress))
             {
-                var AddAmount = 0.0001m;//初始递增量
-                for (int i = 0; i < 1000; i++)//最多递增100次
+                var decimals = GetDecimals(model.Currency);
+                var maxLoop = Math.Pow(10, decimals);
+                var AddAmount = Convert.ToDecimal(1 / maxLoop);//初始递增量
+                for (int i = 0; i < maxLoop; i++)//最多递增100次
                 {
                     foreach (var token in CurrentAdress)
                     {
                         //判断是否存在此金额、此地址、此币种的待付款
-                        var has = await _repository
+                        var currentAmount = Amount + AddAmount * (i + 1);
+                        var query = _repository
                             .Where(x => x.ToAddress == token)
                             //.Where(x => x.ActualAmount == order.ActualAmount) //原始金额
                             .Where(x => x.Currency == model.Currency)//虚拟币币种
-                            .Where(x => x.Amount == Amount + AddAmount) //实际支付的虚拟币金额
-                            .Where(x => x.Status == OrderStatus.Pending) //代支付
+                            .Where(x => x.Amount == currentAmount) //实际支付的虚拟币金额
+                            .Where(x => x.Status == OrderStatus.Pending);
+                        var has = await query//代支付
                             .AnyAsync();
                         if (!has)
                         {
                             UseTokenAdress = token;
-                            Amount = Amount + AddAmount;
+                            Amount = currentAmount;
                             break;
                         }
                     }
@@ -275,7 +303,6 @@ namespace TokenPay.Controllers
                     {
                         break;
                     }
-                    AddAmount += 0.0001m;
                 }
             }
             if (string.IsNullOrEmpty(UseTokenAdress))

@@ -47,11 +47,10 @@ Services.AddScoped<UnitOfWorkManager>();
 Services.AddFreeRepository();
 
 Services.AddHostedService<OrderExpiredService>();
-var rate = Configuration.GetValue("Rate", 0m);
-if (rate <= 0)
-    Services.AddHostedService<UpdateRateService>();
+Services.AddHostedService<UpdateRateService>();
 Services.AddHostedService<OrderNotifyService>();
-Services.AddHostedService<OrderCheckService>();
+Services.AddHostedService<OrderCheckUSDTService>();
+Services.AddHostedService<OrderCheckTRXService>();
 Services.AddExceptionless(Configuration);
 Services.AddHttpContextAccessor();
 Services.AddEndpointsApiExplorer();

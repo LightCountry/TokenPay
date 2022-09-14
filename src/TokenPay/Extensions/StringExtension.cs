@@ -19,5 +19,32 @@ namespace TokenPay.Extensions
             }
             return sb.ToString();
         }
+
+        public static string ToHexString(this string value)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(value);
+
+            string hexString = Convert.ToHexString(bytes);
+            return hexString;
+        }
+        public static string EncodeBase58(this string value)
+        {
+            return Convert.ToHexString(NokitaKaze.Base58Check.Base58CheckEncoding.Decode(value));
+        }
+        public static byte[] FromHexString(this string hexString)
+        {
+            var bytes = new byte[hexString.Length / 2];
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
+            }
+
+            return bytes;
+        }
+        public static string DecodeBase58(this string value)
+        {
+            var bytes = value.FromHexString();
+            return NokitaKaze.Base58Check.Base58CheckEncoding.Encode(bytes);
+        }
     }
 }

@@ -5,14 +5,14 @@
 <a href="https://github.com/assimon/dujiaoka/releases/tag/1.0.0"><img src="https://img.shields.io/badge/version-1.0.0-red" alt="version 1.0.0"></a>
 </p>
 
-## TokenPay - USDT-TRC20 动态收款地址解决方案
+## TokenPay - `USDT-TRC20`、`TRX` 动态收款地址解决方案
 
->一款开源USDT-TRC20动态收款地址的解决方案！
+>一款开源`USDT-TRC20`、`TRX`动态收款地址的解决方案！
 
 ## 项目简介
-- `TokenPay`是一个由`C#语言`编写的私有化部署`USDT-TRC20`收款解决方案。     
+- `TokenPay`是一个由`C#语言`编写的私有化部署`USDT-TRC20`、`TRX`收款解决方案。     
 - 本项目不依赖任何外部资源，无需另外部署`数据库`，采用轻量化的`sqlite`，也无需`redis`。
-- 任意项目都可以对接，轻松实现`USDT-TRC20`收款！😊 😊 😊
+- 任意项目都可以对接，轻松实现`USDT-TRC20`、`TRX`收款！😊 😊 😊
 - `TokenPay` 遵守 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议!
 
 ## 项目特点
@@ -39,7 +39,7 @@ TokenPay
 
 ## 设计实现
 `TokenPay`的实现方式与其他项目原理类似，都是通过`TronGrid`提供的api节点，      
-轮询有订单的钱包地址的`USDT`代币入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
+轮询有订单的钱包地址的`USDT`代币、`TRX`入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
 ```
 简单的原理：
 0.服务器定时同步交易所最新汇率
