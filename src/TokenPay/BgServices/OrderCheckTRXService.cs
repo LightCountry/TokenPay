@@ -3,6 +3,7 @@ using Flurl.Http;
 using FreeSql;
 using TokenPay.Domains;
 using TokenPay.Extensions;
+using TokenPay.Helper;
 using TokenPay.Models.TronModel;
 
 namespace TokenPay.BgServices
@@ -12,16 +13,19 @@ namespace TokenPay.BgServices
         private readonly ILogger<OrderCheckTRXService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment env;
+        private readonly TelegramBot _bot;
         private readonly IServiceProvider _serviceProvider;
 
         public OrderCheckTRXService(ILogger<OrderCheckTRXService> logger,
             IConfiguration configuration,
             IHostEnvironment env,
+            TelegramBot bot,
             IServiceProvider serviceProvider) : base("TRX订单检测", TimeSpan.FromSeconds(3), logger)
         {
             _logger = logger;
             this._configuration = configuration;
             this.env = env;
+            this._bot = bot;
             _serviceProvider = serviceProvider;
         }
 
@@ -96,22 +100,45 @@ namespace TokenPay.BgServices
                             continue;
                         }
                         var order = orders.Where(x => x.Amount == raw.RealAmount && x.ToAddress == raw.ToAddressBase58 && x.CreateTime < item.BlockTimestamp.ToDateTime())
-                            .OrderByDescending(x=>x.CreateTime)//优先付最后一单
+                            .OrderByDescending(x => x.CreateTime)//优先付最后一单
                             .FirstOrDefault();
                         if (order != null)
                         {
-                            order.FromAddress = raw.OwnerAddress;
+                            order.FromAddress = raw.OwnerAddress.DecodeBase58();
                             order.BlockTransactionId = item.TxID;
                             order.Status = OrderStatus.Paid;
                             order.PayTime = DateTime.Now;
                             await _repository.UpdateAsync(order);
                             orders.Remove(order);
+                            await SendAdminMessage(order);
                         }
                     }
                 }
             }
         }
+        private async Task SendAdminMessage(TokenOrders order)
+        {
 
+            var message = @$"<b>您有新订单！({order.ActualAmount} 元)</b>
+
+订单编号：<code>{order.OutOrderId}</code>
+原始金额：<b>{order.ActualAmount} 元</b>
+订单金额：<b>{order.Amount} TRX</b>
+付款地址：<code>{order.FromAddress}</code>
+收款地址：<code>{order.ToAddress}</code>
+创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
+支付时间：<b>{order.PayTime:yyyy-MM-dd HH:mm:ss}</b>
+区块哈希：<code>{order.BlockTransactionId}</code>";
+            if (env.IsProduction())
+            {
+                message += @$"  <b><a href=""https://tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
+            }
+            else
+            {
+                message += @$"  <b><a href=""https://shasta.tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
+            }
+            await _bot.SendTextMessageAsync(message);
+        }
 
         private async Task<bool> Notify(TokenOrders order)
         {

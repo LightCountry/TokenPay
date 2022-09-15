@@ -27,6 +27,9 @@ TokenPay
     ├── Wiki ---> (知识库）
     └── src ---> (项目核心目录)
 ```
+## 系统对接
+- `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
+- `TokenPay`独角数卡插件代码参考👉🏻[TokenPay独角数卡插件](Plugs/dujiaoka/app/Http/Controllers/Pay/TokenPayController.php)
 
 ## 教程（待完善）：
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)
@@ -44,7 +47,7 @@ TokenPay
 简单的原理：
 0.服务器定时同步交易所最新汇率
 1.客户支付，交易上链
-2.服务器定时通过API轮询，获取监听地址下的最新USDT入账交易，并与数据库订单对比
+2.服务器定时通过API轮询，获取监听地址下的最新`USDT`代币、`TRX`入账交易，并与数据库订单对比
 3.若金额一致，将订单标记为完成
 4.订单完成后，异步通知任务将订单完成事件回调给平台
 ```

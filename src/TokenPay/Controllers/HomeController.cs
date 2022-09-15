@@ -64,10 +64,14 @@ namespace TokenPay.Controllers
             var order = await _repository.Where(x => x.Id == Id).FirstAsync();
             if (order == null)
             {
-                return Content("订单不存在！");
+                return View(order);
             }
             ViewData["QrCode"] = Convert.ToBase64String(CreateQrCode(order.ToAddress));
-            var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
+            var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60); 
+            if (DateTime.Now > order.CreateTime.AddSeconds(ExpireTime) || order.Status == OrderStatus.Expired)
+            {
+                return View("OrderExpired",order);
+            }
             ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss");
             return View(order);
         }
@@ -89,7 +93,7 @@ namespace TokenPay.Controllers
         [HttpPost]
         [Route("/" + nameof(CreateOrder))]
         [ApiExplorerSettings(IgnoreApi = false)]
-        public async Task<IActionResult> CreateOrder([FromForm] CreateOrderViewModel model)
+        public async Task<IActionResult> CreateOrder(CreateOrderViewModel model)
         {
             if (!ModelState.IsValid)
             {

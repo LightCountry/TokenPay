@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using TokenPay.BgServices;
 using TokenPay.Domains;
+using TokenPay.Helper;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -45,7 +46,6 @@ IFreeSql fsql = new FreeSqlBuilder()
 Services.AddSingleton(fsql);
 Services.AddScoped<UnitOfWorkManager>();
 Services.AddFreeRepository();
-
 Services.AddHostedService<OrderExpiredService>();
 Services.AddHostedService<UpdateRateService>();
 Services.AddHostedService<OrderNotifyService>();
@@ -58,6 +58,21 @@ Services.AddSwaggerGen(c =>
 {
     c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
 });
+Services.AddSingleton(s =>
+{
+    var bot = new TelegramBot(Configuration);
+    try
+    {
+        var me = bot.GetMeAsync().GetAwaiter().GetResult();
+    }
+    catch (Exception e)
+    {
+        Log.Logger.Error(e, "机器人连接失败！");
+        throw;
+    }
+    return bot;
+});
+
 
 var app = builder.Build();
 

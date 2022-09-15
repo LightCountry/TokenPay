@@ -5,13 +5,16 @@
 @model TokenPay.Domains.TokenOrders
 @if (Model == null)
 {
-    <div class="text-center">
-        <h1 class="display-4">订单不存在！</h1>
+    <div class="row align-items-center h-100">
+        <div class="text-center">
+            <h1 class="display-4">订单不存在！</h1>
+        </div>
     </div>
+
 }
 else
 {
-    <div class="text-center">
+    <div class="text-center pt-2">
         <h4 class="display-6">您正在支付 <span class="text-danger">@Model.Currency.ToDescriptionOrString()</span></h4>
 
         <div class="d-flex mb-3">
@@ -31,7 +34,6 @@ else
         </div>
     </div>
 }
-
 @section Scripts{
     <script>
         let Time;
@@ -47,10 +49,7 @@ else
                     } else if (x === 'Expired') {
                         clearInterval(Time)
                         console.log('订单过期')
-                        alert("此订单已过期")
-                        if (RedirectUrl) {
-                            location = RedirectUrl
-                        }
+                        location.reload();
                     } else if (x === 'Paid') {
                         clearInterval(Time)
                         console.log('已支付')
