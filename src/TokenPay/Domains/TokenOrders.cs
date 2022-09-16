@@ -79,13 +79,13 @@ namespace TokenPay.Domains
     }
     public enum Currency
     {
-        BTC = 10,
-        ETH,
         [Description("USDT-TRC20")]
         USDT_TRC20,
         [Description("USDT-ERC20")]
         USDT_ERC20,
         TRX,
+        BTC = 10,
+        ETH,
     }
     public enum OrderStatus
     {

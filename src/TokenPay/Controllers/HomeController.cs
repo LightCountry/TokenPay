@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkiaSharp;
 using SkiaSharp.QrCode.Image;
 using System.Diagnostics;
+using System.Reflection;
 using TokenPay.Domains;
 using TokenPay.Extensions;
 using TokenPay.Models;
@@ -67,10 +68,10 @@ namespace TokenPay.Controllers
                 return View(order);
             }
             ViewData["QrCode"] = Convert.ToBase64String(CreateQrCode(order.ToAddress));
-            var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60); 
+            var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
             if (DateTime.Now > order.CreateTime.AddSeconds(ExpireTime) || order.Status == OrderStatus.Expired)
             {
-                return View("OrderExpired",order);
+                return View("OrderExpired", order);
             }
             ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss");
             return View(order);
@@ -85,6 +86,29 @@ namespace TokenPay.Controllers
             }
             return Content(order.Status.ToString());
         }
+        private bool VerifySignature(CreateOrderViewModel model)
+        {
+            if (model == null) return false;
+            var dic = new SortedDictionary<string, string?>();
+            PropertyInfo[] properties = model.GetType().GetProperties();
+            if (properties.Length <= 0) { return false; }
+            foreach (PropertyInfo item in properties)
+            {
+                string name = item.Name;
+                string? value = item.GetValue(model, null)?.ToString();
+                dic.Add(name, value);
+            }
+            if (dic.TryGetValue("Signature", out var Signature))
+            {
+                dic.Remove("Signature");
+                var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
+                var NotifyKey = _configuration.GetValue<string>("NotifyKey");
+                SignatureStr += NotifyKey;
+                var md5 = SignatureStr.ToMD5();
+                return Signature == md5;
+            }
+            return false;
+        }
         /// <summary>
         /// 创建订单
         /// </summary>
@@ -93,7 +117,7 @@ namespace TokenPay.Controllers
         [HttpPost]
         [Route("/" + nameof(CreateOrder))]
         [ApiExplorerSettings(IgnoreApi = false)]
-        public async Task<IActionResult> CreateOrder(CreateOrderViewModel model)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -104,6 +128,13 @@ namespace TokenPay.Controllers
                 return Json(new ReturnData
                 {
                     Message = messages
+                });
+            }
+            if (!VerifySignature(model))
+            {
+                return Json(new ReturnData
+                {
+                    Message = "签名验证失败！"
                 });
             }
             if (model.ActualAmount <= 0)

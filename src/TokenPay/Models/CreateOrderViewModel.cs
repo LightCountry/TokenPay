@@ -38,5 +38,9 @@ namespace TokenPay.Models
         /// 同步跳转Url
         /// </summary>
         public string? RedirectUrl { get; set; }
+        /// <summary>
+        /// 参数签名
+        /// </summary>
+        public string? Signature { get; set; }
     }
 }

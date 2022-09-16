@@ -67,10 +67,6 @@ namespace TokenPay.BgServices
                 {
                     query.Add("only_confirmed", true);
                 }
-                else
-                {
-                    query.Add("only_unconfirmed", true);
-                }
                 query.Add("only_to", true);
                 query.Add("limit", 50);
                 query.Add("min_timestamp", start.ToUnixTimeStamp());

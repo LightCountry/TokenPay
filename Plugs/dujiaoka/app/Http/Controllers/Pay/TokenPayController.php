@@ -27,15 +27,16 @@ class TokenPayController extends PayController
             $parameter = [
                 "ActualAmount" => (float)$this->order->actual_price,//原价
                 "OutOrderId" => $this->order->order_sn, 
-                // 当前为每个用户分配一个收款地址，通过此参数识别是否为同一个用户
-                // 如需要每单一个地址，可将此行改为 "OrderUserKey" => $this->order->order_sn, 
                 "OrderUserKey" => $this->order->email, 
                 "Currency" => $this->payGateway->merchant_id,
                 'RedirectUrl' => route('tokenpay-return', ['order_id' => $this->order->order_sn]),
                 'NotifyUrl' => url($this->payGateway->pay_handleroute . '/notify_url'),
             ];
-            $client = new Client();
-            $response = $client->post($this->payGateway->merchant_pem, ['form_params' => $parameter]);
+            $parameter['Signature'] = $this->VerifySign($parameter, $this->payGateway->merchant_key);
+            $client = new Client([
+				'headers' => [ 'Content-Type' => 'application/json' ]
+			]);
+            $response = $client->post($this->payGateway->merchant_pem, ['body' =>  json_encode($parameter)]);
             $body = json_decode($response->getBody()->getContents(), true);
             if (!isset($body['success']) || $body['success'] != true) {
                 return $this->err(__('dujiaoka.prompt.abnormal_payment_channel') . $body['message']);

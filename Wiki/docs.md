@@ -5,9 +5,8 @@
 
 URL: `/CreateOrder`  
 
-类型： `POST`  
-
-接受 `application/x-www-url-formencoded` 和 `application/json`
+类型： `POST`   
+`Content-Type: application/json`  
 
 | 字段 | 类型 | 必填 | 说明 |
 | ---- | ---- | ---- | ---- |
@@ -17,6 +16,58 @@ URL: `/CreateOrder`
 | Currency | Enum,支持`USDT_TRC20`、`TRX`等 | 是 | 加密货币的币种，直接以`原样字符串`传递即可 |
 | NotifyUrl | string? | 否 | 异步通知URL |
 | RedirectUrl | string? | 否 | 订单支付或过期后跳转的URL |
+| Signature | string | 是 | 参数签名，参见下方参数签名生成规则 |
+### ①示例POST参数
+```json
+{
+    "OutOrderId": "AJIHK72N34BR2CWG",
+    "OrderUserKey": "admin@qq.com",
+    "ActualAmount": 15,
+    "Currency": "TRX",
+    "NotifyUrl": "http://localhost:1011/pay/tokenpay/notify_url",
+    "RedirectUrl": "http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG"
+}
+```
+### ②按照ASCII排序后拼接
+`ActualAmount=15&Currency=TRX&NotifyUrl=http://localhost:1011/pay/tokenpay/notify_url&OrderUserKey=admin@qq.com&OutOrderId=AJIHK72N34BR2CWG&RedirectUrl=http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG`
+
+异步通知密钥为：`666`
+
+拼接密钥后
+`ActualAmount=15&Currency=TRX&NotifyUrl=http://localhost:1011/pay/tokenpay/notify_url&OrderUserKey=admin@qq.com&OutOrderId=AJIHK72N34BR2CWG&RedirectUrl=http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG666`
+
+### ③计算MD5
+`e9765880db6081496456283678e70152`
+
+### ④POST参数增加`Signature`
+```json
+{
+    "OutOrderId": "AJIHK72N34BR2CWG",
+    "OrderUserKey": "admin@qq.com",
+    "ActualAmount": 15,
+    "Currency": 14,
+    "NotifyUrl": "http://localhost:1011/pay/tokenpay/notify_url",
+    "RedirectUrl": "http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG",
+    "Signature": "e9765880db6081496456283678e70152"
+}
+```
+### ⑤返回数据示例
+创建订单成功的返回示例
+```json
+{
+    "success": true,
+    "message": "创建订单成功！",
+    "data": "http://127.0.0.1:5000/Pay?Id=6324ddd2-4677-7914-0010-702806ae9766"
+}
+```
+创建订单失败的返回示例
+```json
+{
+    "success": false,
+    "message": "签名验证失败！"
+}
+```
+
 
 
 ## 2. `TokenPay`的异步回调参数
@@ -25,7 +76,8 @@ URL: `/CreateOrder`
 
 URL: `创建订单`接口传递的`NotifyUrl`字段内的URL  
 
-类型： `POST` `application/json`  
+类型： `POST`  
+`Content-Type: application/json`  
 
 | 字段 | 类型 |说明 |
 | ---- | ---- | ---- |
@@ -56,7 +108,7 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
     "ToAddress": "TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb"
 }
 ```
-### ②排序后拼接
+### ②按照ASCII排序后拼接
 `ActualAmount=15&Amount=34.91&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OrderUserKey=&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb`
 
 异步通知密钥为：`666`

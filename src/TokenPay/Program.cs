@@ -2,6 +2,7 @@
 using Exceptionless;
 using FreeSql;
 using FreeSql.DataAnnotations;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 using Serilog.Events;
 using System.Data.Common;
@@ -36,6 +37,11 @@ builder.Services.AddControllersWithViews()
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.AllowSynchronousIO = true;
+});
 var connectionString = Configuration.GetConnectionString("DB");
 
 IFreeSql fsql = new FreeSqlBuilder()
