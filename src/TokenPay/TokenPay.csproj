@@ -22,7 +22,7 @@
     <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.669" />
     <PackageReference Include="FreeSql.Repository" Version="3.2.669" />
     <PackageReference Include="HDWallet.Tron" Version="0.7.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" ExcludeAssets="All"/>
     <PackageReference Include="NokitaKaze.Base58Check" Version="0.4.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
     <PackageReference Include="Serilog.Sinks.Exceptionless" Version="3.1.5" />
