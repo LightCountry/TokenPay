@@ -36,7 +36,7 @@ class TokenPayController extends PayController
             $client = new Client([
 				'headers' => [ 'Content-Type' => 'application/json' ]
 			]);
-            $response = $client->post($this->payGateway->merchant_pem, ['body' =>  json_encode($parameter)]);
+            $response = $client->post($this->payGateway->merchant_pem.'/CreateOrder', ['body' =>  json_encode($parameter)]);
             $body = json_decode($response->getBody()->getContents(), true);
             if (!isset($body['success']) || $body['success'] != true) {
                 return $this->err(__('dujiaoka.prompt.abnormal_payment_channel') . $body['message']);

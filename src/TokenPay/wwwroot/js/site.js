@@ -9,4 +9,7 @@
 
     clipboard.on('error', function (e) {
     });
+
+    console.log("Powered by TokenPay");
+    console.log("https://github.com/LightCountry/TokenPay");
 })()

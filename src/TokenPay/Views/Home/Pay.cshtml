@@ -30,6 +30,9 @@ else
             您支付金额为：<span class="text-danger">@Model.Amount</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">复制</button>
         </div>
         <div class="mb-3">
+            您的订单号：<span class="text-danger">@Model.OutOrderId</span>
+        </div>
+        <div class="mb-3">
             此订单过期时间为：<span class="text-danger">@ViewData["ExpireTime"]</span>
         </div>
     </div>
@@ -53,10 +56,12 @@ else
                     } else if (x === 'Paid') {
                         clearInterval(Time)
                         console.log('已支付')
-                        alert("已支付")
-                        if (RedirectUrl) {
-                            location = RedirectUrl
-                        }
+                        setTimeout(() => {
+                            alert("已支付")
+                            if (RedirectUrl) {
+                                location = RedirectUrl
+                            }
+                        }, 0)
                     }
                 })
         }

@@ -27,9 +27,14 @@ TokenPay
     ├── Wiki ---> (知识库）
     └── src ---> (项目核心目录)
 ```
+## 现有插件
+- [独角数卡插件](Plugs/dujiaoka/) | [独角数卡](https://github.com/assimon/dujiaoka) ![Github stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
+- [v2board插件](Plugs/v2board/) | [v2board](https://github.com/v2board/v2board) ![Github stars](https://img.shields.io/github/stars/v2board/v2board?style=social)
+- [card-system插件](Plugs/card-system/) | [card-system](https://github.com/Tai7sy/card-system) ![Github stars](https://img.shields.io/github/stars/Tai7sy/card-system?style=social)
+
 ## 系统对接
 - `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
-- `TokenPay`独角数卡插件代码参考👉🏻[TokenPay独角数卡插件](Plugs/dujiaoka/app/Http/Controllers/Pay/TokenPayController.php)
+- **也可参考仓库内现有插件**
 
 ## 教程（待完善）：
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)

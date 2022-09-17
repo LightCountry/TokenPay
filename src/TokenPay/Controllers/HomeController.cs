@@ -158,6 +158,7 @@ namespace TokenPay.Controllers
             var order = new TokenOrders
             {
                 OutOrderId = model.OutOrderId,
+                OrderUserKey = model.OrderUserKey,
                 Status = OrderStatus.Pending,
                 Currency = model.Currency,
                 ActualAmount = model.ActualAmount,

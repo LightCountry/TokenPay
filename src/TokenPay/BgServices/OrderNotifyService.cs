@@ -75,7 +75,7 @@ namespace TokenPay.BgServices
             {
                 try
                 {
-                    var dic = new SortedDictionary<string, string?>();
+                    var dic = new SortedDictionary<string, object?>();
                     dic.Add(nameof(order.Id), order.Id.ToString());
                     dic.Add(nameof(order.BlockTransactionId), order.BlockTransactionId);
                     dic.Add(nameof(order.OutOrderId), order.OutOrderId);
@@ -86,6 +86,7 @@ namespace TokenPay.BgServices
                     dic.Add(nameof(order.Currency), order.Currency.ToDescriptionOrString());
                     dic.Add(nameof(order.FromAddress), order.FromAddress);
                     dic.Add(nameof(order.ToAddress), order.ToAddress);
+                    dic.Add(nameof(order.Status), (int)order.Status);
                     var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
                     var NotifyKey = _configuration.GetValue<string>("NotifyKey");
                     SignatureStr += NotifyKey;
