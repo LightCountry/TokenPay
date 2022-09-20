@@ -102,8 +102,8 @@ namespace TokenPay.Controllers
             {
                 dic.Remove("Signature");
                 var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
-                var NotifyKey = _configuration.GetValue<string>("NotifyKey");
-                SignatureStr += NotifyKey;
+                var ApiToken = _configuration.GetValue<string>("ApiToken");
+                SignatureStr += ApiToken;
                 var md5 = SignatureStr.ToMD5();
                 return Signature == md5;
             }
@@ -145,7 +145,7 @@ namespace TokenPay.Controllers
                 });
             }
             //订单号已存在
-            var hasOrder = await _repository.Where(x => x.OutOrderId == model.OutOrderId).FirstAsync();
+            var hasOrder = await _repository.Where(x => x.OutOrderId == model.OutOrderId && x.Currency == model.Currency).FirstAsync();
             if (hasOrder != null)
             {
                 return Json(new ReturnData<string>
@@ -267,7 +267,7 @@ namespace TokenPay.Controllers
         /// <exception cref="TokenPayException"></exception>
         private async Task<(string, decimal)> GetUseTokenStaticAdress(CreateOrderViewModel model)
         {
-            var TRON = _configuration.GetSection("TRON-Address").Get<string[]>();
+            var TRON = _configuration.GetSection("TRON-Address").Get<string[]>() ?? new string[0];
 
             var CurrentAdress = model.Currency switch
             {
@@ -347,13 +347,34 @@ namespace TokenPay.Controllers
             }
             return (UseTokenAdress, Amount);
         }
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        [Route("/error-development")]
+        public IActionResult HandleErrorDevelopment([FromServices] IHostEnvironment hostEnvironment)
         {
-            var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, Message = context?.Error?.Message });
+            var exceptionHandlerFeature =
+                HttpContext.Features.Get<IExceptionHandlerFeature>()!;
+            var e = exceptionHandlerFeature.Error;
+
+            if (!hostEnvironment.IsDevelopment())
+            {
+                return Json(new ReturnData
+                {
+                    Message = e.Message
+                });
+            }
+
+            return Json(new ReturnData<object>
+            {
+                Message = e.Message,
+                Data = new
+                {
+                    title = exceptionHandlerFeature.Error.Message,
+                    detail = exceptionHandlerFeature.Error.StackTrace,
+                }
+            });
         }
 
+        [Route("/error")]
+        public IActionResult HandleError() => Problem();
         /// <summary>
         /// 创建二维码
         /// </summary>

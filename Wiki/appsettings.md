@@ -2,7 +2,7 @@
 
 **务必保存好`TokenPay.db`文件，此文件内保存了系统生成的收款地址和私钥，一旦丢失，你将损失所收取的款项**
 
-**为保证安全性，务必修改`NotifyKey`**
+**为保证安全性，务必修改`ApiToken`**
 
 ```json
 {
@@ -29,10 +29,12 @@
   //"TRON-Address": [ "Txxxxxx1", "Txxxxxx2" ], // UseDynamicAddress设为false时在此配置收款地址
   "OnlyConfirmed": true, //默认仅查询已确认的数据，如果想要回调更快，可以设置为false
   "NotifyTimeOut": 3, //异步通知超时时间
-  "NotifyKey": "666666", //异步通知密钥，请务必修改此密钥为随机字符串，脸滚键盘即可！！！
-   "Telegram": {
+  "ApiToken": "666666", //异步通知密钥，请务必修改此密钥为随机字符串，脸滚键盘即可！！！
+  //"WebSiteUrl": "http://token-pay.xxxxx.com", //配置服务器外网域名，一般不需要配置，能自动识别，如识别不正确请手动配置
+  "Telegram": {
     "AdminUserId": 12345678, // 你的账号ID，如不知道ID，可给https://t.me/EShopFakaBot 发送 /me 获取用户ID
     "BotToken": "1234567890:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" //从https://t.me/BotFather 创建机器人时，会给你BotToken
   }
 }
+
 ```

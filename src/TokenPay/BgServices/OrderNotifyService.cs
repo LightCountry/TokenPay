@@ -88,8 +88,8 @@ namespace TokenPay.BgServices
                     dic.Add(nameof(order.ToAddress), order.ToAddress);
                     dic.Add(nameof(order.Status), (int)order.Status);
                     var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
-                    var NotifyKey = _configuration.GetValue<string>("NotifyKey");
-                    SignatureStr += NotifyKey;
+                    var ApiToken = _configuration.GetValue<string>("ApiToken");
+                    SignatureStr += ApiToken;
                     var Signature = SignatureStr.ToMD5();
                     dic.Add(nameof(Signature), Signature);
                     var result = await order.NotifyUrl.WithClient(client).PostJsonAsync(dic);

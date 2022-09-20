@@ -36,7 +36,7 @@ TokenPay
 - `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
 - **也可参考仓库内现有插件**
 
-## 教程（待完善）：
+## 教程：
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)
 - 手动运行`TokenPay`教程👉🏻[手动运行TokenPay](Wiki/manual_RUN.md)
 

@@ -1,5 +1,6 @@
 using Flurl;
 using Flurl.Http;
+using Newtonsoft.Json;
 using Serilog;
 
 namespace TokenPay.Helper
@@ -25,8 +26,8 @@ namespace TokenPay.Helper
                 client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
             }
         }
-
-        public async Task<object?> GetMeAsync(string? TelegramApiHost = null)
+        public static TelegramBotInfo BotInfo;
+        public async Task<TelegramResult<TelegramBotInfo>?> GetMeAsync(string? TelegramApiHost = null)
         {
             if (string.IsNullOrEmpty(_botToken) || _userId <= 0)
             {
@@ -39,17 +40,18 @@ namespace TokenPay.Helper
                     .AppendPathSegment($"bot{_botToken}/getMe")
                     .WithClient(client)
                     .WithTimeout(10);
-            var result = await request.GetJsonAsync<object>();
-            Log.Logger.Information("机器人启动成功！\n{@result}", result);
+            var result = await request.GetJsonAsync<TelegramResult<TelegramBotInfo>>();
+            Log.Logger.Information("机器人启动成功！我是{@result}。", result.Result.FirstName);
+            BotInfo = result.Result;
             await SendTextMessageAsync("你好呀~我是TokenPay通知机器人！");
             return result;
         }
-        public async Task SendTextMessageAsync(string Message, string? TelegramApiHost = null)
+        public async Task<TelegramResult<SendMessageResult>?> SendTextMessageAsync(string Message, string? TelegramApiHost = null)
         {
             if (string.IsNullOrEmpty(_botToken) || _userId <= 0)
             {
                 Log.Logger.Information("未配置机器人Token！");
-                return;
+                return null;
             }
             var ApiHost = TelegramApiHost ?? BaseTelegramApiHost;
 
@@ -66,13 +68,94 @@ namespace TokenPay.Helper
                     .WithTimeout(10);
             try
             {
-                var result = await request.GetStringAsync();
-                Log.Logger.Information("机器人消息发送结果：{result}", result);
+                var result = await request.GetJsonAsync<TelegramResult<SendMessageResult>>();
+                Log.Logger.Information("机器人消息发送结果：{result}", result.Ok);
+                return result;
             }
             catch (Exception e)
             {
                 Log.Logger.Error(e, "机器人发送消息失败！");
             }
+            return null;
         }
+    }
+
+    public class TelegramBotInfo
+    {
+        [JsonProperty("id")]
+        public long Id { get; set; }
+
+        [JsonProperty("is_bot")]
+        public bool IsBot { get; set; }
+
+        [JsonProperty("first_name")]
+        public string FirstName { get; set; }
+
+        [JsonProperty("username")]
+        public string Username { get; set; }
+
+        [JsonProperty("can_join_groups")]
+        public bool CanJoinGroups { get; set; }
+
+        [JsonProperty("can_read_all_group_messages")]
+        public bool CanReadAllGroupMessages { get; set; }
+
+        [JsonProperty("supports_inline_queries")]
+        public bool SupportsInlineQueries { get; set; }
+    }
+    public class MessageChat
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("first_name")]
+        public string FirstName { get; set; }
+
+        [JsonProperty("username")]
+        public string Username { get; set; }
+
+        [JsonProperty("type")]
+        public string Type { get; set; }
+    }
+
+    public class MessageFrom
+    {
+        [JsonProperty("id")]
+        public long Id { get; set; }
+
+        [JsonProperty("is_bot")]
+        public bool IsBot { get; set; }
+
+        [JsonProperty("first_name")]
+        public string FirstName { get; set; }
+
+        [JsonProperty("username")]
+        public string Username { get; set; }
+    }
+
+    public class SendMessageResult
+    {
+        [JsonProperty("message_id")]
+        public int MessageId { get; set; }
+
+        [JsonProperty("from")]
+        public MessageFrom From { get; set; }
+
+        [JsonProperty("chat")]
+        public MessageChat Chat { get; set; }
+
+        [JsonProperty("date")]
+        public int Date { get; set; }
+
+        [JsonProperty("text")]
+        public string Text { get; set; }
+    }
+    public class TelegramResult<T>
+    {
+        [JsonProperty("ok")]
+        public bool Ok { get; set; }
+
+        [JsonProperty("result")]
+        public T Result { get; set; }
     }
 }

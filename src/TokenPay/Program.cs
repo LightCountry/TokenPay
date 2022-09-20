@@ -38,10 +38,6 @@ builder.Services.AddControllersWithViews()
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-builder.Services.Configure<KestrelServerOptions>(options =>
-{
-    options.AllowSynchronousIO = true;
-});
 var connectionString = Configuration.GetConnectionString("DB");
 
 IFreeSql fsql = new FreeSqlBuilder()
@@ -84,10 +80,11 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/error");
 }
 else
 {
+    app.UseExceptionHandler("/error-development");
     app.UseSwagger();
     app.UseSwaggerUI();
 }
