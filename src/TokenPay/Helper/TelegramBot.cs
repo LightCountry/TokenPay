@@ -106,7 +106,7 @@ namespace TokenPay.Helper
     public class MessageChat
     {
         [JsonProperty("id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         [JsonProperty("first_name")]
         public string FirstName { get; set; }
@@ -136,7 +136,7 @@ namespace TokenPay.Helper
     public class SendMessageResult
     {
         [JsonProperty("message_id")]
-        public int MessageId { get; set; }
+        public long MessageId { get; set; }
 
         [JsonProperty("from")]
         public MessageFrom From { get; set; }
