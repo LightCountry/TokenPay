@@ -62,7 +62,7 @@ TokenPay
 ```
 USDT-TRC20打赏地址: TQWM6cuy6YesssqqzSucoUkS1A11kAAAAA
 ```
-<img src="Wiki/imgs/usdt_thanks.jpg" width = "400" height = "500" alt="usdt扫码打赏"/>
+<img src="Wiki/imgs/usdt_thanks.jpg" width = "400" alt="usdt扫码打赏"/>
 
 ## 致谢
 感谢以下开源项目：
