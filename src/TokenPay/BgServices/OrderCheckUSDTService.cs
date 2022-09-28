@@ -73,6 +73,7 @@ namespace TokenPay.BgServices
                 query.Add("contract_address", ContractAddress);
                 var req = BaseUrl
                     .AppendPathSegment($"v1/accounts/{address}/transactions/trc20")
+                    .SetQueryParams(query)
                     .WithTimeout(15);
                 if (env.IsProduction())
                     req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue("TRON-PRO-API-KEY", ""));
