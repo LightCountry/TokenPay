@@ -4,29 +4,36 @@ using FreeSql;
 using TokenPay.Domains;
 using TokenPay.Extensions;
 using TokenPay.Helper;
-using TokenPay.Models.TronModel;
+using TokenPay.Models.EthModel;
 
 namespace TokenPay.BgServices
 {
-    public class OrderCheckUSDTService : BaseScheduledService
+    public class OrderCheckETHService : BaseScheduledService
     {
-        private readonly ILogger<OrderCheckUSDTService> _logger;
+        private readonly ILogger<OrderCheckETHService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment env;
         private readonly TelegramBot _bot;
         private readonly IServiceProvider _serviceProvider;
+        private readonly FlurlClient client;
 
-        public OrderCheckUSDTService(ILogger<OrderCheckUSDTService> logger,
+        public OrderCheckETHService(ILogger<OrderCheckETHService> logger,
             IConfiguration configuration,
             IHostEnvironment env,
             TelegramBot bot,
-            IServiceProvider serviceProvider) : base("USDT订单检测", TimeSpan.FromSeconds(3), logger)
+            IServiceProvider serviceProvider) : base("ETH订单检测", TimeSpan.FromSeconds(15), logger)
         {
             _logger = logger;
             this._configuration = configuration;
             this.env = env;
             this._bot = bot;
             _serviceProvider = serviceProvider;
+            var WebProxy = configuration.GetValue<string>("WebProxy");
+            client = new FlurlClient();
+            if (!string.IsNullOrEmpty(WebProxy))
+            {
+                client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
+            }
         }
 
         protected override async Task ExecuteAsync()
@@ -36,25 +43,23 @@ namespace TokenPay.BgServices
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
-                .Where(x => x.Currency == Currency.USDT_TRC20)
+                .Where(x => x.Currency == Currency.ETH)
+                .Distinct()
                 .ToListAsync(x => x.ToAddress);
             if (Address.Count > 0)
-                _logger.LogInformation("待检测地址数：{c}", Address.Count);
-            var ContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-            var BaseUrl = "https://api.trongrid.io";
+                _logger.LogInformation($"{jobName}，待检测地址数：{{c}}", Address.Count);
+            var BaseUrl = "https://api.etherscan.io";
             if (!env.IsProduction())
             {
-                ContractAddress = "TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs";
-                BaseUrl = "https://api.shasta.trongrid.io";
+                BaseUrl = "https://api-goerli.etherscan.io";
             }
-            var OnlyConfirmed = _configuration.GetValue("OnlyConfirmed", true);
-            var start = DateTime.Now.AddMinutes(-10);
+
             foreach (var address in Address)
             {
                 //查询此地址待支付订单
                 var orders = await _repository
                     .Where(x => x.Status == OrderStatus.Pending)
-                    .Where(x => x.Currency == Currency.USDT_TRC20)
+                    .Where(x => x.Currency == Currency.ETH)
                     .Where(x => x.ToAddress == address)
                     .OrderBy(x => x.CreateTime)
                     .ToListAsync();
@@ -63,49 +68,49 @@ namespace TokenPay.BgServices
                     continue;
                 }
                 var query = new Dictionary<string, object>();
-                if (OnlyConfirmed)
-                {
-                    query.Add("only_confirmed", true);
-                }
-                query.Add("only_to", true);
-                query.Add("limit", 50);
-                query.Add("min_timestamp", start.ToUnixTimeStamp());
-                query.Add("contract_address", ContractAddress);
-                var req = BaseUrl
-                    .AppendPathSegment($"v1/accounts/{address}/transactions/trc20")
-                    .SetQueryParams(query)
-                    .WithTimeout(15);
+                query.Add("module", "account");
+                query.Add("action", "txlist");
+                query.Add("address", address);
+                query.Add("page", 1);
+                query.Add("offset", 100);
+                query.Add("sort", "desc");
                 if (env.IsProduction())
-                    req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue("TRON-PRO-API-KEY", ""));
-                var result = await req
-                    .GetJsonAsync<BaseResponse<Transactions>>();
+                    query.Add("apikey", _configuration.GetValue("ETH-API-KEY", ""));
 
-                if (result.Success && result.Data?.Count > 0)
+                var req = BaseUrl
+                    .AppendPathSegment($"api")
+                    .SetQueryParams(query)
+                    .WithClient(client)
+                    .WithTimeout(15);
+                var result = await req
+                    .GetJsonAsync<BaseResponse<EthTransaction>>();
+
+                if (result.Status == "1" && result.Result?.Count > 0)
                 {
-                    foreach (var item in result.Data)
+                    foreach (var item in result.Result)
                     {
-                        //合约地址不匹配
-                        if (item.TokenInfo?.Address != ContractAddress)
-                        {
-                            continue;
-                        }
                         //没有需要匹配的订单了
                         if (!orders.Any())
                         {
                             break;
                         }
                         //此交易已被其他订单使用
-                        if (await _repository.Select.AnyAsync(x => x.BlockTransactionId == item.TransactionId))
+                        if (await _repository.Select.AnyAsync(x => x.BlockTransactionId == item.Hash))
                         {
                             continue;
                         }
-                        var order = orders.Where(x => x.Amount == item.Amount && x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
-                            .OrderByDescending(x=>x.CreateTime)//优先付最后一单
+                        //合约地址 方法id 是否错误 确认数
+                        if (!string.IsNullOrEmpty(item.ContractAddress) || item.MethodId != "0x" || item.IsError != 0 || item.Confirmations < 12)
+                        {
+                            continue;
+                        }
+                        var order = orders.Where(x => x.Amount == item.RealAmount && x.ToAddress.ToLower() == item.To.ToLower() && x.CreateTime < item.DateTime)
+                            .OrderByDescending(x => x.CreateTime)//优先付最后一单
                             .FirstOrDefault();
                         if (order != null)
                         {
                             order.FromAddress = item.From;
-                            order.BlockTransactionId = item.TransactionId;
+                            order.BlockTransactionId = item.Hash;
                             order.Status = OrderStatus.Paid;
                             order.PayTime = DateTime.Now;
                             await _repository.UpdateAsync(order);
@@ -123,7 +128,7 @@ namespace TokenPay.BgServices
 
 订单编号：<code>{order.OutOrderId}</code>
 原始金额：<b>{order.ActualAmount} 元</b>
-订单金额：<b>{order.Amount} USDT</b>
+订单金额：<b>{order.Amount} {order.Currency.ToCurrency()}</b>
 付款地址：<code>{order.FromAddress}</code>
 收款地址：<code>{order.ToAddress}</code>
 创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
@@ -131,11 +136,11 @@ namespace TokenPay.BgServices
 区块哈希：<code>{order.BlockTransactionId}</code>";
             if (env.IsProduction())
             {
-                message += @$"  <b><a href=""https://tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
+                message += @$"  <b><a href=""https://etherscan.io/tx/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
             }
             else
             {
-                message += @$"  <b><a href=""https://shasta.tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
+                message += @$"  <b><a href=""https://goerli.etherscan.io/tx/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
             }
             await _bot.SendTextMessageAsync(message);
         }

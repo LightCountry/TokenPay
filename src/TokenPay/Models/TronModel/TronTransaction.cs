@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace TokenPay.Models.TronModel
 {
-    public class Transactions
+    public class TronTransaction
     {
         [JsonProperty("transaction_id")]
         public string TransactionId { get; set; }

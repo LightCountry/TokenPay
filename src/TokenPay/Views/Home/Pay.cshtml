@@ -2,6 +2,7 @@
     ViewData["Title"] = "支付页";
 }
 @using TokenPay.Domains;
+@using TokenPay.Extensions
 @model TokenPay.Domains.TokenOrders
 @if (Model == null)
 {
@@ -14,34 +15,92 @@
 }
 else
 {
+    <style>
+        .time {
+            font-family: Consolas,Menlo,Courier;
+        }
+
+        .address {
+        @if (@Model.ToAddress.StartsWith("T"))
+        {
+            @Html.Raw("font-size:14px;")
+        }
+        else
+        {
+            @Html.Raw("font-size:12px;")
+        }
+        }
+    </style>
     <div class="text-center pt-2">
         <h4 class="display-6">您正在支付 <span class="text-danger">@Model.Currency.ToDescriptionOrString()</span></h4>
 
-        <div class="d-flex mb-3">
-            <div class="input-group m-auto" style="min-width:370px;max-width:370px;">
+        <div class="d-flex mb-2">
+            <div class="input-group m-auto" style="width:410px;">
                 <input class="form-control form-control-sm" type="text" id="Token" value="@Model.ToAddress" readonly>
                 <button class="btn btn-primary btn-sm" data-clipboard-target="#Token">复制</button>
             </div>
         </div>
-        <div class="mb-3">
+        <div class="mb-2 fw-bold display-6 invisible time">
+            剩余时间：<span class="text-danger"><span id="day_show"></span><span id="hour_show"></span><span id="minute_show"></span><span id="second_show"></span></span>
+        </div>
+        <div class="text-danger fw-bold mb-2">请仔细核对区块链和币种，避免丢失资产或支付失败！！！</div>
+        <div class="mb-2">
+            <div class="text-danger fw-bold" style="position:relative;bottom:-6px;height:0;">区块链：@Model.Currency.ToBlockchainName() 币种：@Model.Currency.ToCurrency()</div>
             <img src="data:image/png;base64,@ViewData["QrCode"]" class="border border-gray-300" alt="收款地址">
+            <div class="text-danger fw-semibold address" style="position:relative;top:-24px;height:0;">@Model.ToAddress</div>
         </div>
-        <div class="mb-3">
-            您支付金额为：<span class="text-danger">@Model.Amount</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">复制</button>
-        </div>
-        <div class="mb-3">
-            您的订单号：<span class="text-danger">@Model.OutOrderId</span>
-        </div>
-        <div class="mb-3">
-            此订单过期时间为：<span class="text-danger">@ViewData["ExpireTime"]</span>
+        <div class="text-start m-auto" style="width:300px;">
+            <div class="mb-2 fw-bold">
+                支付金额：<span class="text-danger">@Model.Amount</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">复制</button>
+            </div>
+            <div class="mb-2">
+                订单编号：<span class="text-danger">@Model.OutOrderId</span>
+            </div>
+            <div class="mb-2">
+                过期时间：<span class="text-danger">@ViewData["ExpireTime"]</span>
+            </div>
+            <div class="mt-4 text-start">
+                <div>区块链货币购买地址</div>
+                <div>1. 在 <a href="https://www.okx.com/buy-@Model.Currency.ToCurrency()/cny" target="_blank">OKX（欧易）</a> 购买 <span class="text-danger">@Model.Currency.ToCurrency()</span></div>
+                <div>2. 在 <a href="https://p2p.binance.com/zh-CN/express/buy/@Model.Currency.ToCurrency()/CNY" target="_blank">Binance（币安）</a> 购买 <span class="text-danger">@Model.Currency.ToCurrency()</span></div>
+            </div>
         </div>
     </div>
 
     @section Scripts{
     <script>
         let Time;
+        var EndTime = new Date('@ViewData["ExpireTime"]');
+        function timer() {
+            window.setInterval(function() {
+                var intDiff = (EndTime - new Date()) / 1000
+                if (intDiff <= 0) return;
+                $(".time").removeClass("invisible")
+                var day = 0,
+                    hour = 0,
+                    minute = 0,
+                    second = 0;
+                if (intDiff > 0) {
+                    day = Math.floor(intDiff / (60 * 60 * 24));
+                    hour = Math.floor(intDiff / (60 * 60)) - (day * 24);
+                    minute = Math.floor(intDiff / 60) - (day * 24 * 60) - (hour * 60);
+                    second = Math.floor(intDiff) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60);
+                }
+                if (minute <= 9) minute = '0' + minute;
+                if (second <= 9) second = '0' + second;
+                if (day)
+                    $('#day_show').html(day + "天");
+                if (hour)
+                    $('#hour_show').html('<s id="h"></s>' + hour + '时');
+                if (minute)
+                    $('#minute_show').html('<s></s>' + minute + '分');
+                $('#second_show').html('<s></s>' + second + '秒');
+                intDiff--;
+            }, 1000);
+        }
         $(() => {
-            Time = setInterval(Check, 1000)
+            timer();
+            Time = setInterval(Check, 1000);
         })
         function Check() {
             var RedirectUrl = "@(Model?.RedirectUrl)";

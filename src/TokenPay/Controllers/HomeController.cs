@@ -22,17 +22,22 @@ namespace TokenPay.Controllers
         private readonly IConfiguration _configuration;
         private int DecimalsUSDT => _configuration.GetValue("Decimals:USDT", 4);
         private int DecimalsTRX => _configuration.GetValue("Decimals:TRX", 2);
+        private int DecimalsETH => _configuration.GetValue("Decimals:TRX", 5);
         private int GetDecimals(Currency currency)
         {
             var decimals = currency switch
             {
                 Currency.TRX => DecimalsTRX,
+                Currency.ETH => DecimalsETH,
                 Currency.USDT_TRC20 => DecimalsUSDT,
+                Currency.USDT_ERC20 => DecimalsUSDT,
+                Currency.USDC_ERC20 => DecimalsUSDT,
                 _ => DecimalsUSDT,
             };
             return decimals;
         }
         private decimal RateUSDT => _configuration.GetValue("Rate:USDT", 0m);
+        private decimal RateUSDC => _configuration.GetValue("Rate:USDC", 0m);
         private decimal RateTRX => _configuration.GetValue("Rate:TRX", 0m);
         private decimal GetRate(Currency currency)
         {
@@ -40,6 +45,8 @@ namespace TokenPay.Controllers
             {
                 Currency.TRX => RateTRX,
                 Currency.USDT_TRC20 => RateUSDT,
+                Currency.USDT_ERC20 => RateUSDT,
+                Currency.USDC_ERC20 => RateUSDC,
                 _ => 0m,
             };
             return value;
@@ -215,7 +222,7 @@ namespace TokenPay.Controllers
         /// <returns></returns>
         private async Task<(string, decimal)> GetUseTokenDynamicAdress(CreateOrderViewModel model)
         {
-            var (UseTokenAdress, _) = await CreateTronWallet(model.OrderUserKey);
+            var (UseTokenAdress, _) = await CreateAddress(model.OrderUserKey, model.Currency);
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
@@ -231,10 +238,8 @@ namespace TokenPay.Controllers
         /// <summary>
         /// 根据唯一Id获取一个地址
         /// </summary>
-        /// <param name="OrderUserKey"></param>
-        /// <returns></returns>
         /// <exception cref="TokenPayException"></exception>
-        private async Task<(string, string)> CreateTronWallet(string OrderUserKey)
+        private async Task<(string, string)> CreateAddress(string OrderUserKey, Currency currency)
         {
             if (string.IsNullOrEmpty(OrderUserKey))
             {
@@ -247,15 +252,31 @@ namespace TokenPay.Controllers
                 var ecKey = Nethereum.Signer.EthECKey.GenerateKey();
                 var rawPrivateKey = ecKey.GetPrivateKeyAsBytes();
                 var hex = Convert.ToHexString(rawPrivateKey);
-                var tronWallet = new TronWallet(hex);
-                var Address = tronWallet.Address;
-                token = new Tokens
+                if (currency == Currency.USDT_ERC20 || currency == Currency.ETH)
                 {
-                    Id = OrderUserKey,
-                    Address = Address,
-                    Key = hex
-                };
-                await _tokenRepository.InsertAsync(token);
+                    var Address = ecKey.GetPublicAddress();
+                    token = new Tokens
+                    {
+                        Id = OrderUserKey,
+                        Address = Address,
+                        Key = hex,
+                        Currency = currency
+                    };
+                    await _tokenRepository.InsertAsync(token);
+                }
+                else
+                {
+                    var tronWallet = new TronWallet(hex);
+                    var Address = tronWallet.Address;
+                    token = new Tokens
+                    {
+                        Id = OrderUserKey,
+                        Address = Address,
+                        Key = hex,
+                        Currency = currency
+                    };
+                    await _tokenRepository.InsertAsync(token);
+                }
             }
             return (token.Address, token.Key);
         }
@@ -268,12 +289,16 @@ namespace TokenPay.Controllers
         private async Task<(string, decimal)> GetUseTokenStaticAdress(CreateOrderViewModel model)
         {
             var TRON = _configuration.GetSection("TRON-Address").Get<string[]>() ?? new string[0];
+            var ETH = _configuration.GetSection("ETH-Address").Get<string[]>() ?? new string[0];
 
             var CurrentAdress = model.Currency switch
             {
                 Currency.USDT_TRC20 => TRON,
                 Currency.TRX => TRON,
-                _ => TRON
+                Currency.USDT_ERC20 => ETH,
+                Currency.USDC_ERC20 => ETH,
+                Currency.ETH => ETH,
+                _ => throw new TokenPayException("未配置收款地址！")
             };
             if (CurrentAdress.Length == 0)
             {
@@ -383,7 +408,7 @@ namespace TokenPay.Controllers
         private static byte[] CreateQrCode(string qrcode)
         {
             using var stream = new MemoryStream();
-            var qrCode = new QrCode(qrcode, new Vector2Slim(256, 256), SKEncodedImageFormat.Png);
+            var qrCode = new QrCode(qrcode, new Vector2Slim(300, 300), SKEncodedImageFormat.Png);
             qrCode.GenerateImage(stream);
             return stream.ToArray();
         }

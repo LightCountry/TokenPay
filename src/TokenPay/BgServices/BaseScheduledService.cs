@@ -1,9 +1,9 @@
-﻿namespace TokenPay.BgServices
+namespace TokenPay.BgServices
 {
     public abstract class BaseScheduledService : IHostedService, IDisposable
     {
         private readonly Timer _timer;
-        private readonly string jobName;
+        protected readonly string jobName;
         private readonly TimeSpan _period;
         protected readonly ILogger Logger;
 

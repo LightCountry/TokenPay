@@ -86,6 +86,9 @@ namespace TokenPay.Domains
         TRX,
         BTC = 10,
         ETH,
+        [Description("USDC-ERC20")]
+        USDC_ERC20,
+
     }
     public enum OrderStatus
     {

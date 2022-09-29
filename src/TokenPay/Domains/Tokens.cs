@@ -15,11 +15,15 @@ namespace TokenPay.Domains
         /// </summary>
         public string Key { get; set; }
         /// <summary>
-        /// TRX余额
+        /// 币种
         /// </summary>
-        public decimal Trx { get; set; }
+        public Currency Currency { get; set; }
         /// <summary>
-        /// USDT余额
+        /// 本币余额
+        /// </summary>
+        public decimal Value { get; set; }
+        /// <summary>
+        /// USDT代币余额
         /// </summary>
         public decimal USDT { get; set; }
     }

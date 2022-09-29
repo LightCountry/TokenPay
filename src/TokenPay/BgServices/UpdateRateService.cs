@@ -34,9 +34,11 @@ namespace TokenPay.BgServices
 
         protected override async Task ExecuteAsync()
         {
-            var rate1 = _configuration.GetValue("Rate:USDT", 0m);
-            var rate2 = _configuration.GetValue("Rate:TRX", 0m);
-            if (rate1 > 0 && rate2 > 0)
+            var USDT = _configuration.GetValue("Rate:USDT", 0m);
+            var TRX = _configuration.GetValue("Rate:TRX", 0m);
+            var ETH = _configuration.GetValue("Rate:ETH", 0m);
+            var USDC = _configuration.GetValue("Rate:USDC", 0m);
+            if (USDT > 0 && TRX > 0 && ETH > 0 && USDC > 0)
             {
                 // 无需更新汇率
                 return;
@@ -48,7 +50,7 @@ namespace TokenPay.BgServices
             var list = new List<TokenRate>();
             var side = "buy";
 
-            if (rate1 <= 0)
+            if (USDT <= 0)
             {
                 try
                 {
@@ -72,6 +74,14 @@ namespace TokenPay.BgServices
                             FiatCurrency = FiatCurrency.CNY,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
+                        }); 
+                        list.Add(new TokenRate
+                        {
+                            Id = $"{Currency.USDT_ERC20}_{FiatCurrency.CNY}",
+                            Currency = Currency.USDT_ERC20,
+                            FiatCurrency = FiatCurrency.CNY,
+                            LastUpdateTime = DateTime.Now,
+                            Rate = result.data.First(x => x.bestOption).price,
                         });
                     }
                     else
@@ -84,7 +94,7 @@ namespace TokenPay.BgServices
                     _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", e?.InnerException?.Message + "; " + e?.Message);
                 }
             }
-            if (rate2 <= 0)
+            if (TRX <= 0)
             {
                 try
                 {
@@ -105,6 +115,79 @@ namespace TokenPay.BgServices
                         {
                             Id = $"{Currency.TRX}_{FiatCurrency.CNY}",
                             Currency = Currency.TRX,
+                            FiatCurrency = FiatCurrency.CNY,
+                            LastUpdateTime = DateTime.Now,
+                            Rate = result.data.First(x => x.bestOption).price,
+                        });
+                    }
+                    else
+                    {
+                        _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", result.msg ?? result.error_message);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", e?.InnerException?.Message + "; " + e?.Message);
+                }
+            }
+
+            if (ETH <= 0)
+            {
+                try
+                {
+                    var result = await baseUrl
+                        .WithClient(client)
+                        .WithHeaders(new { User_Agent = User_Agent })
+                        .AppendPathSegment("/v3/c2c/otc-ticker/quotedPrice")
+                        .SetQueryParams(new
+                        {
+                            side = side,
+                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            baseCurrency = "ETH",
+                        })
+                        .GetJsonAsync<Root>();
+                    if (result.code == 0)
+                    {
+                        list.Add(new TokenRate
+                        {
+                            Id = $"{Currency.ETH}_{FiatCurrency.CNY}",
+                            Currency = Currency.ETH,
+                            FiatCurrency = FiatCurrency.CNY,
+                            LastUpdateTime = DateTime.Now,
+                            Rate = result.data.First(x => x.bestOption).price,
+                        });
+                    }
+                    else
+                    {
+                        _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", result.msg ?? result.error_message);
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", e?.InnerException?.Message + "; " + e?.Message);
+                }
+            }
+            if (USDC <= 0)
+            {
+                try
+                {
+                    var result = await baseUrl
+                        .WithClient(client)
+                        .WithHeaders(new { User_Agent = User_Agent })
+                        .AppendPathSegment("/v3/c2c/otc-ticker/quotedPrice")
+                        .SetQueryParams(new
+                        {
+                            side = side,
+                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            baseCurrency = "USDC",
+                        })
+                        .GetJsonAsync<Root>();
+                    if (result.code == 0)
+                    {
+                        list.Add(new TokenRate
+                        {
+                            Id = $"{Currency.USDC_ERC20}_{FiatCurrency.CNY}",
+                            Currency = Currency.USDC_ERC20,
                             FiatCurrency = FiatCurrency.CNY,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
