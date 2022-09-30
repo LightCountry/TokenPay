@@ -4,15 +4,16 @@
 <a href="https://www.php.net/releases/7_4_0.php"><img src="https://img.shields.io/badge/.NET-6-orange" alt=".net6"></a>
 <a href="https://github.com/assimon/dujiaoka/releases/tag/1.0.0"><img src="https://img.shields.io/badge/version-1.0.0-red" alt="version 1.0.0"></a>
 </p>
+<h2 align="center">简体中文 | <a href="README_EN.md">English</a></h2>  
 
-## TokenPay - `USDT-TRC20`、`TRX` 动态收款地址解决方案
+## TokenPay - `区块链`支付解决方案
 
->一款开源`USDT-TRC20`、`TRX`动态收款地址的解决方案！
+>一款开源的，支持以动态收款地址或静态收款地址收取`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`等区块链代币的支付解决方案！
 
 ## 项目简介
-- `TokenPay`是一个由`C#语言`编写的私有化部署`USDT-TRC20`、`TRX`收款解决方案。     
+- `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。     
 - 本项目不依赖任何外部资源，无需另外部署`数据库`，采用轻量化的`sqlite`，也无需`redis`。
-- 任意项目都可以对接，轻松实现`USDT-TRC20`、`TRX`收款！😊 😊 😊
+- 任意项目都可以对接，轻松实现`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`收款！😊 😊 😊
 - `TokenPay` 遵守 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议!
 
 ## 项目特点
@@ -46,13 +47,13 @@ TokenPay
 - `TokenPay`交流群组[https://t.me/TokenPayGroup](https://t.me/TokenPayGroup)
 
 ## 设计实现
-`TokenPay`的实现方式与其他项目原理类似，都是通过`TronGrid`提供的api节点，      
-轮询有订单的钱包地址的`USDT`代币、`TRX`入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
+`TokenPay`的实现方式与其他项目原理类似，都是通过`TronGrid`、`EtherScan`等提供的api，      
+轮询订单未过期的钱包地址的`TRX`、`ETH`、`USDT`、`USDC`入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
 ```
 简单的原理：
 0.服务器定时同步交易所最新汇率
 1.客户支付，交易上链
-2.服务器定时通过API轮询，获取监听地址下的最新`USDT`代币、`TRX`入账交易，并与数据库订单对比
+2.服务器定时通过API轮询，获取监听地址下的最新入账交易数据，并与数据库订单对比
 3.若金额一致，将订单标记为完成
 4.订单完成后，异步通知任务将订单完成事件回调给平台
 ```
@@ -73,7 +74,9 @@ USDT-TRC20打赏地址: TQWM6cuy6YesssqqzSucoUkS1A11kAAAAA
 
 [Flurl](https://github.com/tmenier/Flurl) ![Github stars](https://img.shields.io/github/stars/tmenier/Flurl?style=social)
 
-[HDWallet](https://github.com/farukterzioglu/HDWallet) ![Github stars](https://github.com/farukterzioglu/HDWallet?style=social)
+[Nethereum](https://github.com/Nethereum/Nethereum) ![Github stars](https://img.shields.io/github/stars/Nethereum/Nethereum?style=social)
+
+[HDWallet](https://github.com/farukterzioglu/HDWallet) ![Github stars](https://img.shields.io/github/stars/farukterzioglu/HDWallet?style=social)
 
 ## 声明
 `TokenPay`为开源的产品，仅用于学习交流使用！       
