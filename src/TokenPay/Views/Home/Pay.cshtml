@@ -70,7 +70,7 @@ else
     @section Scripts{
     <script>
         let Time;
-        var EndTime = new Date('@ViewData["ExpireTime"]');
+        var EndTime = new Date('@ViewData["ExpireTime"]?.ToString()?.Replace("-","/")');
         function timer() {
             window.setInterval(function() {
                 var intDiff = (EndTime - new Date()) / 1000
