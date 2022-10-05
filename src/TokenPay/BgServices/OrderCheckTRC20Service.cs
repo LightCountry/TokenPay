@@ -86,10 +86,10 @@ namespace TokenPay.BgServices
                     foreach (var item in result.Data)
                     {
                         //合约地址不匹配
-                        if (item.TokenInfo?.Address != ContractAddress)
-                        {
-                            continue;
-                        }
+                        if (item.TokenInfo?.Address != ContractAddress) continue;
+                        var types = new string[] { "Transfer", "TransferFrom" };
+                        //收款地址相同
+                        if (item.To != address || !types.Contains(item.Type)) continue;
                         //没有需要匹配的订单了
                         if (!orders.Any())
                         {
@@ -101,7 +101,7 @@ namespace TokenPay.BgServices
                             continue;
                         }
                         var order = orders.Where(x => x.Amount == item.Amount && x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
-                            .OrderByDescending(x=>x.CreateTime)//优先付最后一单
+                            .OrderByDescending(x => x.CreateTime)//优先付最后一单
                             .FirstOrDefault();
                         if (order != null)
                         {
