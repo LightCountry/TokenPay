@@ -5,7 +5,6 @@
 **为保证安全性，务必修改`ApiToken`**
 
 ```json
-
 {
   "Serilog": {
     "MinimumLevel": {
@@ -22,6 +21,7 @@
   },
   "TRON-PRO-API-KEY": "xxxxxx-xxxx-xxxx-xxxxxxxxxxxx", // 避免接口请求频繁被限制，此处申请 https://www.trongrid.io/dashboard/keys
   "ETH-API-KEY": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // 避免接口请求频繁被限制，此处申请 https://etherscan.io/myapikey
+  "BaseCurrency": "CNY", //默认货币，支持 CNY、USD、EUR、GBP、AUD、HKD、TWD、SGD
   "Rate": { //汇率 设置0将使用自动汇率
     "USDT": 0,
     "TRX": 0,
