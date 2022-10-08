@@ -1,4 +1,4 @@
-﻿using FreeSql;
+using FreeSql;
 using TokenPay.Domains;
 
 namespace TokenPay.BgServices
@@ -26,8 +26,6 @@ namespace TokenPay.BgServices
             var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
             var ExpireDateTime = DateTime.Now.AddSeconds(-1 * ExpireTime);
             var ExpiredOrders = await _repository.Where(x => x.CreateTime < ExpireDateTime && x.Status == OrderStatus.Pending).ToListAsync();
-            if (ExpiredOrders.Count > 0)
-                _logger.LogInformation("过期订单检测，订单数：{c}", ExpiredOrders.Count);
             foreach (var order in ExpiredOrders)
             {
                 _logger.LogInformation("订单[{c}]过期了！", order.Id);

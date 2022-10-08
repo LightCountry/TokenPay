@@ -20,9 +20,10 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<TokenRate> _rateRepository;
         private readonly IBaseRepository<Tokens> _tokenRepository;
         private readonly IConfiguration _configuration;
+        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
         private int DecimalsUSDT => _configuration.GetValue("Decimals:USDT", 4);
         private int DecimalsTRX => _configuration.GetValue("Decimals:TRX", 2);
-        private int DecimalsETH => _configuration.GetValue("Decimals:TRX", 5);
+        private int DecimalsETH => _configuration.GetValue("Decimals:ETH", 5);
         private int GetDecimals(Currency currency)
         {
             var decimals = currency switch
@@ -39,11 +40,13 @@ namespace TokenPay.Controllers
         private decimal RateUSDT => _configuration.GetValue("Rate:USDT", 0m);
         private decimal RateUSDC => _configuration.GetValue("Rate:USDC", 0m);
         private decimal RateTRX => _configuration.GetValue("Rate:TRX", 0m);
+        private decimal RateETH => _configuration.GetValue("Rate:ETH", 0m);
         private decimal GetRate(Currency currency)
         {
             var value = currency switch
             {
                 Currency.TRX => RateTRX,
+                Currency.ETH => RateETH,
                 Currency.USDT_TRC20 => RateUSDT,
                 Currency.USDT_ERC20 => RateUSDT,
                 Currency.USDC_ERC20 => RateUSDC,
@@ -226,7 +229,7 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == FiatCurrency.CNY).FirstAsync(x => x.Rate);
+                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)
             {
@@ -245,14 +248,19 @@ namespace TokenPay.Controllers
             {
                 throw new TokenPayException("动态地址需传递用户标识！");
             }
+            var BaseCurrency = Currency.TRX;
+            if (currency == Currency.USDT_ERC20 || currency == Currency.USDC_ERC20 || currency == Currency.ETH)
+            {
+                BaseCurrency = Currency.ETH;
+            }
 
-            var token = await _tokenRepository.Where(x => x.Id == OrderUserKey).FirstAsync();
+            var token = await _tokenRepository.Where(x => x.Id == OrderUserKey && x.Currency == BaseCurrency).FirstAsync();
             if (token == null)
             {
                 var ecKey = Nethereum.Signer.EthECKey.GenerateKey();
                 var rawPrivateKey = ecKey.GetPrivateKeyAsBytes();
                 var hex = Convert.ToHexString(rawPrivateKey);
-                if (currency == Currency.USDT_ERC20 || currency == Currency.ETH)
+                if (BaseCurrency == Currency.ETH)
                 {
                     var Address = ecKey.GetPublicAddress();
                     token = new Tokens
@@ -260,7 +268,7 @@ namespace TokenPay.Controllers
                         Id = OrderUserKey,
                         Address = Address,
                         Key = hex,
-                        Currency = currency
+                        Currency = Currency.ETH
                     };
                     await _tokenRepository.InsertAsync(token);
                 }
@@ -273,7 +281,7 @@ namespace TokenPay.Controllers
                         Id = OrderUserKey,
                         Address = Address,
                         Key = hex,
-                        Currency = currency
+                        Currency = Currency.TRX
                     };
                     await _tokenRepository.InsertAsync(token);
                 }
@@ -307,7 +315,7 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == FiatCurrency.CNY).FirstAsync(x => x.Rate);
+                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)
             {

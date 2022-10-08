@@ -1,4 +1,4 @@
-﻿using FreeSql.DataAnnotations;
+using FreeSql.DataAnnotations;
 using System.ComponentModel.DataAnnotations;
 
 namespace TokenPay.Domains
@@ -30,6 +30,12 @@ namespace TokenPay.Domains
     public enum FiatCurrency
     {
         CNY = 10,
-        USD
+        USD,
+        EUR,
+        GBP,
+        AUD,
+        HKD,
+        TWD,
+        SGD
     }
 }

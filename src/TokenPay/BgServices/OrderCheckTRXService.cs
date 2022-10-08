@@ -39,8 +39,6 @@ namespace TokenPay.BgServices
                 .Where(x => x.Currency == Currency.TRX)
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
-            if (Address.Count > 0)
-                _logger.LogInformation($"{jobName}，待检测地址数：{{c}}", Address.Count);
             var BaseUrl = "https://api.trongrid.io";
             if (!env.IsProduction())
             {

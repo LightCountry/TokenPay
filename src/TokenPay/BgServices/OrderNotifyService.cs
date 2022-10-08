@@ -50,8 +50,6 @@ namespace TokenPay.BgServices
                 .Where(x => x.LastNotifyTime == null || x.LastNotifyTime < start) //未通知过，或通知失败5分钟后的
                 .Where(x => x.NotifyUrl.StartsWith("http"))
                 .ToListAsync();
-            if (Orders.Count > 0)
-                _logger.LogInformation("待通知订单检测，订单数：{c}", Orders.Count);
             foreach (var order in Orders)
             {
                 _logger.LogInformation("开始异步通知订单: {c}", order.Id);

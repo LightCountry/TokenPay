@@ -46,8 +46,6 @@ namespace TokenPay.BgServices
                 .Where(x => x.Currency == Currency.ETH)
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
-            if (Address.Count > 0)
-                _logger.LogInformation($"{jobName}，待检测地址数：{{c}}", Address.Count);
             var BaseUrl = "https://api.etherscan.io";
             if (!env.IsProduction())
             {

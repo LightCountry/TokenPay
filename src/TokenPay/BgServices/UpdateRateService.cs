@@ -14,6 +14,7 @@ namespace TokenPay.BgServices
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<UpdateRateService> _logger;
         private readonly FlurlClient client;
+        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
         public UpdateRateService(
             IConfiguration configuration,
             IServiceProvider serviceProvider,
@@ -61,7 +62,7 @@ namespace TokenPay.BgServices
                         .SetQueryParams(new
                         {
                             side = side,
-                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            quoteCurrency = BaseCurrency.ToString(),
                             baseCurrency = "USDT",
                         })
                         .GetJsonAsync<Root>();
@@ -69,17 +70,17 @@ namespace TokenPay.BgServices
                     {
                         list.Add(new TokenRate
                         {
-                            Id = $"{Currency.USDT_TRC20}_{FiatCurrency.CNY}",
+                            Id = $"{Currency.USDT_TRC20}_{BaseCurrency}",
                             Currency = Currency.USDT_TRC20,
-                            FiatCurrency = FiatCurrency.CNY,
+                            FiatCurrency = BaseCurrency,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
                         }); 
                         list.Add(new TokenRate
                         {
-                            Id = $"{Currency.USDT_ERC20}_{FiatCurrency.CNY}",
+                            Id = $"{Currency.USDT_ERC20}_{BaseCurrency}",
                             Currency = Currency.USDT_ERC20,
-                            FiatCurrency = FiatCurrency.CNY,
+                            FiatCurrency = BaseCurrency,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
                         });
@@ -105,7 +106,7 @@ namespace TokenPay.BgServices
                         .SetQueryParams(new
                         {
                             side = side,
-                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            quoteCurrency = BaseCurrency.ToString(),
                             baseCurrency = "TRX",
                         })
                         .GetJsonAsync<Root>();
@@ -113,9 +114,9 @@ namespace TokenPay.BgServices
                     {
                         list.Add(new TokenRate
                         {
-                            Id = $"{Currency.TRX}_{FiatCurrency.CNY}",
+                            Id = $"{Currency.TRX}_{BaseCurrency}",
                             Currency = Currency.TRX,
-                            FiatCurrency = FiatCurrency.CNY,
+                            FiatCurrency = BaseCurrency,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
                         });
@@ -142,7 +143,7 @@ namespace TokenPay.BgServices
                         .SetQueryParams(new
                         {
                             side = side,
-                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            quoteCurrency = BaseCurrency.ToString(),
                             baseCurrency = "ETH",
                         })
                         .GetJsonAsync<Root>();
@@ -150,9 +151,9 @@ namespace TokenPay.BgServices
                     {
                         list.Add(new TokenRate
                         {
-                            Id = $"{Currency.ETH}_{FiatCurrency.CNY}",
+                            Id = $"{Currency.ETH}_{BaseCurrency}",
                             Currency = Currency.ETH,
-                            FiatCurrency = FiatCurrency.CNY,
+                            FiatCurrency = BaseCurrency,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
                         });
@@ -178,7 +179,7 @@ namespace TokenPay.BgServices
                         .SetQueryParams(new
                         {
                             side = side,
-                            quoteCurrency = FiatCurrency.CNY.ToString(),
+                            quoteCurrency = BaseCurrency.ToString(),
                             baseCurrency = "USDC",
                         })
                         .GetJsonAsync<Root>();
@@ -186,9 +187,9 @@ namespace TokenPay.BgServices
                     {
                         list.Add(new TokenRate
                         {
-                            Id = $"{Currency.USDC_ERC20}_{FiatCurrency.CNY}",
+                            Id = $"{Currency.USDC_ERC20}_{BaseCurrency}",
                             Currency = Currency.USDC_ERC20,
-                            FiatCurrency = FiatCurrency.CNY,
+                            FiatCurrency = BaseCurrency,
                             LastUpdateTime = DateTime.Now,
                             Rate = result.data.First(x => x.bestOption).price,
                         });
