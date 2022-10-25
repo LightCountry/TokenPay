@@ -32,6 +32,7 @@ TokenPay
 - [dujiaoka](Plugs/dujiaoka/) | [dujiaoka](https://github.com/assimon/dujiaoka) ![Github stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
 - [v2board](Plugs/v2board/) | [v2board](https://github.com/v2board/v2board) ![Github stars](https://img.shields.io/github/stars/v2board/v2board?style=social)
 - [card-system](Plugs/card-system/) | [card-system](https://github.com/Tai7sy/card-system) ![Github stars](https://img.shields.io/github/stars/Tai7sy/card-system?style=social)
+- [epay](Plugs/epay/) | [epay](https://pay.cccyun.cc)
 
 ## System Api(Only Chinese)
 - `TokenPay`Api Docs👉🏻[TokenPay Api Docs](Wiki/docs.md)

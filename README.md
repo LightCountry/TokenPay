@@ -32,6 +32,7 @@ TokenPay
 - [独角数卡插件](Plugs/dujiaoka/) | [独角数卡](https://github.com/assimon/dujiaoka) ![Github stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
 - [v2board插件](Plugs/v2board/) | [v2board](https://github.com/v2board/v2board) ![Github stars](https://img.shields.io/github/stars/v2board/v2board?style=social)
 - [card-system插件](Plugs/card-system/) | [card-system](https://github.com/Tai7sy/card-system) ![Github stars](https://img.shields.io/github/stars/Tai7sy/card-system?style=social)
+- [彩虹易支付插件](Plugs/epay/) | [彩虹易支付官网](https://pay.cccyun.cc)
 
 ## 系统对接
 - `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
