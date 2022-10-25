@@ -1,0 +1,129 @@
+﻿@{
+    ViewData["Title"] = "Pay";
+}
+@using TokenPay.Domains;
+@using TokenPay.Extensions
+@model TokenPay.Domains.TokenOrders
+@if (Model == null)
+{
+    <div class="row align-items-center h-100">
+        <div class="text-center">
+            <h1 class="display-4">Order does not exist！</h1>
+        </div>
+    </div>
+
+}
+else
+{
+    <style>
+        .time {
+            font-family: Consolas,Menlo,Courier;
+        }
+
+        .address {
+        @if (@Model.ToAddress.StartsWith("T"))
+        {
+            @Html.Raw("font-size:14px;")
+        }
+        else
+        {
+            @Html.Raw("font-size:12px;")
+        }
+        }
+    </style>
+    <div class="text-center pt-2">
+        <h4 class="display-6">You are paying <span class="text-danger">@Model.Currency.ToDescriptionOrString()</span></h4>
+
+        <div class="d-flex mb-2">
+            <div class="input-group m-auto" style="width:410px;">
+                <input class="form-control form-control-sm" type="text" id="Token" value="@Model.ToAddress" readonly>
+                <button class="btn btn-primary btn-sm" data-clipboard-target="#Token">Copy</button>
+            </div>
+        </div>
+        <div class="mb-2 fw-bold display-6 invisible time">
+            Time left：<span class="text-danger"><span id="day_show"></span><span id="hour_show"></span><span id="minute_show"></span><span id="second_show"></span></span>
+        </div>
+        <div class="text-danger fw-bold mb-2">Please double check the blockchain and currency to avoid losing assets or payment failures ! ! !</div>
+        <div class="mb-2">
+            <div class="text-danger fw-bold" style="position:relative;bottom:-6px;height:0;">Blockchain：@Model.Currency.ToBlockchainEnglishName() Currency：@Model.Currency.ToCurrency()</div>
+            <img src="data:image/png;base64,@ViewData["QrCode"]" class="border border-gray-300" alt="address">
+            <div class="text-danger fw-semibold address" style="position:relative;top:-24px;height:0;">@Model.ToAddress</div>
+        </div>
+        <div class="text-start m-auto" style="width:300px;">
+            <div class="mb-2 fw-bold">
+                Amount：<span class="text-danger">@Model.Amount</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">Copy</button>
+            </div>
+            <div class="mb-2">
+                Order No：<span class="text-danger">@Model.OutOrderId</span>
+            </div>
+            <div class="mb-2">
+                Expiration：<span class="text-danger">@ViewData["ExpireTime"]</span>
+            </div>
+            <div class="mt-4 text-start">
+                <div>You can buy blockchain currency at</div>
+                <div>1. Buy <span class="text-danger">@Model.Currency.ToCurrency()</span> on <a href="https://www.okx.com/buy-@Model.Currency.ToCurrency()/UDS" target="_blank">OKX</a></div>
+                <div>2. Buy <span class="text-danger">@Model.Currency.ToCurrency()</span> on<a href="https://p2p.binance.com/zh-CN/express/buy/@Model.Currency.ToCurrency()/USD" target="_blank">Binance</a></div>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts{
+    <script>
+        let Time;
+        var EndTime = new Date('@ViewData["ExpireTime"]?.ToString()?.Replace("-","/")');
+        function timer() {
+            window.setInterval(function() {
+                var intDiff = (EndTime - new Date()) / 1000
+                if (intDiff <= 0) return;
+                $(".time").removeClass("invisible")
+                var day = 0,
+                    hour = 0,
+                    minute = 0,
+                    second = 0;
+                if (intDiff > 0) {
+                    day = Math.floor(intDiff / (60 * 60 * 24));
+                    hour = Math.floor(intDiff / (60 * 60)) - (day * 24);
+                    minute = Math.floor(intDiff / 60) - (day * 24 * 60) - (hour * 60);
+                    second = Math.floor(intDiff) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60);
+                }
+                if (minute <= 9) minute = '0' + minute;
+                if (second <= 9) second = '0' + second;
+                if (day)
+                    $('#day_show').html(day + " Days ");
+                if (hour)
+                    $('#hour_show').html('<s id="h"></s>' + hour + ' Hours ');
+                if (minute)
+                    $('#minute_show').html('<s></s>' + minute + ' Minutes ');
+                $('#second_show').html('<s></s>' + second + ' Seconds ');
+                intDiff--;
+            }, 1000);
+        }
+        $(() => {
+            timer();
+            Time = setInterval(Check, 1000);
+        })
+        function Check() {
+            var RedirectUrl = "@(Model?.RedirectUrl)";
+            $.get("/Check/@(Model?.Id)")
+                .then(x => {
+                    if (x === 'Pending') {
+                        console.log('待支付')
+                    } else if (x === 'Expired') {
+                        clearInterval(Time)
+                        console.log('订单过期')
+                        location.reload();
+                    } else if (x === 'Paid') {
+                        clearInterval(Time)
+                        console.log('已支付')
+                        setTimeout(() => {
+                            alert("Paid")
+                            if (RedirectUrl) {
+                                location = RedirectUrl
+                            }
+                        }, 0)
+                    }
+                })
+        }
+    </script>
+    }
+}

@@ -10,4 +10,4 @@
 5. 如果你要同时支持USDT和TRX付款，你需要添加两条前台支付方式，并分别选中对应的子渠道
 
 请参考此图填写
-<img src="../../Wiki/imgs/card-system-payment.png" alt="v2board支付方式配置"/>
+<img src="../../Wiki/imgs/card-system-payment.png" alt="card-system支付方式配置"/>

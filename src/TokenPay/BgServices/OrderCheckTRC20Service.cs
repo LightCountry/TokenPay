@@ -43,7 +43,7 @@ namespace TokenPay.BgServices
             var BaseUrl = "https://api.trongrid.io";
             if (!env.IsProduction())
             {
-                ContractAddress = "TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs";
+                ContractAddress = "TX8ZUpucJYgHb8wBFQYuYSJ459og32AHWW";
                 BaseUrl = "https://api.shasta.trongrid.io";
             }
             var OnlyConfirmed = _configuration.GetValue("OnlyConfirmed", true);

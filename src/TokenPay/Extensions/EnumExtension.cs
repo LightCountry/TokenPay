@@ -27,5 +27,17 @@ namespace TokenPay.Extensions
             };
             return value;
         }
+        public static string ToBlockchainEnglishName(this Currency currency)
+        {
+            var value = currency switch
+            {
+                Currency.USDT_ERC20 => "ETH",
+                Currency.USDC_ERC20 => "ETH",
+                Currency.USDT_TRC20 => "TRON",
+                Currency.TRX => "TRON",
+                _ => currency.ToDescriptionOrString()
+            };
+            return value;
+        }
     }
 }

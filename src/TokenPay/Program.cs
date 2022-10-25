@@ -2,10 +2,13 @@
 using Exceptionless;
 using FreeSql;
 using FreeSql.DataAnnotations;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 using Serilog.Events;
 using System.Data.Common;
+using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,6 +35,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
                     .WriteTo.Exceptionless(b => b.AddTags("Serilog"))
                     );
 builder.Services.AddControllersWithViews()
+    .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -61,6 +65,19 @@ Services.AddEndpointsApiExplorer();
 Services.AddSwaggerGen(c =>
 {
     c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
+});
+Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new List<CultureInfo>
+            {
+                new CultureInfo("zh"),
+                new CultureInfo("en-US"),
+                new CultureInfo("ru")
+            };
+
+    options.DefaultRequestCulture = new RequestCulture("zh");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
 });
 Services.AddSingleton(s =>
 {
@@ -95,7 +112,12 @@ app.UseExceptionless();
 app.UseRouting();
 
 app.UseAuthorization();
+var supportedCultures = new[] { "zh", "en-US", "ru"};
+var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
 
+app.UseRequestLocalization(localizationOptions);
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
