@@ -8,7 +8,15 @@
 
 ## TokenPay - `区块链`支付解决方案
 
->一款开源的，支持以动态收款地址或静态收款地址收取`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`等区块链代币的支付解决方案！
+>一款开源的，支持以动态收款地址或静态收款地址收取`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`等区块链代币的支付解决方案！ 
+  
+
+## AD -- 免费领取国际信用卡
+>免费领取VISA卡，万事达卡，充值USDT即可随便刷  
+可绑微信、支付宝、美区AppStore消费  
+快来领取你的可刷USDT的国际银行卡吧   
+➡️➡️➡️ [点击领取你的国际信用卡](https://depay.depay.one/web-app/register-h5?invitCode=949656&lang=zh-cn)
+
 
 ## 项目简介
 - `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。     

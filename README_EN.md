@@ -10,6 +10,12 @@
 
 >An open source, payment solution that supports receiving `TRX`, `USDT-TRC20`, `ETH`, `USDT-ERC20`, `USDC-ERC20` and other blockchain tokens with dynamic payout addresses or static payout addresses!
 
+## AD -- Receive free international credit card
+>Receive free VISA and Mastercard, recharge USDT and you can use it as you like  
+You can connect to WeChat, Alipay, and AppStore in the U.S.  
+Come and get your international bank card that can be used for USDT!   
+➡️➡️➡️ [Click to get your international credit card](https://depay.depay.one/web-app/register-h5?invitCode=949656&lang=zh-cn)
+
 ## Project Description
 - `TokenPay` is a privately deployed `blockchain` payment solution written in `C# language`.     
 - The project does not depend on any external resources, no need to deploy a separate `database`, uses lightweight `sqlite`, and does not require `redis`.
