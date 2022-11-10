@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "订单过期";
+}
+@using TokenPay.Domains;
+@model TokenPay.Domains.TokenOrders
+<div class="row align-items-center h-100">
+    @if (Model == null)
+    {
+        <div class="text-center">
+            <h4 class="display-4">Order does not exist!</h4>
+        </div>
+    }
+    else
+    {
+        <div class="text-center">
+            <h1 class="display-4">Order has expired!</h1>
+            @if (!string.IsNullOrEmpty(Model.RedirectUrl))
+            {
+                <a class="btn btn-primary btn-sm" href="@Model.RedirectUrl">Back</a>
+            }
+        </div>
+
+    }
+</div>

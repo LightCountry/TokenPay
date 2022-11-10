@@ -71,11 +71,11 @@ Services.Configure<RequestLocalizationOptions>(options =>
     var supportedCultures = new List<CultureInfo>
             {
                 new CultureInfo("zh"),
-                new CultureInfo("en-US"),
+                new CultureInfo("en"),
                 new CultureInfo("ru")
             };
 
-    options.DefaultRequestCulture = new RequestCulture("zh");
+    options.DefaultRequestCulture = new RequestCulture("en");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
 });
@@ -112,7 +112,7 @@ app.UseExceptionless();
 app.UseRouting();
 
 app.UseAuthorization();
-var supportedCultures = new[] { "zh", "en-US", "ru"};
+var supportedCultures = new[] { "zh", "en", "ru"};
 var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures);
