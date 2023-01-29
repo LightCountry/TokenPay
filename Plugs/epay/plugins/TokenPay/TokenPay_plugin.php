@@ -142,7 +142,7 @@ class TokenPay_plugin{
 			}else{
 			    return ['type'=>'html','data'=>'fail'];
 			}
-			return ['type'=>'html','data'=>'success'];
+			return ['type'=>'html','data'=>'ok'];
 		}else{
 			return ['type'=>'html','data'=>'fail'];
 		}
