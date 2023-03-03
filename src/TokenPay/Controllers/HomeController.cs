@@ -2,6 +2,7 @@ using FreeSql;
 using HDWallet.Tron;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Bcpg;
 using SkiaSharp;
 using SkiaSharp.QrCode.Image;
 using System.Diagnostics;
@@ -9,6 +10,7 @@ using System.Reflection;
 using TokenPay.Domains;
 using TokenPay.Extensions;
 using TokenPay.Models;
+using TokenPay.Models.EthModel;
 
 namespace TokenPay.Controllers
 {
@@ -19,49 +21,76 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<TokenOrders> _repository;
         private readonly IBaseRepository<TokenRate> _rateRepository;
         private readonly IBaseRepository<Tokens> _tokenRepository;
+        private readonly List<EVMChain> _chain;
         private readonly IConfiguration _configuration;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
-        private int DecimalsUSDT => _configuration.GetValue("Decimals:USDT", 4);
-        private int DecimalsTRX => _configuration.GetValue("Decimals:TRX", 2);
-        private int DecimalsETH => _configuration.GetValue("Decimals:ETH", 5);
-        private int GetDecimals(Currency currency)
+        private int GetDecimals(string currency)
         {
             var decimals = currency switch
             {
-                Currency.TRX => DecimalsTRX,
-                Currency.ETH => DecimalsETH,
-                Currency.USDT_TRC20 => DecimalsUSDT,
-                Currency.USDT_ERC20 => DecimalsUSDT,
-                Currency.USDC_ERC20 => DecimalsUSDT,
-                _ => DecimalsUSDT,
+                "TRX" => _configuration.GetValue("Decimals:TRX", 2),
+                "EVM_ETH" => _configuration.GetValue("Decimals:ETH", 5),
+                _ => _configuration.GetValue($"Decimals:{currency}", 4)
             };
+
             return decimals;
         }
-        private decimal RateUSDT => _configuration.GetValue("Rate:USDT", 0m);
-        private decimal RateUSDC => _configuration.GetValue("Rate:USDC", 0m);
-        private decimal RateTRX => _configuration.GetValue("Rate:TRX", 0m);
-        private decimal RateETH => _configuration.GetValue("Rate:ETH", 0m);
-        private decimal GetRate(Currency currency)
+        private List<string> GetErc20Name()
         {
-            var value = currency switch
+            var list = new List<string>();
+            foreach (var item in _chain)
             {
-                Currency.TRX => RateTRX,
-                Currency.ETH => RateETH,
-                Currency.USDT_TRC20 => RateUSDT,
-                Currency.USDT_ERC20 => RateUSDT,
-                Currency.USDC_ERC20 => RateUSDC,
-                _ => 0m,
+                list.Add(item.ERC20Name);
+            }
+            list = list.Distinct().ToList();
+            return list;
+        }
+
+        private decimal GetRate(string currency)
+        {
+            var erc20Names = GetErc20Name();
+            foreach (var item in erc20Names)
+            {
+                currency = currency.Replace(item, "");
+            }
+            var _currency = currency.Replace("TRC20", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Last();
+            var value = _currency switch
+            {
+                "TRX" => _configuration.GetValue("Rate:TRX", 0m),
+                "ETH" => _configuration.GetValue("Rate:ETH", 0m),
+                "USDT" => _configuration.GetValue("Rate:USDT", 0m),
+                "USDC" => _configuration.GetValue("Rate:USDC", 0m),
+                _ => _configuration.GetValue($"Rate:{_currency}", 0m)
             };
             return value;
+        }
+        private List<string> GetActiveCurrency()
+        {
+            var list = new List<string>()
+            {
+                "TRX","USDT_TRC20"
+            };
+            foreach (var chain in _chain)
+            {
+                if (chain == null || !chain.Enable || chain.ERC20 == null) continue;
+                list.Add($"EVM_{chain.ChainNameEN}_{chain.BaseCoin}");
+                foreach (var erc20 in chain.ERC20)
+                {
+                    list.Add($"EVM_{chain.ChainNameEN}_{erc20.Name}_{chain.ERC20Name}");
+                }
+            }
+            return list;
         }
         public HomeController(IBaseRepository<TokenOrders> repository,
             IBaseRepository<TokenRate> rateRepository,
             IBaseRepository<Tokens> tokenRepository,
+            List<EVMChain> chain,
             IConfiguration configuration)
         {
             this._repository = repository;
             this._rateRepository = rateRepository;
             this._tokenRepository = tokenRepository;
+            this._chain = chain;
             this._configuration = configuration;
         }
         [Route("/")]
@@ -140,11 +169,20 @@ namespace TokenPay.Controllers
                     Message = messages
                 });
             }
+#if !DEBUG
             if (!VerifySignature(model))
             {
                 return Json(new ReturnData
                 {
                     Message = "签名验证失败！"
+                });
+            }
+#endif
+            if (!GetActiveCurrency().Contains(model.Currency))
+            {
+                return Json(new ReturnData
+                {
+                    Message = $"不支持的币种【{model.Currency}】！"
                 });
             }
             if (model.ActualAmount <= 0)
@@ -155,7 +193,9 @@ namespace TokenPay.Controllers
                 });
             }
             //订单号已存在
-            var hasOrder = await _repository.Where(x => x.OutOrderId == model.OutOrderId && x.Currency == model.Currency).FirstAsync();
+            var hasOrder = await _repository.Where(x => x.OutOrderId == model.OutOrderId && x.Currency == model.Currency)
+                .Where(x => x.Status != OrderStatus.Expired)
+                .FirstAsync();
             if (hasOrder != null)
             {
                 return Json(new ReturnData<string>
@@ -198,6 +238,13 @@ namespace TokenPay.Controllers
                     Message = e.Message
                 });
             }
+            if (order.Amount == 0)
+            {
+                return Json(new ReturnData
+                {
+                    Message = "此订单金额过低！"
+                });
+            }
             await _repository.InsertAsync(order);
             return Json(new ReturnData<string>
             {
@@ -229,7 +276,8 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
+                var Currency = model.Currency.ToCurrency(_chain);
+                rate = await _rateRepository.Where(x => x.Currency == Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)
             {
@@ -242,33 +290,34 @@ namespace TokenPay.Controllers
         /// 根据唯一Id获取一个地址
         /// </summary>
         /// <exception cref="TokenPayException"></exception>
-        private async Task<(string, string)> CreateAddress(string OrderUserKey, Currency currency)
+        private async Task<(string, string)> CreateAddress(string OrderUserKey, string currency)
         {
             if (string.IsNullOrEmpty(OrderUserKey))
             {
                 throw new TokenPayException("动态地址需传递用户标识！");
             }
-            var BaseCurrency = Currency.TRX;
-            if (currency == Currency.USDT_ERC20 || currency == Currency.USDC_ERC20 || currency == Currency.ETH)
+            var BaseCurrency = TokenCurrency.TRX;
+            // 币种以EVM开头判定为EVM
+            if (currency.StartsWith("EVM"))
             {
-                BaseCurrency = Currency.ETH;
+                BaseCurrency = TokenCurrency.EVM;
             }
-
-            var token = await _tokenRepository.Where(x => x.Id == OrderUserKey && x.Currency == BaseCurrency).FirstAsync();
+            var TokenId = $"{BaseCurrency}_{OrderUserKey}";
+            var token = await _tokenRepository.Where(x => x.Id == TokenId && x.Currency == BaseCurrency).FirstAsync();
             if (token == null)
             {
                 var ecKey = Nethereum.Signer.EthECKey.GenerateKey();
                 var rawPrivateKey = ecKey.GetPrivateKeyAsBytes();
                 var hex = Convert.ToHexString(rawPrivateKey);
-                if (BaseCurrency == Currency.ETH)
+                if (BaseCurrency == TokenCurrency.EVM)
                 {
                     var Address = ecKey.GetPublicAddress();
                     token = new Tokens
                     {
-                        Id = OrderUserKey,
+                        Id = TokenId,
                         Address = Address,
                         Key = hex,
-                        Currency = Currency.ETH
+                        Currency = TokenCurrency.EVM
                     };
                     await _tokenRepository.InsertAsync(token);
                 }
@@ -278,10 +327,10 @@ namespace TokenPay.Controllers
                     var Address = tronWallet.Address;
                     token = new Tokens
                     {
-                        Id = OrderUserKey,
+                        Id = TokenId,
                         Address = Address,
                         Key = hex,
-                        Currency = Currency.TRX
+                        Currency = TokenCurrency.TRX
                     };
                     await _tokenRepository.InsertAsync(token);
                 }
@@ -296,18 +345,20 @@ namespace TokenPay.Controllers
         /// <exception cref="TokenPayException"></exception>
         private async Task<(string, decimal)> GetUseTokenStaticAdress(CreateOrderViewModel model)
         {
-            var TRON = _configuration.GetSection("TRON-Address").Get<string[]>() ?? new string[0];
-            var ETH = _configuration.GetSection("ETH-Address").Get<string[]>() ?? new string[0];
+            var TRON = _configuration.GetSection("Address:TRON").Get<string[]>() ?? new string[0];
+            var EVM = _configuration.GetSection("Address:EVM").Get<string[]>() ?? new string[0];
+            var CurrencyAddress = _configuration.GetSection($"Address:{model.Currency.Replace("EVM", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).First()}").Get<string[]>() ?? new string[0];
 
-            var CurrentAdress = model.Currency switch
+            var CurrentAdress = CurrencyAddress;
+
+            if (CurrentAdress.Length == 0 && (model.Currency == "TRX" || model.Currency.EndsWith("TRC20")))
             {
-                Currency.USDT_TRC20 => TRON,
-                Currency.TRX => TRON,
-                Currency.USDT_ERC20 => ETH,
-                Currency.USDC_ERC20 => ETH,
-                Currency.ETH => ETH,
-                _ => throw new TokenPayException("未配置收款地址！")
-            };
+                CurrentAdress = TRON;
+            }
+            if (CurrentAdress.Length == 0 && model.Currency.StartsWith("EVM"))
+            {
+                CurrentAdress = EVM;
+            }
             if (CurrentAdress.Length == 0)
             {
                 throw new TokenPayException("未配置收款地址！");
@@ -315,7 +366,8 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                rate = await _rateRepository.Where(x => x.Currency == model.Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
+                var Currency = model.Currency.ToCurrency(_chain);
+                rate = await _rateRepository.Where(x => x.Currency == Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)
             {

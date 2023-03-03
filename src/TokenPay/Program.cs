@@ -5,6 +5,7 @@ using FreeSql.DataAnnotations;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using System.Data.Common;
@@ -12,9 +13,11 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
 using TokenPay.BgServices;
 using TokenPay.Domains;
 using TokenPay.Helper;
+using TokenPay.Models.EthModel;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -25,7 +28,9 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
 var Configuration = builder.Configuration;
-
+Configuration.AddJsonFile("EVMChains.json", optional: false, reloadOnChange: true);
+if (!builder.Environment.IsProduction())
+    Configuration.AddJsonFile($"EVMChains.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 builder.Host.UseSerilog((context, services, configuration) => configuration
                     .ReadFrom.Configuration(context.Configuration)
@@ -41,7 +46,8 @@ builder.Services.AddControllersWithViews()
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-
+var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>();
+Services.AddSingleton(EVMChains);
 var connectionString = Configuration.GetConnectionString("DB");
 
 IFreeSql fsql = new FreeSqlBuilder()
@@ -55,10 +61,11 @@ Services.AddFreeRepository();
 Services.AddHostedService<OrderExpiredService>();
 Services.AddHostedService<UpdateRateService>();
 Services.AddHostedService<OrderNotifyService>();
+Services.AddHostedService<OrderPaySuccessService>();
 Services.AddHostedService<OrderCheckTRC20Service>();
 Services.AddHostedService<OrderCheckTRXService>();
-Services.AddHostedService<OrderCheckETHService>();
-Services.AddHostedService<OrderCheckERC20Service>();
+Services.AddHostedService<OrderCheckEVMBaseService>();
+Services.AddHostedService<OrderCheckEVMERC20Service>();
 Services.AddExceptionless(Configuration);
 Services.AddHttpContextAccessor();
 Services.AddEndpointsApiExplorer();
@@ -93,6 +100,9 @@ Services.AddSingleton(s =>
     }
     return bot;
 });
+// ¶©µ¥¹ã²¥ 
+var channel = Channel.CreateUnbounded<TokenOrders>();
+Services.AddSingleton(channel);
 
 
 var app = builder.Build();
@@ -112,7 +122,7 @@ app.UseExceptionless();
 app.UseRouting();
 
 app.UseAuthorization();
-var supportedCultures = new[] { "zh", "en", "ru"};
+var supportedCultures = new[] { "zh", "en", "ru" };
 var localizationOptions = new RequestLocalizationOptions().SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
     .AddSupportedUICultures(supportedCultures);

@@ -17,7 +17,7 @@ namespace TokenPay.Domains
         /// <summary>
         /// 币种
         /// </summary>
-        public Currency Currency { get; set; }
+        public TokenCurrency Currency { get; set; }
         /// <summary>
         /// 本币余额
         /// </summary>
@@ -26,5 +26,11 @@ namespace TokenPay.Domains
         /// USDT代币余额
         /// </summary>
         public decimal USDT { get; set; }
+    }
+    public enum TokenCurrency
+    {
+        BTC = 10,
+        EVM,
+        TRX
     }
 }

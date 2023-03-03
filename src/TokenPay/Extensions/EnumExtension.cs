@@ -1,43 +1,59 @@
+using NBitcoin;
+using Nethereum.Signer;
 using TokenPay.Domains;
+using TokenPay.Models.EthModel;
 
 namespace TokenPay.Extensions
 {
     public static class EnumExtension
     {
-        public static string ToCurrency(this Currency currency)
+        public static string ToCurrency(this string currency, List<EVMChain> chains, bool hasSuffix = false)
         {
-            var currencyString = currency switch
+            if (hasSuffix)
             {
-                Currency.USDT_ERC20 => "USDT",
-                Currency.USDT_TRC20 => "USDT",
-                Currency.USDC_ERC20 => "USDC",
-                _ => currency.ToDescriptionOrString()
-            };
-            return currencyString;
+                if (currency.StartsWith("EVM"))
+                {
+                    currency = currency.Replace("EVM_", "");
+                    var coin = currency.Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).First();
+                    currency = currency.Replace($"{coin}_", "");
+                }
+                return currency.Replace($"_", "-");
+            }
+            var erc20Names = chains.Select(x => x.ERC20Name).ToArray();
+            foreach (var item in erc20Names)
+            {
+                currency = currency.Replace(item, "");
+            }
+            var str = currency.Replace("TRC20", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Last();
+
+            return str;
         }
-        public static string ToBlockchainName(this Currency currency)
+        public static string ToBlockchainName(this string currency, List<EVMChain> chains)
         {
-            var value = currency switch
+            if (currency == "TRX" || currency.EndsWith("TRC20")) return "波场（TRON）";
+
+            var ChainNameEN = currency.Replace("EVM", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).First();
+
+            var chain = chains.Where(x => x.ChainNameEN == ChainNameEN).FirstOrDefault();
+            if (chain != null)
             {
-                Currency.USDT_ERC20 => "以太坊（ETH）",
-                Currency.USDC_ERC20 => "以太坊（ETH）",
-                Currency.USDT_TRC20 => "波场（TRON）",
-                Currency.TRX => "波场（TRON）",
-                _ => currency.ToDescriptionOrString()
-            };
-            return value;
+                return chain.ChainName;
+            }
+
+            return $"未知区块链[{currency}]";
         }
-        public static string ToBlockchainEnglishName(this Currency currency)
+        public static string ToBlockchainEnglishName(this string currency, List<EVMChain> chains)
         {
-            var value = currency switch
+            if (currency == "TRX" || currency.EndsWith("TRC20")) return "TRON";
+
+            var ChainNameEN = currency.Replace("EVM", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).First();
+            var chain = chains.Where(x => x.ChainNameEN == ChainNameEN).FirstOrDefault();
+            if (chain != null)
             {
-                Currency.USDT_ERC20 => "ETH",
-                Currency.USDC_ERC20 => "ETH",
-                Currency.USDT_TRC20 => "TRON",
-                Currency.TRX => "TRON",
-                _ => currency.ToDescriptionOrString()
-            };
-            return value;
+                return chain.ChainNameEN;
+            }
+
+            return $"Unknown Blockchain[{currency}]";
         }
     }
 }

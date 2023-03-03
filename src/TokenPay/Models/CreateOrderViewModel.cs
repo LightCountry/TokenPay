@@ -29,7 +29,7 @@ namespace TokenPay.Models
         [Display(Name = "币种")]
         [Required(ErrorMessage = "{0}为必传参数")]
         //[(ErrorMessage = "{1}不是有效的{0}")]
-        public Currency Currency { get; set; }
+        public string Currency { get; set; }
         /// <summary>
         /// 异步通知Url
         /// </summary>

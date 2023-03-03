@@ -1,6 +1,8 @@
 using Flurl;
 using Flurl.Http;
 using FreeSql;
+using Nethereum.Signer;
+using System.Threading.Channels;
 using TokenPay.Domains;
 using TokenPay.Extensions;
 using TokenPay.Helper;
@@ -8,25 +10,28 @@ using TokenPay.Models.EthModel;
 
 namespace TokenPay.BgServices
 {
-    public class OrderCheckETHService : BaseScheduledService
+    public class OrderCheckEVMERC20Service : BaseScheduledService
     {
-        private readonly ILogger<OrderCheckETHService> _logger;
+        private readonly ILogger<OrderCheckEVMERC20Service> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IHostEnvironment env;
-        private readonly TelegramBot _bot;
+        private readonly IHostEnvironment _env;
+        private readonly List<EVMChain> _chains;
+        private readonly Channel<TokenOrders> _channel;
         private readonly IServiceProvider _serviceProvider;
         private readonly FlurlClient client;
 
-        public OrderCheckETHService(ILogger<OrderCheckETHService> logger,
+        public OrderCheckEVMERC20Service(ILogger<OrderCheckEVMERC20Service> logger,
             IConfiguration configuration,
             IHostEnvironment env,
-            TelegramBot bot,
-            IServiceProvider serviceProvider) : base("ETH订单检测", TimeSpan.FromSeconds(15), logger)
+            List<EVMChain> Chains,
+            Channel<TokenOrders> channel,
+            IServiceProvider serviceProvider) : base("ERC20订单检测", TimeSpan.FromSeconds(15), logger)
         {
             _logger = logger;
             this._configuration = configuration;
-            this.env = env;
-            this._bot = bot;
+            this._env = env;
+            _chains = Chains;
+            this._channel = channel;
             _serviceProvider = serviceProvider;
             var WebProxy = configuration.GetValue<string>("WebProxy");
             client = new FlurlClient();
@@ -40,24 +45,45 @@ namespace TokenPay.BgServices
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            foreach (var chain in _chains)
+            {
+                if (chain == null || !chain.Enable || chain.ERC20 == null) continue;
+                foreach (var erc20 in chain.ERC20)
+                {
+                    var Currency = $"EVM_{chain.ChainNameEN}_{erc20.Name}_{chain.ERC20Name}";
+                    try
+                    {
+                        await ERC20(_repository, Currency, chain, erc20);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, "{Currency}查询交易记录出错", Currency);
+                    }
+                }
 
+            }
+
+        }
+        /// <summary>
+        /// 查询交易记录
+        /// </summary>
+        /// <returns></returns>
+        private async Task ERC20(IBaseRepository<TokenOrders> _repository, string Currency, EVMChain chain, EVMErc20 erc20)
+        {
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
-                .Where(x => x.Currency == Currency.ETH)
+                .Where(x => x.Currency == Currency)
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
-            var BaseUrl = "https://api.etherscan.io";
-            if (!env.IsProduction())
-            {
-                BaseUrl = "https://api-goerli.etherscan.io";
-            }
+
+            var BaseUrl = chain.ApiHost;
 
             foreach (var address in Address)
             {
                 //查询此地址待支付订单
                 var orders = await _repository
                     .Where(x => x.Status == OrderStatus.Pending)
-                    .Where(x => x.Currency == Currency.ETH)
+                    .Where(x => x.Currency == Currency)
                     .Where(x => x.ToAddress == address)
                     .OrderBy(x => x.CreateTime)
                     .ToListAsync();
@@ -65,15 +91,18 @@ namespace TokenPay.BgServices
                 {
                     continue;
                 }
-                var query = new Dictionary<string, object>();
-                query.Add("module", "account");
-                query.Add("action", "txlist");
-                query.Add("address", address);
-                query.Add("page", 1);
-                query.Add("offset", 100);
-                query.Add("sort", "desc");
-                if (env.IsProduction())
-                    query.Add("apikey", _configuration.GetValue("ETH-API-KEY", ""));
+                var query = new Dictionary<string, object>
+                {
+                    { "module", "account" },
+                    { "action", "tokentx" },
+                    { "contractaddress", erc20.ContractAddress },
+                    { "address", address },
+                    { "page", 1 },
+                    { "offset", 100 },
+                    { "sort", "desc" }
+                };
+                if (_env.IsProduction())
+                    query.Add("apikey", chain.ApiKey);
 
                 var req = BaseUrl
                     .AppendPathSegment($"api")
@@ -81,7 +110,7 @@ namespace TokenPay.BgServices
                     .WithClient(client)
                     .WithTimeout(15);
                 var result = await req
-                    .GetJsonAsync<BaseResponse<EthTransaction>>();
+                    .GetJsonAsync<BaseResponse<ERC20Transaction>>();
 
                 if (result.Status == "1" && result.Result?.Count > 0)
                 {
@@ -97,8 +126,8 @@ namespace TokenPay.BgServices
                         {
                             continue;
                         }
-                        //合约地址 方法id 是否错误 确认数
-                        if (!string.IsNullOrEmpty(item.ContractAddress) || item.MethodId != "0x" || item.IsError != 0 || item.Confirmations < 12)
+                        //合约地址 确认数
+                        if (item.ContractAddress.ToLower() != erc20.ContractAddress.ToLower() || item.Confirmations < chain.Confirmations)
                         {
                             continue;
                         }
@@ -121,52 +150,7 @@ namespace TokenPay.BgServices
         }
         private async Task SendAdminMessage(TokenOrders order)
         {
-
-            var message = @$"<b>您有新订单！({order.ActualAmount} 元)</b>
-
-订单编号：<code>{order.OutOrderId}</code>
-原始金额：<b>{order.ActualAmount} 元</b>
-订单金额：<b>{order.Amount} {order.Currency.ToCurrency()}</b>
-付款地址：<code>{order.FromAddress}</code>
-收款地址：<code>{order.ToAddress}</code>
-创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
-支付时间：<b>{order.PayTime:yyyy-MM-dd HH:mm:ss}</b>
-区块哈希：<code>{order.BlockTransactionId}</code>";
-            if (env.IsProduction())
-            {
-                message += @$"  <b><a href=""https://etherscan.io/tx/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
-            }
-            else
-            {
-                message += @$"  <b><a href=""https://goerli.etherscan.io/tx/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
-            }
-            await _bot.SendTextMessageAsync(message);
-        }
-
-        private async Task<bool> Notify(TokenOrders order)
-        {
-            if (!string.IsNullOrEmpty(order.NotifyUrl))
-            {
-                try
-                {
-                    var result = await order.NotifyUrl.PostJsonAsync(order);
-                    var message = await result.GetStringAsync();
-                    if (result.StatusCode == 200)
-                    {
-                        _logger.LogInformation("订单异步通知成功！\n{msg}", message);
-                        return true;
-                    }
-                    else
-                    {
-                        _logger.LogInformation("订单异步通知失败：{msg}", message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogInformation("订单异步通知失败：{msg}", e.Message);
-                }
-            }
-            return false;
+            await _channel.Writer.WriteAsync(order);
         }
     }
 }

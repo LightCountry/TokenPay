@@ -8,7 +8,7 @@
 
 ## TokenPay - `区块链`支付解决方案
 
->一款开源的，支持以动态收款地址或静态收款地址收取`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`等区块链代币的支付解决方案！ 
+>一款开源的，支持以动态收款地址或静态收款地址收取波场的`TRX`、`USDT-TRC20`以及`ETH系原生币`以及`ETH系ERC20代币`的支付解决方案！ 理论上支持`所有ETH系的区块链`，常见的ETH系的区块链有：`以太坊(ETH)`、`币安智能链(BSC)`、`Polygon`等等。
   
 
 ## AD -- 免费领取国际信用卡
@@ -21,7 +21,7 @@
 ## 项目简介
 - `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。     
 - 本项目不依赖任何外部资源，无需另外部署`数据库`，采用轻量化的`sqlite`，也无需`redis`。
-- 任意项目都可以对接，轻松实现`TRX`、`USDT-TRC20`、`ETH`、`USDT-ERC20`、`USDC-ERC20`收款！😊 😊 😊
+- 任意项目都可以对接，轻松实现`TRX`、`USDT-TRC20`以及`ETH系原生币`以及`ETH系ERC20代币`，理论支持`所有ETH系的区块链`收款！😊 😊 😊
 - `TokenPay` 遵守 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议!
 
 ## 项目特点
@@ -57,7 +57,7 @@ TokenPay
 
 ## 设计实现
 `TokenPay`的实现方式与其他项目原理类似，都是通过`TronGrid`、`EtherScan`等提供的api，      
-轮询订单未过期的钱包地址的`TRX`、`ETH`、`USDT`、`USDC`入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
+轮询订单未过期的钱包地址的`TRX`、`ETH`、`USDT`、`USDC`等入账事件，将入账金额，与数据库的订单金额进行对比，若一致，则视为订单完成
 ```
 简单的原理：
 0.服务器定时同步交易所最新汇率
@@ -70,7 +70,7 @@ TokenPay
 ## 打赏
 如果该项目对您有所帮助，希望可以请我喝一杯咖啡☕️
 ```
-USDT-TRC20打赏地址: TQWM6cuy6YesssqqzSucoUkS1A11kAAAAA
+USDT-TRC20打赏地址: TKGTx4pCKiKQbk8evXHTborfZn754TGViP
 ```
 <img src="Wiki/imgs/usdt_thanks.jpg" width = "400" alt="usdt扫码打赏"/>
 
