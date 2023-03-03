@@ -6,6 +6,7 @@
       "ChainNameEN": "ETH",
       "BaseCoin": "ETH",
       "Decimals": 18,
+      "ScanHost": "https://etherscan.io",
       "ApiHost": "https://api.etherscan.io",
       "ApiKey": "", // 此处申请 https://etherscan.io/myapikey
       "ERC20Name": "ERC20",
@@ -26,6 +27,7 @@
       "ChainNameEN": "BSC",
       "BaseCoin": "BNB",
       "Decimals": 18,
+      "ScanHost": "https://www.bscscan.com",
       "ApiHost": "https://api.bscscan.com",
       "ApiKey": "", // 此处申请 https://bscscan.com/myapikey
       "ERC20Name": "BEP20",
@@ -46,6 +48,7 @@
       "ChainNameEN": "Polygon",
       "BaseCoin": "MATIC",
       "Decimals": 18,
+      "ScanHost": "https://polygonscan.com",
       "ApiHost": "https://api.polygonscan.com",
       "ApiKey": "", // 此处申请 https://polygonscan.com/myapikey
       "ERC20Name": "ERC20",

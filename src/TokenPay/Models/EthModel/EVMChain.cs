@@ -27,6 +27,10 @@ namespace TokenPay.Models.EthModel
         /// </summary>
         public int Decimals { get; set; } = 18;
         /// <summary>
+        /// 区块浏览器Host
+        /// </summary>
+        public string ScanHost { get; set; }
+        /// <summary>
         /// Api Host
         /// </summary>
         public string ApiHost { get; set; }

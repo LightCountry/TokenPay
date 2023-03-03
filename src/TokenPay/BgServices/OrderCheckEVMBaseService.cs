@@ -47,7 +47,7 @@ namespace TokenPay.BgServices
             foreach (var chain in _chains)
             {
                 if (chain == null || !chain.Enable) continue;
-                var Currency = $"EVM_{chain.ChainNameEN}";
+                var Currency = $"EVM_{chain.ChainNameEN}_{chain.BaseCoin}";
                 try
                 {
                     var Address = await _repository

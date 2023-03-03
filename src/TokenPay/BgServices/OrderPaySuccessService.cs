@@ -1,5 +1,4 @@
 using CoinListenBot.BgServices.Base;
-using Nethereum.Signer;
 using System.Threading.Channels;
 using TokenPay.Domains;
 using TokenPay.Extensions;
@@ -69,13 +68,29 @@ namespace TokenPay.BgServices
 创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
 支付时间：<b>{order.PayTime:yyyy-MM-dd HH:mm:ss}</b>
 交易哈希：<code>{order.BlockTransactionId}</code>";
-            if (_env.IsProduction())
+
+            if (order.Currency.Contains("TRX") || order.Currency.Contains("TRC20"))
             {
-                message += @$"  <b><a href=""https://tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看交易</a></b>";
+                if (_env.IsProduction())
+                {
+                    message += @$"  <b><a href=""https://tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看交易</a></b>";
+                }
+                else
+                {
+                    message += @$"  <b><a href=""https://shasta.tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看交易</a></b>";
+                }
             }
-            else
+            else if (order.Currency.StartsWith("EVM"))
             {
-                message += @$"  <b><a href=""https://shasta.tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看交易</a></b>";
+                foreach (var chain in _chain)
+                {
+                    if (order.Currency.StartsWith($"EVM_{chain.ChainNameEN}"))
+                    {
+                        if(!string.IsNullOrEmpty(chain.ScanHost))
+                            message += @$"  <b><a href=""{chain.ScanHost}/tx/{order.BlockTransactionId}"">查看交易</a></b>";
+                        break;
+                    }
+                }
             }
             await _bot.SendTextMessageAsync(message);
         }
