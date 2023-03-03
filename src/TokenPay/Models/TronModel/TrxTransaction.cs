@@ -107,7 +107,7 @@ namespace TokenPay.Models.TronModel
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
         /// <summary>
-        /// ÕæÊµ½ğ¶î
+        /// çœŸå®é‡‘é¢
         /// </summary>
         public decimal RealAmount => Amount / 1_000_000m;
 
