@@ -10,7 +10,7 @@ namespace TokenPay.Domains
         /// 币种
         /// </summary>
         [Column(MapType = typeof(string))]
-        public Currency Currency { get; set; }
+        public string Currency { get; set; }
         /// <summary>
         /// 法币
         /// </summary>

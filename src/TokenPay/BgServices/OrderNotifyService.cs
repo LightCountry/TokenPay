@@ -81,7 +81,7 @@ namespace TokenPay.BgServices
                     dic.Add(nameof(order.PayTime), order.PayTime?.ToString("yyyy-MM-dd HH:mm:ss"));
                     dic.Add(nameof(order.Amount), order.Amount.ToString());
                     dic.Add(nameof(order.ActualAmount), order.ActualAmount.ToString());
-                    dic.Add(nameof(order.Currency), order.Currency.ToDescriptionOrString());
+                    dic.Add(nameof(order.Currency), order.Currency);
                     dic.Add(nameof(order.FromAddress), order.FromAddress);
                     dic.Add(nameof(order.ToAddress), order.ToAddress);
                     dic.Add(nameof(order.Status), (int)order.Status);

@@ -8,7 +8,7 @@
 
 ## TokenPay - `Blockchain` Payment Solution
 
->An open source, payment solution that supports receiving `TRX`, `USDT-TRC20`, `ETH`, `USDT-ERC20`, `USDC-ERC20` and other blockchain tokens with dynamic payout addresses or static payout addresses!
+>An open source payment solution that supports receiving `TRX`, `USDT-TRC20` and `ETH native coins` as well as `ETH ERC20 tokens` with dynamic or static payout addresses! Theoretically supports `all ETH-system blockchains`, common ETH-system blockchains are: `Ether (ETH)`, `Binance Smart Chain (BSC)`, `Polygon`, etc.
 
 ## AD -- Receive free international credit card
 >Receive free VISA and Mastercard, recharge USDT and you can use it as you like  
@@ -19,7 +19,7 @@ Come and get your international bank card that can be used for USDT!
 ## Project Description
 - `TokenPay` is a privately deployed `blockchain` payment solution written in `C# language`.     
 - The project does not depend on any external resources, no need to deploy a separate `database`, uses lightweight `sqlite`, and does not require `redis`.
-- Any project can be docked and easily implement `TRX`, `USDT-TRC20`, `ETH`, `USDT-ERC20`, `USDC-ERC20` collections! 😊 😊 😊 😊
+- Any project can be docked to easily implement `TRX`, `USDT-TRC20` and `ETH-system native coins` as well as `ETH-system ERC20 tokens`, theoretically supporting `all ETH-system blockchain` collections! 😊 😊 😊 😊
 - `TokenPay` is licensed under the terms of the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license.
 
 ## Project Features
@@ -68,7 +68,7 @@ Simple principle.
 ## Donate
 If this project has helped you, I hope you can buy me a cup of coffee☕️
 ```
-USDT-TRC20: TQWM6cuy6YesssqqzSucoUkS1A11kAAAAA
+USDT-TRC20: TKGTx4pCKiKQbk8evXHTborfZn754TGViP
 ```
 <img src="Wiki/imgs/usdt_thanks_en.jpg" width = "400" alt="usdt扫码打赏"/>
 

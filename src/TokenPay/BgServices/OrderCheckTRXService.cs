@@ -1,6 +1,7 @@
 using Flurl;
 using Flurl.Http;
 using FreeSql;
+using System.Threading.Channels;
 using TokenPay.Domains;
 using TokenPay.Extensions;
 using TokenPay.Helper;
@@ -12,20 +13,20 @@ namespace TokenPay.BgServices
     {
         private readonly ILogger<OrderCheckTRXService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IHostEnvironment env;
-        private readonly TelegramBot _bot;
+        private readonly IHostEnvironment _env;
+        private readonly Channel<TokenOrders> _channel;
         private readonly IServiceProvider _serviceProvider;
 
         public OrderCheckTRXService(ILogger<OrderCheckTRXService> logger,
             IConfiguration configuration,
             IHostEnvironment env,
-            TelegramBot bot,
+            Channel<TokenOrders> channel,
             IServiceProvider serviceProvider) : base("TRX订单检测", TimeSpan.FromSeconds(3), logger)
         {
             _logger = logger;
             this._configuration = configuration;
-            this.env = env;
-            this._bot = bot;
+            this._env = env;
+            this._channel = channel;
             _serviceProvider = serviceProvider;
         }
 
@@ -36,11 +37,11 @@ namespace TokenPay.BgServices
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
-                .Where(x => x.Currency == Currency.TRX)
+                .Where(x => x.Currency == TokenCurrency.TRX.ToString())
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
             var BaseUrl = "https://api.trongrid.io";
-            if (!env.IsProduction())
+            if (!_env.IsProduction())
             {
                 BaseUrl = "https://api.shasta.trongrid.io";
             }
@@ -51,7 +52,7 @@ namespace TokenPay.BgServices
                 //查询此地址待支付订单
                 var orders = await _repository
                     .Where(x => x.Status == OrderStatus.Pending)
-                    .Where(x => x.Currency == Currency.TRX)
+                    .Where(x => x.Currency == TokenCurrency.TRX.ToString())
                     .Where(x => x.ToAddress == address)
                     .OrderBy(x => x.CreateTime)
                     .ToListAsync();
@@ -71,7 +72,7 @@ namespace TokenPay.BgServices
                     .AppendPathSegment($"v1/accounts/{address}/transactions")
                     .SetQueryParams(query)
                     .WithTimeout(15);
-                if (env.IsProduction())
+                if (_env.IsProduction())
                     req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue("TRON-PRO-API-KEY", ""));
                 var result = await req
                     .GetJsonAsync<BaseResponse<TrxTransaction>>();
@@ -114,52 +115,7 @@ namespace TokenPay.BgServices
         }
         private async Task SendAdminMessage(TokenOrders order)
         {
-
-            var message = @$"<b>您有新订单！({order.ActualAmount} 元)</b>
-
-订单编号：<code>{order.OutOrderId}</code>
-原始金额：<b>{order.ActualAmount} 元</b>
-订单金额：<b>{order.Amount} {order.Currency.ToCurrency()}</b>
-付款地址：<code>{order.FromAddress}</code>
-收款地址：<code>{order.ToAddress}</code>
-创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
-支付时间：<b>{order.PayTime:yyyy-MM-dd HH:mm:ss}</b>
-区块哈希：<code>{order.BlockTransactionId}</code>";
-            if (env.IsProduction())
-            {
-                message += @$"  <b><a href=""https://tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
-            }
-            else
-            {
-                message += @$"  <b><a href=""https://shasta.tronscan.org/#/transaction/{order.BlockTransactionId}?lang=zh"">查看区块</a></b>";
-            }
-            await _bot.SendTextMessageAsync(message);
-        }
-
-        private async Task<bool> Notify(TokenOrders order)
-        {
-            if (!string.IsNullOrEmpty(order.NotifyUrl))
-            {
-                try
-                {
-                    var result = await order.NotifyUrl.PostJsonAsync(order);
-                    var message = await result.GetStringAsync();
-                    if (result.StatusCode == 200)
-                    {
-                        _logger.LogInformation("订单异步通知成功！\n{msg}", message);
-                        return true;
-                    }
-                    else
-                    {
-                        _logger.LogInformation("订单异步通知失败：{msg}", message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    _logger.LogInformation("订单异步通知失败：{msg}", e.Message);
-                }
-            }
-            return false;
+            await _channel.Writer.WriteAsync(order);
         }
     }
 }

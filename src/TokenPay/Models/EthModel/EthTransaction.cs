@@ -32,7 +32,10 @@ namespace TokenPay.Models.EthModel
 
         [JsonProperty("value")]
         public decimal Value { get; set; }
-        public decimal RealAmount => Value / (decimal)Math.Pow(10, 18);
+        public decimal RealAmount(int decimals)
+        {
+            return Value / (decimal)Math.Pow(10, decimals);
+        }
 
         [JsonProperty("gas")]
         public decimal Gas { get; set; }
@@ -44,7 +47,7 @@ namespace TokenPay.Models.EthModel
         public int IsError { get; set; }
 
         [JsonProperty("txreceipt_status")]
-        public string TxreceiptStatus { get; set; }
+        public int TxreceiptStatus { get; set; }
 
         [JsonProperty("input")]
         public string Input { get; set; }

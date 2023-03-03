@@ -86,7 +86,7 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
 | OutOrderId | string | 外部订单号，调用 `创建订单` 接口时传递的外部订单号 |
 | OrderUserKey | string | 支付用户标识，调用 `创建订单` 接口时传递的支付用户标识 |
 | PayTime | string | 支付时间，示例：`2022-09-15 16:00:00` |
-| Currency | string | 币种，`USDT_TRC20`、`TRX`等 |
+| Currency | string | 币种，`USDT_TRC20`、`TRX`等，如配置了`EVMChains.json`,原生币格式为`EVM_[ChainNameEN]_[BaseCoin]`,ERC20代币格式为：`EVM_[ChainNameEN]_[Erc20.Name]_[ERC20Name]`，如BSC的原生币为`EVM_BSC_BNB`，BSC的USDT代币为`EVM_BSC_USDT_BEP20` |
 | Amount | string | 订单金额，此金额为人民币转换为`Currency`字段指定的币种后的金额 |
 | ActualAmount | string | 订单金额，此金额为人民币金额 |
 | FromAddress | string | 付款地址 |

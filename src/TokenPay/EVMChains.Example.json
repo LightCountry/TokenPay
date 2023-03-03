@@ -1,0 +1,64 @@
+{
+  "EVMChains": [
+    {
+      "Enable": false,
+      "ChainName": "以太坊",
+      "ChainNameEN": "ETH",
+      "BaseCoin": "ETH",
+      "Decimals": 18,
+      "ApiHost": "https://api.etherscan.io",
+      "ApiKey": "", // 此处申请 https://etherscan.io/myapikey
+      "ERC20Name": "ERC20",
+      "ERC20": [
+        {
+          "Name": "USDT",
+          "ContractAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+        },
+        {
+          "Name": "USDC",
+          "ContractAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        }
+      ]
+    },
+    {
+      "Enable": false,
+      "ChainName": "币安智能链",
+      "ChainNameEN": "BSC",
+      "BaseCoin": "BNB",
+      "Decimals": 18,
+      "ApiHost": "https://api.bscscan.com",
+      "ApiKey": "", // 此处申请 https://bscscan.com/myapikey
+      "ERC20Name": "BEP20",
+      "ERC20": [
+        {
+          "Name": "USDT",
+          "ContractAddress": "0x55d398326f99059ff775485246999027b3197955"
+        },
+        {
+          "Name": "USDC",
+          "ContractAddress": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"
+        }
+      ]
+    },
+    {
+      "Enable": false,
+      "ChainName": "Polygon",
+      "ChainNameEN": "Polygon",
+      "BaseCoin": "MATIC",
+      "Decimals": 18,
+      "ApiHost": "https://api.polygonscan.com",
+      "ApiKey": "", // 此处申请 https://polygonscan.com/myapikey
+      "ERC20Name": "ERC20",
+      "ERC20": [
+        {
+          "Name": "USDT",
+          "ContractAddress": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+        },
+        {
+          "Name": "USDC",
+          "ContractAddress": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+        }
+      ]
+    }
+  ]
+}

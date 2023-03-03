@@ -3,7 +3,9 @@
 }
 @using TokenPay.Domains;
 @using TokenPay.Extensions
+@using TokenPay.Models.EthModel;
 @model TokenPay.Domains.TokenOrders
+@inject List<EVMChain> chain
 @if (Model == null)
 {
     <div class="row align-items-center h-100">
@@ -32,7 +34,7 @@ else
         }
     </style>
     <div class="text-center pt-2">
-        <h4 class="display-6">You are paying <span class="text-danger">@Model.Currency.ToDescriptionOrString()</span></h4>
+        <h4 class="display-6">You are paying <span class="text-danger">@Model.Currency.ToCurrency(chain,true)</span> for <span class="text-danger">@Model.Currency.ToBlockchainEnglishName(chain)</span> </h4>
 
         <div class="d-flex mb-2">
             <div class="input-group m-auto" style="width:410px;">
@@ -45,13 +47,13 @@ else
         </div>
         <div class="text-danger fw-bold mb-2">Please double check the blockchain and currency to avoid losing assets or payment failures ! ! !</div>
         <div class="mb-2">
-            <div class="text-danger fw-bold" style="position:relative;bottom:-6px;height:0;">Blockchain：@Model.Currency.ToBlockchainEnglishName() Currency：@Model.Currency.ToCurrency()</div>
+            <div class="text-danger fw-bold" style="position:relative;bottom:-6px;height:0;">Blockchain：@Model.Currency.ToBlockchainEnglishName(chain) Currency：@Model.Currency.ToCurrency(chain)</div>
             <img src="data:image/png;base64,@ViewData["QrCode"]" class="border border-gray-300" alt="address">
             <div class="text-danger fw-semibold address" style="position:relative;top:-24px;height:0;">@Model.ToAddress</div>
         </div>
         <div class="text-start m-auto" style="width:300px;">
             <div class="mb-2 fw-bold">
-                Amount：<span class="text-danger">@Model.Amount</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">Copy</button>
+                Amount：<span class="text-danger">@Model.Amount @Model.Currency.ToCurrency(chain)</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">Copy</button>
             </div>
             <div class="mb-2">
                 Order No：<span class="text-danger">@Model.OutOrderId</span>
@@ -61,8 +63,8 @@ else
             </div>
             <div class="mt-4 text-start">
                 <div>You can buy blockchain currency at</div>
-                <div>1. Buy <span class="text-danger">@Model.Currency.ToCurrency()</span> on <a href="https://www.okx.com/buy-@Model.Currency.ToCurrency()/UDS" target="_blank">OKX</a></div>
-                <div>2. Buy <span class="text-danger">@Model.Currency.ToCurrency()</span> on<a href="https://p2p.binance.com/zh-CN/express/buy/@Model.Currency.ToCurrency()/USD" target="_blank">Binance</a></div>
+                <div>1. Buy <span class="text-danger">@Model.Currency.ToCurrency(chain)</span> on <a href="https://www.okx.com/buy-@Model.Currency.ToCurrency(chain)/UDS" target="_blank">OKX</a></div>
+                <div>2. Buy <span class="text-danger">@Model.Currency.ToCurrency(chain)</span> on<a href="https://p2p.binance.com/zh-CN/express/buy/@Model.Currency.ToCurrency(chain)/USD" target="_blank">Binance</a></div>
             </div>
         </div>
     </div>
@@ -72,7 +74,7 @@ else
         let Time;
         var EndTime = new Date('@ViewData["ExpireTime"]?.ToString()?.Replace("-","/")');
         function timer() {
-            window.setInterval(function() {
+            window.setInterval(function () {
                 var intDiff = (EndTime - new Date()) / 1000
                 if (intDiff <= 0) return;
                 $(".time").removeClass("invisible")
@@ -104,26 +106,27 @@ else
         })
         function Check() {
             var RedirectUrl = "@(Model?.RedirectUrl)";
-            $.get("/Check/@(Model?.Id)")
-                .then(x => {
-                    if (x === 'Pending') {
-                        console.log('待支付')
-                    } else if (x === 'Expired') {
-                        clearInterval(Time)
-                        console.log('订单过期')
-                        location.reload();
-                    } else if (x === 'Paid') {
-                        clearInterval(Time)
-                        console.log('已支付')
-                        setTimeout(() => {
-                            alert("Paid")
-                            if (RedirectUrl) {
-                                location = RedirectUrl
-                            }
-                        }, 0)
-                    }
-                })
-        }
-    </script>
+                $.get("/Check/@(Model?.Id)")
+                    .then(x => {
+                        if (x === 'Pending') {
+                            console.log('待支付')
+                        } else if (x === 'Expired') {
+                            clearInterval(Time)
+                            console.log('订单过期')
+                            location.reload();
+                        } else if (x === 'Paid') {
+                            clearInterval(Time)
+                            console.log('已支付')
+                            setTimeout(() => {
+                                if (RedirectUrl) {
+                                    location = RedirectUrl
+                                } else {
+                                    alert("Paid")
+                                }
+                            }, 0)
+                        }
+                    })
+            }
+        </script>
     }
 }

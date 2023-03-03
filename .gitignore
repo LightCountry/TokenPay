@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /src/publish.sh
 /src/archive.sh
+/src/TokenPay/EVMChains.json
+/src/TokenPay/EVMChains.Development.json

@@ -38,10 +38,9 @@ namespace TokenPay.Domains
         [Column(Precision = 15, Scale = 2)]
         public decimal ActualAmount { get; set; }
         /// <summary>
-        /// 币种
+        /// 区块链币种
         /// </summary>
-        [Column(MapType = typeof(string))]
-        public Currency Currency { get; set; }
+        public string Currency { get; set; }
         /// <summary>
         /// 订单金额，保留4位小数
         /// </summary>
@@ -76,19 +75,6 @@ namespace TokenPay.Domains
         /// </summary>
         public DateTime? LastNotifyTime { get; set; }
         public DateTime CreateTime { get; set; } = DateTime.Now;
-    }
-    public enum Currency
-    {
-        [Description("USDT-TRC20")]
-        USDT_TRC20,
-        [Description("USDT-ERC20")]
-        USDT_ERC20,
-        TRX,
-        BTC = 10,
-        ETH,
-        [Description("USDC-ERC20")]
-        USDC_ERC20,
-
     }
     public enum OrderStatus
     {
