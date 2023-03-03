@@ -47,6 +47,7 @@ TokenPay
 ## Tutorials(Only Chinese)：
 - Run `TokenPay` Tutorial with aaPanel 👉🏻[aaPanel Tutorial](Wiki/BT_RUN.md)
 - Run `TokenPay` tutorial manually👉🏻[Manually Tutorial](Wiki/manual_RUN.md)
+- Run `TokenPay` docker👉🏻[Manually Tutorial](Wiki/manual_DOCKER.md)
 
 
 ## Join the exchange / feedback
