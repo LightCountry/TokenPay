@@ -49,7 +49,7 @@ TokenPay
 ## 教程：
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)
 - 手动运行`TokenPay`教程👉🏻[手动运行TokenPay](Wiki/manual_RUN.md)
-- docker运行`TokenPay`教程👉🏻[手动运行TokenPay](Wiki/manual_DOCKER.md)
+- docker运行`TokenPay`教程👉🏻[docker运行TokenPay](Wiki/manual_DOCKER.md)
 
 ## 加入交流/意见反馈
 - `TokenPay`频道[https://t.me/TokenPayChannel](https://t.me/TokenPayChannel)
