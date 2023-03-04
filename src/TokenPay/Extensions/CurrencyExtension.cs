@@ -5,7 +5,7 @@ using TokenPay.Models.EthModel;
 
 namespace TokenPay.Extensions
 {
-    public static class EnumExtension
+    public static class CurrencyExtension
     {
         public static string ToCurrency(this string currency, List<EVMChain> chains, bool hasSuffix = false)
         {
@@ -30,7 +30,7 @@ namespace TokenPay.Extensions
         }
         public static string ToBlockchainName(this string currency, List<EVMChain> chains)
         {
-            if (currency == "TRX" || currency.EndsWith("TRC20")) return "波场（TRON）";
+            if (currency == "TRX" || currency.EndsWith("TRC20")) return "波场(TRON)";
 
             var ChainNameEN = currency.Replace("EVM", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).First();
 

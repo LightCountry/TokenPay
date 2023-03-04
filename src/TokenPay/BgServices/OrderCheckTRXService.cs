@@ -37,7 +37,7 @@ namespace TokenPay.BgServices
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
-                .Where(x => x.Currency == TokenCurrency.TRX.ToString())
+                .Where(x => x.Currency == "TRX")
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
             var BaseUrl = "https://api.trongrid.io";
@@ -52,7 +52,7 @@ namespace TokenPay.BgServices
                 //查询此地址待支付订单
                 var orders = await _repository
                     .Where(x => x.Status == OrderStatus.Pending)
-                    .Where(x => x.Currency == TokenCurrency.TRX.ToString())
+                    .Where(x => x.Currency == "TRX")
                     .Where(x => x.ToAddress == address)
                     .OrderBy(x => x.CreateTime)
                     .ToListAsync();
