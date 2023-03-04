@@ -29,7 +29,7 @@ namespace TokenPay.Helper
         public static TelegramBotInfo BotInfo;
         public async Task<TelegramResult<TelegramBotInfo>?> GetMeAsync(string? TelegramApiHost = null)
         {
-            if (string.IsNullOrEmpty(_botToken) || _userId <= 0)
+            if (string.IsNullOrEmpty(_botToken) || _userId == 0)
             {
                 Log.Logger.Information("未配置机器人Token！");
                 return null;
@@ -48,7 +48,7 @@ namespace TokenPay.Helper
         }
         public async Task<TelegramResult<SendMessageResult>?> SendTextMessageAsync(string Message, string? TelegramApiHost = null)
         {
-            if (string.IsNullOrEmpty(_botToken) || _userId <= 0)
+            if (string.IsNullOrEmpty(_botToken) || _userId == 0)
             {
                 Log.Logger.Information("未配置机器人Token！");
                 return null;
