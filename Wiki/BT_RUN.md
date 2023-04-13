@@ -5,7 +5,9 @@
 ### 1. 下载release对应平台的包，解压到指定目录
 ### 2. 重命名`appsettings.Example.json`为`appsettings.json`，并修改配置文件
 > `appsettings.json`说明参见：[appsettings.json](appsettings.md)
-### 2. 如需支持ETH系的区块链，可以重命名`EVMChains.Example.json`为`EVMChains.json`，并配置需要支持的区块链，配置文件中已添加`ETH`、`BSC`、`Polygon`三条区块链，如需其他ETH系的区块链可自由拓展。每条区块链配置都带有一个`Enable`参数，表示是否启用此区块链，默认的三条区块链的此项配置都为`false`，请将需要启用的区块链`Enable`参数更改为`true`
+### 2. 重命名`EVMChains.Example.json`为`EVMChains.json`，并配置需要支持的区块链。
+# 只需修改配置中的`Enable`和`ApiKey`，其他配置项请勿修改！！！
+>配置文件中已添加`ETH`、`BSC`、`Polygon`三条区块链，如需其他ETH系的区块链可自由拓展。每条区块链配置都带有一个`Enable`参数，表示是否启用此区块链，默认的三条区块链的此项配置都为`false`，请将需要启用的区块链`Enable`参数更改为`true`
 > `EVMChains.json`说明参见：[EVMChains.json](EVMChains.md)
 ### 3. 为二进制文件`TokenPay`增加可执行权限
 ### 5. `宝塔应用管理器`或`Supervisor管理器`添加应用
