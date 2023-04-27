@@ -23,7 +23,7 @@ namespace CoinListenBot.BgServices.Base
         public virtual Task StartAsync(CancellationToken cancellationToken)
         {
             if (jobName != null && __logger != null)
-                __logger.LogInformation("后台任务 {JobName} 已启动", jobName);
+                __logger.LogInformation("Background Service {JobName} is starting.", jobName);
 
             _executingTask = ExecuteAsync(_stoppingCts.Token);
 
@@ -45,7 +45,7 @@ namespace CoinListenBot.BgServices.Base
             try
             {
                 if (jobName != null && __logger != null)
-                    __logger.LogInformation("后台任务 {JobName} 已停止", jobName);
+                    __logger.LogInformation("Background Service {JobName} is stopping.", jobName);
                 _stoppingCts.Cancel();
             }
             finally

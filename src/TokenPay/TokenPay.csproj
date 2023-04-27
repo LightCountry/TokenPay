@@ -8,12 +8,6 @@
     <SatelliteResourceLanguages>en;zh</SatelliteResourceLanguages>
     <NoWarn>1591;</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <_WebToolingArtifacts Remove="Properties\PublishProfiles\linux-arm.pubxml" />
-    <_WebToolingArtifacts Remove="Properties\PublishProfiles\linux-x64.pubxml" />
-  </ItemGroup>
-
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
@@ -24,6 +18,7 @@
     <PackageReference Include="FreeSql.Provider.Sqlite" Version="3.2.669" />
     <PackageReference Include="FreeSql.Repository" Version="3.2.669" />
     <PackageReference Include="HDWallet.Tron" Version="0.7.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.5" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" ExcludeAssets="All" />
     <PackageReference Include="NokitaKaze.Base58Check" Version="0.4.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />

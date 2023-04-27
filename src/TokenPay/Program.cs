@@ -11,6 +11,7 @@ using Serilog.Events;
 using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
@@ -18,6 +19,17 @@ using TokenPay.BgServices;
 using TokenPay.Domains;
 using TokenPay.Helper;
 using TokenPay.Models.EthModel;
+
+Console.WriteLine("系统：" + (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" :
+                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "OSX" :
+                    RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "未知"));
+Console.WriteLine($"系统架构：{RuntimeInformation.OSArchitecture}");
+Console.WriteLine($"系统名称：{RuntimeInformation.OSDescription}");
+Console.WriteLine($"进程架构：{RuntimeInformation.ProcessArchitecture}");
+Console.WriteLine($"是否64位操作系统：{Environment.Is64BitOperatingSystem}");
+Console.WriteLine("CPU CORE:" + Environment.ProcessorCount);
+Console.WriteLine("HostName:" + Environment.MachineName);
+Console.WriteLine("Version:" + Environment.OSVersion);
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -48,12 +60,27 @@ builder.Services.AddControllersWithViews()
     });
 var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
 Services.AddSingleton(EVMChains);
-var connectionString = Configuration.GetConnectionString("DB");
 
-IFreeSql fsql = new FreeSqlBuilder()
-    .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
-    .UseAutoSyncStructure(true) //自动同步实体结构
-    .Build();
+var connectionString = Configuration.GetConnectionString("DB");
+IFreeSql fsql;
+if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
+{
+    Microsoft.Data.Sqlite.SqliteConnection _database = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+    fsql = new FreeSqlBuilder()
+        .UseConnectionFactory(FreeSql.DataType.Sqlite, () => _database, typeof(FreeSql.Sqlite.SqliteProvider<>))
+        .UseAutoSyncStructure(true) //自动同步实体结构
+        .UseNoneCommandParameter(true)
+        .Build();
+}
+else
+{
+
+    fsql = new FreeSqlBuilder()
+        .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
+        .UseAutoSyncStructure(true) //自动同步实体结构
+        .UseNoneCommandParameter(true)
+        .Build();
+}
 
 Services.AddSingleton(fsql);
 Services.AddScoped<UnitOfWorkManager>();
