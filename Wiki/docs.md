@@ -45,7 +45,7 @@ URL: `/CreateOrder`
     "OutOrderId": "AJIHK72N34BR2CWG",
     "OrderUserKey": "admin@qq.com",
     "ActualAmount": 15,
-    "Currency": 14,
+    "Currency": "TRX",
     "NotifyUrl": "http://localhost:1011/pay/tokenpay/notify_url",
     "RedirectUrl": "http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG",
     "Signature": "e9765880db6081496456283678e70152"

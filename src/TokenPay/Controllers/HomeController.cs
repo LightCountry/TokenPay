@@ -169,7 +169,6 @@ namespace TokenPay.Controllers
                     Message = messages
                 });
             }
-#if !DEBUG
             if (!VerifySignature(model))
             {
                 return Json(new ReturnData
@@ -177,12 +176,11 @@ namespace TokenPay.Controllers
                     Message = "签名验证失败！"
                 });
             }
-#endif
             if (!GetActiveCurrency().Contains(model.Currency))
             {
                 return Json(new ReturnData
                 {
-                    Message = $"不支持的币种【{model.Currency}】！"
+                    Message = $"不支持的币种【{model.Currency}】！\n当前支持的币种参数有：{string.Join(", ", GetActiveCurrency())}"
                 });
             }
             if (model.ActualAmount <= 0)
@@ -202,7 +200,8 @@ namespace TokenPay.Controllers
                 {
                     Success = true,
                     Message = "订单已存在，查询旧订单！",
-                    Data = Host + Url.Action(nameof(Pay), new { Id = hasOrder.Id })
+                    Data = Host + Url.Action(nameof(Pay), new { Id = hasOrder.Id }),
+                    Info = hasOrder.ToDic()
                 });
             }
             var order = new TokenOrders
@@ -250,7 +249,8 @@ namespace TokenPay.Controllers
             {
                 Success = true,
                 Message = "创建订单成功！",
-                Data = Host + Url.Action(nameof(Pay), new { Id = order.Id })
+                Data = Host + Url.Action(nameof(Pay), new { Id = order.Id }),
+                Info = order.ToDic()
             });
         }
         private string Host
@@ -399,7 +399,7 @@ namespace TokenPay.Controllers
                 var decimals = GetDecimals(model.Currency);
                 var maxLoop = Math.Pow(10, decimals);
                 var AddAmount = Convert.ToDecimal(1 / maxLoop);//初始递增量
-                for (int i = 0; i < maxLoop; i++)//最多递增100次
+                for (int i = 0; i < maxLoop; i++)//最多递增N次，根据精度控制
                 {
                     foreach (var token in CurrentAdress)
                     {

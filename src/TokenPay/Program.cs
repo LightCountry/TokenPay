@@ -28,7 +28,7 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
 var Configuration = builder.Configuration;
-Configuration.AddJsonFile("EVMChains.json", optional: false, reloadOnChange: true);
+Configuration.AddJsonFile("EVMChains.json", optional: true, reloadOnChange: true);
 if (!builder.Environment.IsProduction())
     Configuration.AddJsonFile($"EVMChains.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
@@ -46,7 +46,7 @@ builder.Services.AddControllersWithViews()
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>();
+var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
 Services.AddSingleton(EVMChains);
 var connectionString = Configuration.GetConnectionString("DB");
 

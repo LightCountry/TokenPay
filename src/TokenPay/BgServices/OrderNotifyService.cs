@@ -73,18 +73,7 @@ namespace TokenPay.BgServices
             {
                 try
                 {
-                    var dic = new SortedDictionary<string, object?>();
-                    dic.Add(nameof(order.Id), order.Id.ToString());
-                    dic.Add(nameof(order.BlockTransactionId), order.BlockTransactionId);
-                    dic.Add(nameof(order.OutOrderId), order.OutOrderId);
-                    dic.Add(nameof(order.OrderUserKey), order.OrderUserKey);
-                    dic.Add(nameof(order.PayTime), order.PayTime?.ToString("yyyy-MM-dd HH:mm:ss"));
-                    dic.Add(nameof(order.Amount), order.Amount.ToString());
-                    dic.Add(nameof(order.ActualAmount), order.ActualAmount.ToString());
-                    dic.Add(nameof(order.Currency), order.Currency);
-                    dic.Add(nameof(order.FromAddress), order.FromAddress);
-                    dic.Add(nameof(order.ToAddress), order.ToAddress);
-                    dic.Add(nameof(order.Status), (int)order.Status);
+                    var dic = order.ToDic();
                     var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
                     var ApiToken = _configuration.GetValue<string>("ApiToken");
                     SignatureStr += ApiToken;
@@ -104,7 +93,7 @@ namespace TokenPay.BgServices
                 }
                 catch (Exception e)
                 {
-                    _logger.LogInformation (e, "订单异步通知失败：{msg}", e.Message);
+                    _logger.LogInformation(e, "订单异步通知失败：{msg}", e.Message);
                 }
             }
             return false;
