@@ -57,7 +57,19 @@ URL: `/CreateOrder`
 {
     "success": true,
     "message": "创建订单成功！",
-    "data": "http://127.0.0.1:5000/Pay?Id=6324ddd2-4677-7914-0010-702806ae9766"
+    "data": "http://127.0.0.1:5000/Pay?Id=6324ddd2-4677-7914-0010-702806ae9766",
+    "info": {
+        "ActualAmount": "15",
+        "Amount": "34.91",
+        "BlockTransactionId": null,
+        "Currency": "TRX",
+        "FromAddress": null,
+        "Id": "63234df7-55bf-93fc-0010-67be493c0c27",
+        "OrderUserKey": null,
+        "OutOrderId": "AJIHK72N34BR2CWG",
+        "PayTime": null,
+        "ToAddress": "TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb"
+    }
 }
 ```
 创建订单失败的返回示例
