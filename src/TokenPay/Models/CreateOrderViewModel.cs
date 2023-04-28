@@ -31,6 +31,10 @@ namespace TokenPay.Models
         //[(ErrorMessage = "{1}不是有效的{0}")]
         public string Currency { get; set; }
         /// <summary>
+        /// 在回调通知或订单信息中原样返回
+        /// </summary>
+        public string? PassThroughInfo { get; set; }
+        /// <summary>
         /// 异步通知Url
         /// </summary>
         public string? NotifyUrl { get; set; }

@@ -55,6 +55,11 @@ namespace TokenPay.Domains
         /// </summary>
         public OrderStatus Status { get; set; }
         /// <summary>
+        /// 在回调通知或订单信息中原样返回
+        /// </summary>
+        [Column(StringLength = -1)]
+        public string? PassThroughInfo { get; set; }
+        /// <summary>
         /// 异步通知Url
         /// </summary>
         public string? NotifyUrl { get; set; }

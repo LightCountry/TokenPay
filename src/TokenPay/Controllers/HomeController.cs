@@ -135,6 +135,7 @@ namespace TokenPay.Controllers
             {
                 string name = item.Name;
                 string? value = item.GetValue(model, null)?.ToString();
+                if (string.IsNullOrEmpty(value)) continue;
                 dic.Add(name, value);
             }
             if (dic.TryGetValue("Signature", out var Signature))
@@ -201,7 +202,7 @@ namespace TokenPay.Controllers
                     Success = true,
                     Message = "订单已存在，查询旧订单！",
                     Data = Host + Url.Action(nameof(Pay), new { Id = hasOrder.Id }),
-                    Info = hasOrder.ToDic()
+                    Info = ToPayDic(hasOrder)
                 });
             }
             var order = new TokenOrders
@@ -212,7 +213,8 @@ namespace TokenPay.Controllers
                 Currency = model.Currency,
                 ActualAmount = model.ActualAmount,
                 NotifyUrl = model.NotifyUrl,
-                RedirectUrl = model.RedirectUrl
+                RedirectUrl = model.RedirectUrl,
+                PassThroughInfo = model.PassThroughInfo,
             };
             var UseDynamicAddress = _configuration.GetValue("UseDynamicAddress", true);
             try
@@ -250,8 +252,45 @@ namespace TokenPay.Controllers
                 Success = true,
                 Message = "创建订单成功！",
                 Data = Host + Url.Action(nameof(Pay), new { Id = order.Id }),
-                Info = order.ToDic()
+                Info = ToPayDic(order)
             });
+        }
+
+        public SortedDictionary<string, object?> ToPayDic(TokenOrders order)
+        {
+            var BaseCurrency = _configuration.GetValue<string>("BaseCurrency", "CNY");
+            var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
+            var dic = new SortedDictionary<string, object?>
+            {
+                { nameof(order.Id), order.Id.ToString() },
+                { nameof(order.OutOrderId), order.OutOrderId },
+                { nameof(order.OrderUserKey), order.OrderUserKey },
+                { nameof(order.Amount), order.Amount.ToString() },
+                { nameof(order.ActualAmount), order.ActualAmount.ToString() },
+                { nameof(order.ToAddress), order.ToAddress },
+                { nameof(order.PassThroughInfo), order.PassThroughInfo },
+                { "BaseCurrency", BaseCurrency },
+                { "BlockChainName", order.Currency.ToBlockchainEnglishName(_chain) },
+                { "CurrencyName", order.Currency.ToCurrency(_chain) },
+                { "ExpireTime", order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss")},
+                { "QrCodeBase64", "data:image/png;base64," + Convert.ToBase64String(CreateQrCode(order.ToAddress))},
+                { "QrCodeLink", Host + Url.Action(nameof(GetQrCode), new { Id = order.Id })},
+            };
+            return dic;
+        }
+        /// <summary>
+        /// 获取订单对应的二维码
+        /// 尺寸 300x300
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IActionResult> GetQrCode(Guid Id, int Size = 300)
+        {
+            var order = await _repository.Where(x => x.Id == Id).FirstAsync();
+            if (order == null)
+            {
+                return File(new byte[0], "image/png");
+            }
+            return File(CreateQrCode(order.ToAddress, Size), "image/png");
         }
         private string Host
         {
@@ -463,12 +502,11 @@ namespace TokenPay.Controllers
         /// <summary>
         /// 创建二维码
         /// </summary>
-        /// <param name="qrcode"></param>
         /// <returns></returns>
-        private static byte[] CreateQrCode(string qrcode)
+        private static byte[] CreateQrCode(string qrcode, int size = 300)
         {
             using var stream = new MemoryStream();
-            var qrCode = new QrCode(qrcode, new Vector2Slim(300, 300), SKEncodedImageFormat.Png);
+            var qrCode = new QrCode(qrcode, new Vector2Slim(size, size), SKEncodedImageFormat.Png);
             qrCode.GenerateImage(stream);
             return stream.ToArray();
         }

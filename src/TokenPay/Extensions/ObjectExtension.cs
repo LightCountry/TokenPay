@@ -1,11 +1,15 @@
 using TokenPay.Domains;
+using TokenPay.Models.EthModel;
 
 namespace TokenPay.Extensions
 {
     public static class ObjectExtension
     {
-        public static SortedDictionary<string, object?> ToDic(this TokenOrders order)
+        public static SortedDictionary<string, object?> ToDic(this TokenOrders order, IConfiguration configuration)
         {
+            var EVMChains = configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
+            var BaseCurrency = configuration.GetValue<string>("BaseCurrency", "CNY");
+            var ExpireTime = configuration.GetValue("ExpireTime", 10 * 60);
             var dic = new SortedDictionary<string, object?>
             {
                 { nameof(order.Id), order.Id.ToString() },
@@ -18,7 +22,11 @@ namespace TokenPay.Extensions
                 { nameof(order.Currency), order.Currency },
                 { nameof(order.FromAddress), order.FromAddress },
                 { nameof(order.ToAddress), order.ToAddress },
-                { nameof(order.Status), (int)order.Status }
+                { nameof(order.Status), (int)order.Status },
+                { nameof(order.PassThroughInfo), order.PassThroughInfo },
+                { "BaseCurrency", BaseCurrency },
+                { "BlockChainName", order.Currency.ToBlockchainEnglishName(EVMChains) },
+                { "CurrencyName", order.Currency.ToCurrency(EVMChains) },
             };
             return dic;
         }

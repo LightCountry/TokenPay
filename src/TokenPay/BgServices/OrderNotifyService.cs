@@ -47,7 +47,7 @@ namespace TokenPay.BgServices
                 .Where(x => x.Status == OrderStatus.Paid)
                 .Where(x => !x.CallbackConfirm)
                 .Where(x => x.CallbackNum < 3)
-                .Where(x => x.LastNotifyTime == null || x.LastNotifyTime < start) //未通知过，或通知失败5分钟后的
+                .Where(x => x.LastNotifyTime == null || x.LastNotifyTime < start) //未通知过，或通知失败N分钟后的
                 .Where(x => x.NotifyUrl.StartsWith("http"))
                 .ToListAsync();
             foreach (var order in Orders)
@@ -73,7 +73,7 @@ namespace TokenPay.BgServices
             {
                 try
                 {
-                    var dic = order.ToDic();
+                    var dic = order.ToDic(_configuration);
                     var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
                     var ApiToken = _configuration.GetValue<string>("ApiToken");
                     SignatureStr += ApiToken;
