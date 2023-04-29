@@ -1,18 +1,32 @@
+/** Common style */
 html {
-    font-size: 16px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-html {
-  position: relative;
-  height: 100%;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 body {
     height: 100%;
+    background-color: #F5F5F5;
+}
+
+/** The style of circle progress. */
+
+.circle-progress {
+    width: 60px;
+    height: 60px;
+}
+
+.circle-progress-value {
+    stroke-width: 5px;
+    stroke: white;
+}
+
+.circle-progress-circle {
+    stroke-width: 10px;
+    stroke: #198754;
+}
+
+.circle-progress-text {
+    fill: #198754;
+    font-size: 1.55rem;
 }
