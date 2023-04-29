@@ -9,6 +9,26 @@ body {
     background-color: #F5F5F5;
 }
 
+/** The style of order code */
+
+.order-code {
+    position: relative;
+    z-index: 1;
+}
+
+.order-code:after {
+    content: '';
+    display: block;
+    width: 105%;
+    height: 6px;
+    background-color: #CBDCFF;
+    position: absolute;
+    bottom: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: -1;
+}
+
 /** The style of circle progress. */
 
 .circle-progress {
