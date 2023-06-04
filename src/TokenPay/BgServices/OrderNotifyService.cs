@@ -26,6 +26,7 @@ namespace TokenPay.BgServices
             {
                 settings.BeforeCall = c =>
                 {
+                    c.Request.WithHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 TokenPay/1.0");
                     _logger.LogInformation("发起请求\nURL：{url}\n参数：{body}", c.Request.Url, c.RequestBody);
                 };
                 settings.AfterCallAsync = async c =>

@@ -28,6 +28,17 @@ namespace TokenPay.Extensions
                 { "BlockChainName", order.Currency.ToBlockchainEnglishName(EVMChains) },
                 { "CurrencyName", order.Currency.ToCurrency(EVMChains) },
             };
+            var nullKey = new List<string>();
+            foreach (var item in dic)
+            {
+                if (item.Value == null)
+                    nullKey.Add(item.Key);
+            }
+            foreach (var item in nullKey)
+            {
+                if (dic.ContainsKey(item))
+                    dic.Remove(item);
+            }
             return dic;
         }
     }

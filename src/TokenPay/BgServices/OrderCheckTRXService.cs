@@ -34,13 +34,14 @@ namespace TokenPay.BgServices
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            var _TokensRepository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Tokens>>();
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
                 .Where(x => x.Currency == "TRX")
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
-            var BaseUrl = "https://api.trongrid.io";
+            var BaseUrl = _configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             if (!_env.IsProduction())
             {
                 BaseUrl = "https://api.shasta.trongrid.io";
@@ -95,6 +96,12 @@ namespace TokenPay.BgServices
                         if (raw == null || raw.AssetName != null)
                         {
                             continue;
+                        }
+                        var token = await _TokensRepository.Where(x => x.Currency == TokenCurrency.TRX && x.Address == raw.ToAddressBase58).FirstAsync();
+                        if (token != null)
+                        {
+                            token.Value += raw.RealAmount;
+                            await _TokensRepository.UpdateAsync(token);
                         }
                         var order = orders.Where(x => x.Amount == raw.RealAmount && x.ToAddress == raw.ToAddressBase58 && x.CreateTime < item.BlockTimestamp.ToDateTime())
                             .OrderByDescending(x => x.CreateTime)//优先付最后一单

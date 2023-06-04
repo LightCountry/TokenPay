@@ -111,12 +111,12 @@ namespace TokenPay.BgServices
                     }
                     else
                     {
-                        _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", result.msg ?? result.error_message);
+                        _logger.LogWarning("{item} 汇率获取失败！错误信息：{msg}", item, result.msg ?? result.error_message);
                     }
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning("USDT 汇率获取失败！错误信息：{msg}", e?.InnerException?.Message + "; " + e?.Message);
+                    _logger.LogWarning("{item} 汇率获取失败！错误信息：{msg}", item, e?.InnerException?.Message + "; " + e?.Message);
                 }
             }
 
