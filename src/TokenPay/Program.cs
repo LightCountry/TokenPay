@@ -20,22 +20,24 @@ using TokenPay.Domains;
 using TokenPay.Helper;
 using TokenPay.Models.EthModel;
 
-Console.WriteLine("系统：" + (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" :
-                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "OSX" :
-                    RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "未知"));
-Console.WriteLine($"系统架构：{RuntimeInformation.OSArchitecture}");
-Console.WriteLine($"系统名称：{RuntimeInformation.OSDescription}");
-Console.WriteLine($"进程架构：{RuntimeInformation.ProcessArchitecture}");
-Console.WriteLine($"是否64位操作系统：{Environment.Is64BitOperatingSystem}");
-Console.WriteLine("CPU CORE:" + Environment.ProcessorCount);
-Console.WriteLine("HostName:" + Environment.MachineName);
-Console.WriteLine("Version:" + Environment.OSVersion);
-
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .Enrich.FromLogContext()
+    .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
     .WriteTo.Console()
     .CreateBootstrapLogger();
+Log.Information("-------------{value}-------------", "System Info Begin");
+Log.Information("Platform: {value}", (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" :
+                    RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "OSX" :
+                    RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "Unknown"));
+Log.Information("Architecture: {value}", RuntimeInformation.OSArchitecture);
+Log.Information("Description: {value}", RuntimeInformation.OSDescription);
+Log.Information("ProcessArchitecture: {value}", RuntimeInformation.ProcessArchitecture);
+Log.Information("X64: {value}", (Environment.Is64BitOperatingSystem ? "Yes" : "No"));
+Log.Information("CPU CORE: {value}", Environment.ProcessorCount);
+Log.Information("HostName: {value}", Environment.MachineName);
+Log.Information("Version: {value}", Environment.OSVersion);
+Log.Information("-------------{value}-------------", "System Info End");
 
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
@@ -48,6 +50,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
                     .ReadFrom.Configuration(context.Configuration)
                     .ReadFrom.Services(services)
                     .Enrich.FromLogContext()
+                    .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
                     .WriteTo.Console()
                     .WriteTo.Exceptionless(b => b.AddTags("Serilog"))
                     );
@@ -68,7 +71,7 @@ if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
     Microsoft.Data.Sqlite.SqliteConnection _database = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
     fsql = new FreeSqlBuilder()
         .UseConnectionFactory(FreeSql.DataType.Sqlite, () => _database, typeof(FreeSql.Sqlite.SqliteProvider<>))
-        .UseAutoSyncStructure(true) //自动同步实体结构
+        .UseAutoSyncStructure(true) //鑷姩鍚屾瀹炰綋缁撴瀯
         .UseNoneCommandParameter(true)
         .Build();
 }
@@ -77,7 +80,7 @@ else
 
     fsql = new FreeSqlBuilder()
         .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
-        .UseAutoSyncStructure(true) //自动同步实体结构
+        .UseAutoSyncStructure(true) //鑷姩鍚屾瀹炰綋缁撴瀯
         .UseNoneCommandParameter(true)
         .Build();
 }
@@ -122,12 +125,12 @@ Services.AddSingleton(s =>
     }
     catch (Exception e)
     {
-        Log.Logger.Error(e, "机器人连接失败！");
+        Log.Logger.Error(e, "鏈哄櫒浜鸿繛鎺ュけ璐ワ紒");
         throw;
     }
     return bot;
 });
-// 订单广播 
+// 璁㈠崟骞挎挱 
 var channel = Channel.CreateUnbounded<TokenOrders>();
 Services.AddSingleton(channel);
 

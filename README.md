@@ -17,6 +17,22 @@
 快来领取你的可刷USDT的国际银行卡吧   
 ➡️➡️➡️ [点击领取你的国际信用卡](https://depay.depay.one/web-app/register-h5?invitCode=949656&lang=zh-cn)
 
+## AD -- 机器人推广
+查币机 - 链上信息查询：[查币机](https://t.me/QueryCoinBot)
+> 支持TRON、ETH、Polygon、BSC多链资产查询，也支持多种法币与区块链货币的实时汇率查询。
+
+USDT、TRX交易监控机器人：[USDT、TRX交易监控](https://t.me/CoinListenBot)
+> 监控波场地址余额变化，速度比钱包App的推送更快！！！
+
+兑币机 - TRX自动兑换：[兑币机](https://t.me/CoinConvertBot)
+> 自用兑币机，并不是开源版机器人！！！
+
+波场能量机器人：[波场能量机器人](https://t.me/Buy_Energy_Bot)
+> 波场能量租用，有能量时转账USDT不扣TRX，为你节省50-70%的TRX
+
+TG会员秒开机器人：[TG会员秒开-全自动发货](https://t.me/BuyYourPremiumBot)
+> 24小时自动开通Telegram Premium会员，只需一个用户名即可开通。
+
 
 ## 项目简介
 - `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。     

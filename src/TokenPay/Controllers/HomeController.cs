@@ -22,6 +22,7 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<TokenRate> _rateRepository;
         private readonly IBaseRepository<Tokens> _tokenRepository;
         private readonly List<EVMChain> _chain;
+        private readonly IHostEnvironment _env;
         private readonly IConfiguration _configuration;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
         private int GetDecimals(string currency)
@@ -85,12 +86,14 @@ namespace TokenPay.Controllers
             IBaseRepository<TokenRate> rateRepository,
             IBaseRepository<Tokens> tokenRepository,
             List<EVMChain> chain,
+            IHostEnvironment env,
             IConfiguration configuration)
         {
             this._repository = repository;
             this._rateRepository = rateRepository;
             this._tokenRepository = tokenRepository;
             this._chain = chain;
+            this._env = env;
             this._configuration = configuration;
         }
         [Route("/")]
@@ -177,12 +180,15 @@ namespace TokenPay.Controllers
                     Message = messages
                 });
             }
-            if (!VerifySignature(model))
+            if (_env.IsProduction())
             {
-                return Json(new ReturnData
+                if (!VerifySignature(model))
                 {
-                    Message = "签名验证失败！"
-                });
+                    return Json(new ReturnData
+                    {
+                        Message = "签名验证失败！"
+                    });
+                }
             }
             if (!GetActiveCurrency().Contains(model.Currency))
             {

@@ -34,6 +34,7 @@ namespace TokenPay.BgServices
         {
             using IServiceScope scope = _serviceProvider.CreateScope();
             var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            var _TokensRepository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Tokens>>();
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
@@ -41,7 +42,7 @@ namespace TokenPay.BgServices
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
             var ContractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-            var BaseUrl = "https://api.trongrid.io";
+            var BaseUrl = _configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             if (!_env.IsProduction())
             {
                 ContractAddress = "TX8ZUpucJYgHb8wBFQYuYSJ459og32AHWW";
@@ -98,6 +99,12 @@ namespace TokenPay.BgServices
                         if (await _repository.Select.AnyAsync(x => x.BlockTransactionId == item.TransactionId))
                         {
                             continue;
+                        }
+                        var token = await _TokensRepository.Where(x => x.Currency == TokenCurrency.TRX && x.Address == item.To).FirstAsync();
+                        if (token != null)
+                        {
+                            token.USDT += item.Amount;
+                            await _TokensRepository.UpdateAsync(token);
                         }
                         var order = orders.Where(x => x.Amount == item.Amount && x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
                             .OrderByDescending(x => x.CreateTime)//优先付最后一单
