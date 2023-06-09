@@ -65,6 +65,7 @@ TokenPay
 ## 教程：
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)
 - 手动运行`TokenPay`教程👉🏻[手动运行TokenPay](Wiki/manual_RUN.md)
+- 小白也可查看用户贡献的搭建视频：[TokenPay详细搭建教程 对接易支付和独角数卡](https://www.youtube.com/watch?v=w75mTOAnLDw)
 
 
 ## 加入交流/意见反馈
