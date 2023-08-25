@@ -4,7 +4,9 @@
 @using TokenPay.Domains;
 @using TokenPay.Extensions
 @using TokenPay.Models.EthModel;
+@using Microsoft.Extensions.Configuration;
 @model TokenPay.Domains.TokenOrders
+@inject IConfiguration Configuration;
 @inject List<EVMChain> chain
 @if (Model == null)
 {
@@ -102,7 +104,7 @@ else
         }
         $(() => {
             timer();
-            Time = setInterval(Check, 1000);
+            Time = setInterval(Check, (@Configuration.GetValue("CheckPaymentStatusInterval", 1)) * 1000);
         })
         function Check() {
             var RedirectUrl = "@(Model?.RedirectUrl)";
