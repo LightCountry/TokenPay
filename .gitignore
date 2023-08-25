@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /src/archive.sh
 /src/TokenPay/EVMChains.json
 /src/TokenPay/EVMChains.Development.json
+/src/TokenPay/手续费钱包私钥.txt

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace CoinListenBot.BgServices.Base
+namespace TokenPay.BgServices
 {
     public abstract class BaseBackgroundService : IHostedService, IDisposable
     {
