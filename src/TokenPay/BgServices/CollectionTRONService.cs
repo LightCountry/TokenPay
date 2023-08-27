@@ -91,7 +91,7 @@ namespace TokenPay.BgServices
             }
             try
             {
-                Address.DecodeBase58();
+                Address.Base58ToHex();
             }
             catch (Exception)
             {

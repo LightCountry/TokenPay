@@ -116,7 +116,7 @@ namespace TokenPay.Models.TronModel
 
         [JsonProperty("to_address")]
         public string ToAddress { get; set; }
-        public string ToAddressBase58 => ToAddress.DecodeBase58();
+        public string ToAddressBase58 => ToAddress.HexToeBase58();
     }
 
 
