@@ -36,7 +36,7 @@ namespace TokenPay.Helper
         /// <returns></returns>
         public static async Task<decimal> GetUsdtAmountAsync(string Address)
         {
-            var hex = Address.HexToeBase58();
+            var hex = Address.Base58ToHex();
             var encoded = new FunctionCallEncoder().EncodeParameters(new Parameter[] {
                 new Parameter("address","who")
                 }, new string[] { "0x" + hex.Substring(2, hex.Length - 2) });
@@ -195,7 +195,7 @@ namespace TokenPay.Helper
                 request2 = request2.WithHeader("TRON-PRO-API-KEY", apiKey);
                 request3 = request3.WithHeader("TRON-PRO-API-KEY", apiKey);
             }
-            var hex = ToAddress.HexToeBase58();
+            var hex = ToAddress.Base58ToHex();
             var encoded = new FunctionCallEncoder().EncodeParameters(new Parameter[] {
                 new Parameter("address","_to"),new Parameter("uint256","_value")
                 }, new object[] { "0x" + hex.Substring(2, hex.Length - 2), (ulong)(value * (decimal)Math.Pow(10, 6)) });
@@ -367,8 +367,8 @@ namespace TokenPay.Helper
             }
             var postData = new
             {
-                owner_address = OwnerAddress.HexToeBase58(),
-                to_address = ToAddress.HexToeBase58(),
+                owner_address = OwnerAddress.Base58ToHex(),
+                to_address = ToAddress.Base58ToHex(),
                 amount = (long)(value * 1_000_000),
                 visible = false
             };
