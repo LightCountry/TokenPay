@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Reflection;
 using TokenPay.Domains;
 using TokenPay.Extensions;
+using TokenPay.Helper;
 using TokenPay.Models;
 using TokenPay.Models.EthModel;
 
@@ -23,6 +24,7 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<Tokens> _tokenRepository;
         private readonly List<EVMChain> _chain;
         private readonly IHostEnvironment _env;
+        private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
         private int GetDecimals(string currency)
@@ -87,6 +89,7 @@ namespace TokenPay.Controllers
             IBaseRepository<Tokens> tokenRepository,
             List<EVMChain> chain,
             IHostEnvironment env,
+            ILogger<HomeController> logger,
             IConfiguration configuration)
         {
             this._repository = repository;
@@ -94,6 +97,7 @@ namespace TokenPay.Controllers
             this._tokenRepository = tokenRepository;
             this._chain = chain;
             this._env = env;
+            this._logger = logger;
             this._configuration = configuration;
         }
         [Route("/")]
@@ -483,6 +487,21 @@ namespace TokenPay.Controllers
                 throw new TokenPayException("无可用收款地址！");
             }
             return (UseTokenAdress, Amount);
+        }
+
+        [Route("/{action}/{address}")]
+        public async Task<IActionResult> CheckAddress(string address)
+        {
+            var item = await _tokenRepository.Where(x => x.Address == address && x.Currency == TokenCurrency.TRX).FirstAsync();
+            if (item == null)
+            {
+                _logger.LogWarning("检查的地址[{address}]不存在！", address);
+                return Content("ok");
+            }
+            item.Value = await QueryTronAction.GetTRXAsync(address);
+            item.USDT = await QueryTronAction.GetUsdtAmountAsync(address);
+            await _tokenRepository.UpdateAsync(item);
+            return Content("ok");
         }
         [Route("/error-development")]
         public IActionResult HandleErrorDevelopment([FromServices] IHostEnvironment hostEnvironment)

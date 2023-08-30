@@ -27,7 +27,7 @@ namespace TokenPay.Extensions
             string hexString = Convert.ToHexString(bytes);
             return hexString;
         }
-        public static string EncodeBase58(this string value)
+        public static string Base58ToHex(this string value)
         {
             return Convert.ToHexString(NokitaKaze.Base58Check.Base58CheckEncoding.Decode(value));
         }
@@ -41,10 +41,14 @@ namespace TokenPay.Extensions
 
             return bytes;
         }
-        public static string DecodeBase58(this string value)
+        public static string HexToeBase58(this string value)
         {
             var bytes = value.FromHexString();
             return NokitaKaze.Base58Check.Base58CheckEncoding.Encode(bytes);
+        }
+        public static string HexToString(this string value)
+        {
+            return Encoding.UTF8.GetString(Convert.FromHexString(value));
         }
     }
 }

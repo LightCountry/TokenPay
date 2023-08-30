@@ -108,7 +108,7 @@ namespace TokenPay.BgServices
                             .FirstOrDefault();
                         if (order != null)
                         {
-                            order.FromAddress = raw.OwnerAddress.DecodeBase58();
+                            order.FromAddress = raw.OwnerAddress.HexToeBase58();
                             order.BlockTransactionId = item.TxID;
                             order.Status = OrderStatus.Paid;
                             order.PayTime = DateTime.Now;

@@ -42,6 +42,7 @@ Log.Information("-------------{value}-------------", "System Info End");
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
 var Configuration = builder.Configuration;
+QueryTronAction.configuration = Configuration;
 Configuration.AddJsonFile("EVMChains.json", optional: true, reloadOnChange: true);
 if (!builder.Environment.IsProduction())
     Configuration.AddJsonFile($"EVMChains.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
@@ -96,6 +97,7 @@ Services.AddHostedService<OrderCheckTRC20Service>();
 Services.AddHostedService<OrderCheckTRXService>();
 Services.AddHostedService<OrderCheckEVMBaseService>();
 Services.AddHostedService<OrderCheckEVMERC20Service>();
+Services.AddHostedService<CollectionTRONService>();
 Services.AddExceptionless(Configuration);
 Services.AddHttpContextAccessor();
 Services.AddEndpointsApiExplorer();
