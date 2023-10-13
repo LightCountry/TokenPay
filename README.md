@@ -9,13 +9,7 @@
 ## TokenPay - `区块链`支付解决方案
 
 >一款开源的，支持以动态收款地址或静态收款地址收取波场的`TRX`、`USDT-TRC20`以及`ETH系原生币`以及`ETH系ERC20代币`的支付解决方案！ 理论上支持`所有ETH系的区块链`，常见的ETH系的区块链有：`以太坊(ETH)`、`币安智能链(BSC)`、`Polygon`等等。
-  
-
-## AD -- 免费领取国际信用卡
->免费领取VISA卡，万事达卡，充值USDT即可随便刷  
-可绑微信、支付宝、美区AppStore消费  
-快来领取你的可刷USDT的国际银行卡吧   
-➡️➡️➡️ [点击领取你的国际信用卡](https://depay.depay.one/web-app/register-h5?invitCode=949656&lang=zh-cn)
+ 
 
 ## AD -- 机器人推广
 查币机 - 链上信息查询：[查币机](https://t.me/QueryCoinBot)
@@ -35,7 +29,8 @@ TG会员秒开机器人：[TG会员秒开-全自动发货](https://t.me/BuyYourP
 
 
 ## 项目简介
-- `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。     
+- `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。
+- 页面支持以`简体中文`、`英语`、`俄语`显示，依据访问者设备语言自适应，不支持的语言默认显示`英语`
 - 本项目不依赖任何外部资源，无需另外部署`数据库`，采用轻量化的`sqlite`，也无需`redis`。
 - 任意项目都可以对接，轻松实现`TRX`、`USDT-TRC20`以及`ETH系原生币`以及`ETH系ERC20代币`，理论支持`所有ETH系的区块链`收款！😊 😊 😊
 - `TokenPay` 遵守 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议!
