@@ -23,8 +23,19 @@ docker images
 ```
 ## Docker容器运行
 
+### main 主网 正式运营请选择主网
+
+```
+docker run -d -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay token-pay
+```
+
++ `yourdir`为你自己存放配置文件和数据库文件的文件夹路径
+
+### shasta 测试网
+
 ```
 docker run -d -e ASPNETCORE_ENVIRONMENT="Development" -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay token-pay
 ```
+
 + `yourdir`为你自己存放配置文件和数据库文件的文件夹路径
-+ `-e ASPNETCORE_ENVIRONMENT="Development"` 生产环境请删除此部分
++ `-e ASPNETCORE_ENVIRONMENT="Development"` 指定环境为开发环境
