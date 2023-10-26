@@ -27,3 +27,4 @@ docker images
 docker run -d -e ASPNETCORE_ENVIRONMENT="Development" -v /yourdir/appsettings.json:/app/appsettings.json -v /yourdir/TokenPay.db:/app/TokenPay.db --name token-pay token-pay
 ```
 + `yourdir`为你自己存放配置文件和数据库文件的文件夹路径
++ `-e ASPNETCORE_ENVIRONMENT="Development"` 生产环境请删除此部分
