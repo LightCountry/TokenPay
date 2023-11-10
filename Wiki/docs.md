@@ -109,6 +109,7 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
 | ActualAmount | string | 订单金额，此金额为法币金额 |
 | FromAddress | string | 付款地址 |
 | ToAddress | string | 收款地址 |
+| Status | int | 状态 0 等待支付 1 已支付 2 订单过期 |
 | PassThroughInfo | string | 创建订单如提供了此字段，在回调通知或订单信息中会原样返回 |
 | Signature | string | 签名，`接口请务必验证此参数！！！`将除`Signature`字段外的所有字段，按照字母升序排序。按顺序拼接为`key1=value1&key2=value2`形式，然后在末尾拼接上`异步通知密钥`，将此字符串计算MD5，即为签名。 |
 
