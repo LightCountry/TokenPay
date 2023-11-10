@@ -59,7 +59,7 @@ else
                 Номер заказа：<span class="text-danger">@Model.OutOrderId</span>
             </div>
             <div class="mb-2">
-                Истечение срока：<span class="text-danger">@ViewData["ExpireTime"]</span>
+                Истечение срока：<span id="ExpireTime" class="text-danger">@ViewData["ExpireTime"]</span>
             </div>
             <div class="mt-4 text-start">
                 <div>Купить валюту блокчейна на этих сайтах</div>
@@ -72,7 +72,14 @@ else
     @section Scripts{
     <script>
         let Time;
-        var EndTime = new Date('@ViewData["ExpireTime"]?.ToString()?.Replace("-","/")');
+        // Unix时间戳转换成时间
+        var EndTime = new Date(@ViewData["ExpireTime"]);
+
+        // 更改页面显示的时间戳为本地时间
+        var localDateString = EndTime.toLocaleString();
+        var expireTimeElement = document.getElementById('ExpireTime');
+        expireTimeElement.innerText = localDateString;
+
         function timer() {
             window.setInterval(function () {
                 var intDiff = (EndTime - new Date()) / 1000

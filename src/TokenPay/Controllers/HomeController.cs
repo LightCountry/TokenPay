@@ -119,7 +119,7 @@ namespace TokenPay.Controllers
             {
                 return View("OrderExpired", order);
             }
-            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss");
+            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToUnixTimeStamp();
             return View(order);
         }
         [Route("/{action}/{id}")]
