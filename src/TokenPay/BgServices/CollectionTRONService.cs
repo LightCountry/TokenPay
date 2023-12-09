@@ -18,19 +18,49 @@ namespace TokenPay.BgServices
         private readonly TelegramBot _bot;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<CollectionTRONService> _logger;
-        private bool Enable => _configuration.GetValue("Collection:Enable", true);
+        /// <summary>
+        /// 是否启用归集功能
+        /// </summary>
+        private bool Enable => _configuration.GetValue("Collection:Enable", false);
+        /// <summary>
+        /// 是否启用能量租赁
+        /// </summary>
         private bool UseEnergy => _configuration.GetValue("Collection:UseEnergy", true);
+        /// <summary>
+        /// 是否保留0.000001USDT
+        /// </summary>
+        private bool RetainUSDT => _configuration.GetValue("Collection:RetainUSDT", true);
+        /// <summary>
+        /// 最小归集USDT
+        /// </summary>
         private decimal MinUSDT => _configuration.GetValue("Collection:MinUSDT", 0.1m);
+        /// <summary>
+        /// 消耗能量数量（请勿修改）
+        /// </summary>
         private long DefaultNeedEnergy => _configuration.GetValue("Collection:NeedEnergy", 31895);
+        /// <summary>
+        /// 最低租赁能量数量（请勿修改）
+        /// </summary>
         private long EnergyMinValue => _configuration.GetValue("Collection:EnergyMinValue", 32000);
+        /// <summary>
+        /// 当前能量单价（请勿修改）
+        /// </summary>
         private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 420m);
+        /// <summary>
+        /// 归集收款地址
+        /// </summary>
         private string Address => _configuration.GetValue<string>("Collection:Address");
+        private int CheckTime => _configuration.GetValue("Collection:CheckTime", 1);
+        /// <summary>
+        /// 预估带宽消耗的TRX
+        /// </summary>
+        private decimal NetUsedTrx => 0.3m;
         private EnergyApi energyApi => new EnergyApi(_logger, _configuration);
         public CollectionTRONService(
             IConfiguration configuration,
             TelegramBot bot,
             IServiceProvider serviceProvider,
-            ILogger<CollectionTRONService> logger) : base("TRON归集任务", TimeSpan.FromHours(3), logger)
+            ILogger<CollectionTRONService> logger) : base("TRON归集任务", TimeSpan.FromHours(configuration.GetValue("Collection:CheckTime", 1)), logger)
         {
             this._configuration = configuration;
             this._serviceProvider = serviceProvider;
@@ -74,8 +104,9 @@ namespace TokenPay.BgServices
             {
                 while (mainTrx < 1)
                 {
+                    var TrxCheckTime = 10;
                     _logger.LogInformation("手续费钱包地址为：{a}", mainWallet.Address);
-                    _logger.LogInformation("等待向手续费钱包充值TRX", mainTrx);
+                    _logger.LogInformation("等待向手续费钱包充值TRX");
                     mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address);
                     if (mainTrx > 1)
                         _logger.LogInformation("充值完成，当前TRX余额：{trx}", mainTrx);
@@ -84,9 +115,14 @@ namespace TokenPay.BgServices
                         await _bot.SendTextMessageAsync(@$"手续费钱包地址需要充值TRX
 
 手续费钱包地址：<code>{mainWallet.Address}</code>
-当前TRX余额：{mainTrx} TRX");
+当前TRX余额：{mainTrx} TRX
+
+
+请先充值TRX，余额检查将在 {TrxCheckTime} 秒后重试。
+
+如无需使用归集功能，请将配置文件中的<b>Collection:Enable</b>配置为<b>false</b>");
                     }
-                    await Task.Delay(10 * 1000);
+                    await Task.Delay(TrxCheckTime * 1000);
                 }
             }
             try
@@ -198,6 +234,11 @@ namespace TokenPay.BgServices
                 if (account.CreateTime == 0)
                 {
                     _logger.LogInformation("地址未激活，激活：{a}", wallet.Address);
+
+                    if (!await CheckMainWalletTrx(mainWallet, NetUsedTrx))
+                    {
+                        return;
+                    }
                     var (success2, txid3) = await mainWallet.TransferTrxAsync(0.000001m, wallet.Address);
                     if (success2)
                     {
@@ -226,6 +267,10 @@ namespace TokenPay.BgServices
                         var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
                         if (nowTrx < trx)
                         {
+                            if (!await CheckMainWalletTrx(mainWallet, trx - nowTrx + NetUsedTrx))
+                            {
+                                return;
+                            }
                             var (success2, txid3) = await mainWallet.TransferTrxAsync(trx - nowTrx, wallet.Address);
                             if (success2)
                             {
@@ -246,6 +291,10 @@ namespace TokenPay.BgServices
                             var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
                             if (nowTrx < trx)
                             {
+                                if (!await CheckMainWalletTrx(mainWallet, trx + NetUsedTrx))
+                                {
+                                    return;
+                                }
                                 var (success2, txid3) = await mainWallet.TransferTrxAsync(trx - nowTrx, wallet.Address);
                                 if (success2)
                                 {
@@ -267,6 +316,10 @@ namespace TokenPay.BgServices
                         {
                             _logger.LogWarning("能量价格预估失败！能量数量：{a}", NeedEnergy);
                             continue;
+                        }
+                        if (!await CheckMainWalletTrx(mainWallet, amountTrx + NetUsedTrx))
+                        {
+                            return;
                         }
                         var (success3, msg, txn) = await QueryTronAction.GetTransferTrxSignedTxnToJobjectAsync(
                             mainWallet.Address,
@@ -371,6 +424,10 @@ namespace TokenPay.BgServices
                         var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
                         if (nowTrx < trx)
                         {
+                            if (!await CheckMainWalletTrx(mainWallet, trx - nowTrx + NetUsedTrx))
+                            {
+                                return;
+                            }
                             var (success2, txid3) = await mainWallet.TransferTrxAsync(trx - nowTrx, wallet.Address);
                             if (success2)
                             {
@@ -384,14 +441,15 @@ namespace TokenPay.BgServices
                         }
                     }
                 }
-                var (success, txid) = await wallet.TransferUSDTAsync(item.USDT - 0.000001m, Address);
+                var RetainUSDTAmount = RetainUSDT ? 0.000001m : 0;
+                var (success, txid) = await wallet.TransferUSDTAsync(item.USDT - RetainUSDTAmount, Address);
                 if (success)
                 {
-                    _logger.LogInformation("归集USDT成功，USDT：{a}，Txid：{b}", item.USDT - 0.000001m, txid);
+                    _logger.LogInformation("归集USDT成功，USDT：{a}，Txid：{b}", item.USDT - RetainUSDTAmount, txid);
                     await _bot.SendTextMessageAsync(@$"归集USDT成功！
 
 归集地址：<code>{item.Address}</code>
-归集数量：{item.USDT - 0.000001m} USDT
+归集数量：{item.USDT - RetainUSDTAmount} USDT
 交易哈希：{txid} <b><a href=""https://tronscan.org/#/transaction/{txid}?lang=zh"">查看交易</a></b>");
                     item.USDT = 0;
                     await _repository.UpdateAsync(item);
@@ -401,6 +459,29 @@ namespace TokenPay.BgServices
                     _logger.LogWarning("归集USDT失败，失败原因：{b}", txid);
                 }
             }
+        }
+        /// <summary>
+        /// 检查手续费钱包TRX余额是否充足
+        /// </summary>
+        /// <param name="mainWallet"></param>
+        /// <param name="minTrx"></param>
+        /// <returns></returns>
+        private async Task<bool> CheckMainWalletTrx(TronWallet mainWallet, decimal minTrx)
+        {
+            var mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address);
+            if (mainTrx < minTrx)
+            {
+                _logger.LogWarning("手续费钱包TRX不足！需要TRX：{minTrx}，当前TRX：{mainTrx}", minTrx, mainTrx);
+                await _bot.SendTextMessageAsync(@$"手续费钱包TRX不足，无法继续进行归集任务！
+
+手续费钱包地址：<code>{mainWallet.Address}</code>
+当前TRX余额：{mainTrx} TRX
+
+
+请先充值TRX，归集任务将在 {CheckTime} 小时后重试。");
+                return false;
+            }
+            return true;
         }
     }
 }

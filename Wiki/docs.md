@@ -123,26 +123,23 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
     "BlockTransactionId": "375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5",
     "Currency": "TRX",
     "CurrencyName": "TRX",
-    "ExpireTime": "2022-09-15 17:08:23",
     "FromAddress": "TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa",
     "Id": "63234df7-55bf-93fc-0010-67be493c0c27",
-    "OrderUserKey": null,
     "OutOrderId": "E6COE6FGZMO5AXSK",
-    "PassThroughInfo": null,
     "PayTime": "2022-09-15 16:08:39",
     "Status": 1,
     "ToAddress": "TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb"
 }
 ```
 ### ②按照ASCII排序后拼接
-`ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockchainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&ExpireTime=2022-09-15 17:08:23&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OrderUserKey=&OutOrderId=E6COE6FGZMO5AXSK&PassThroughInfo=&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb`
+`ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockChainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb`
 
 异步通知密钥为：`666`
 
 拼接密钥后
-`ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockchainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&ExpireTime=2022-09-15 17:08:23&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OrderUserKey=&OutOrderId=E6COE6FGZMO5AXSK&PassThroughInfo=&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb666`
+`ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockChainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb666`
 
 ### ③计算MD5
-`6a3bde5d21f5cfea0c8a81ea7f3a9d44`
+`a8f9d179a8d2798c8b5bb90c31db2c9e`
 
 对比POST中的`Signature`是否与此值一致

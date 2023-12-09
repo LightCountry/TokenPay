@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Pay";
+    var Now = DateTime.Now.ToUniversalTime();
+    var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
 }
 @using TokenPay.Extensions
 @using TokenPay.Models.EthModel;

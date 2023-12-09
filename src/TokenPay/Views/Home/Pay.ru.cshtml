@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "支付页";
+    var Now = DateTime.Now.ToUniversalTime();
+    var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
 }
 @using TokenPay.Domains;
 @using TokenPay.Extensions
@@ -59,7 +61,7 @@ else
                 Номер заказа：<span class="text-danger">@Model.OutOrderId</span>
             </div>
             <div class="mb-2">
-                Истечение срока：<span class="text-danger">@ViewData["ExpireTime"]</span>
+                Истечение срока：<span class="text-danger">@ExpireTime.ToString("yyyy-MM-dd HH:mm:ss \"GMT\"zzz")</span>
             </div>
             <div class="mt-4 text-start">
                 <div>Купить валюту блокчейна на этих сайтах</div>
@@ -72,10 +74,10 @@ else
     @section Scripts{
     <script>
         let Time;
-        var EndTime = new Date('@ViewData["ExpireTime"]?.ToString()?.Replace("-","/")');
+        var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
         function timer() {
             window.setInterval(function () {
-                var intDiff = (EndTime - new Date()) / 1000
+                var intDiff = (EndTime - new Date('@Now.ToString("yyyy/MM/dd HH:mm:ss")')) / 1000
                 if (intDiff <= 0) return;
                 $(".time").removeClass("invisible")
                 var day = 0,

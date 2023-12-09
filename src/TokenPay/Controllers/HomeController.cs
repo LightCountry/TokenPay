@@ -126,7 +126,7 @@ namespace TokenPay.Controllers
             {
                 return View("OrderExpired", order);
             }
-            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss");
+            ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime);
             return View(order);
         }
         [Route("/{action}/{id}")]
@@ -256,7 +256,7 @@ namespace TokenPay.Controllers
                     Message = e.Message
                 });
             }
-            if (order.Amount == 0)
+            if (order.Amount <= 0)
             {
                 return Json(new ReturnData
                 {
