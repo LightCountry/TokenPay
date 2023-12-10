@@ -1,24 +1,28 @@
 ﻿@{
-    ViewData["Title"] = "订单过期";
+    ViewData["Title"] = "Order expired";
 }
-@using TokenPay.Domains;
 @model TokenPay.Domains.TokenOrders
-<div class="row align-items-center h-100">
-    @if (Model == null)
-    {
-        <div class="text-center">
-            <h4 class="display-4">Order does not exist!</h4>
-        </div>
-    }
-    else
-    {
-        <div class="text-center">
-            <h1 class="display-4">Order has expired!</h1>
-            @if (!string.IsNullOrEmpty(Model.RedirectUrl))
-            {
-                <a class="btn btn-primary btn-sm" href="@Model.RedirectUrl">Back</a>
-            }
-        </div>
 
-    }
-</div>
+<section class="container-fluid">
+    <div class="container d-grid gap-3 mx-auto my-4" style="max-width: 55rem;">
+        <div class="row card p-5 rounded-0 border-0 shadow-sm">
+            <div class="card-body border-0 p-4 d-flex flex-column align-items-center">
+                <img src="~/images/finish-error.png" alt="Order canceled" height="100" />
+                <h4 class="mt-5 mb-4 fw-bold">Order Expired</h4>
+                <p class="text-secondary text-center lead fs-6">
+                    The order has been expired, please contact online service if you have any questions.
+                </p>
+                <footer class="mt-5 justify-content-center">
+                    <a href="@Model.RedirectUrl" class="col btn btn-outline-secondary rounded-pill px-5 w-auto">
+                        Continue
+                    </a>
+                </footer>
+            </div>
+
+            <div class="card-footer d-flex  flex-column align-items-center bg-white border-0 p-4">
+                <p class="text-secondary">Order Code:</p>
+                <h4 class="fs-5 order-code">@Model.OutOrderId</h4>
+            </div>
+        </div>
+    </div>
+</section>
