@@ -77,7 +77,7 @@ else
         var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
         function timer() {
             window.setInterval(function () {
-                var intDiff = (EndTime - new Date('@Now.ToString("yyyy/MM/dd HH:mm:ss")')) / 1000
+                var intDiff = (EndTime - new Date(new Date().toISOString().replace('T',' ').replace('Z',''))) / 1000
                 if (intDiff <= 0) return;
                 $(".time").removeClass("invisible")
                 var day = 0,
