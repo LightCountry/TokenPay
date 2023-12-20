@@ -4,6 +4,7 @@ using FreeSql;
 using Nethereum.Signer;
 using Org.BouncyCastle.Asn1.X509;
 using TokenPay.Domains;
+using TokenPay.Extensions;
 using TokenPay.Helper;
 using TokenPay.Models.EthModel;
 
@@ -123,7 +124,13 @@ namespace TokenPay.BgServices
 
             foreach (var item in list)
             {
-                _logger.LogInformation("更新汇率，{a}=>{b} = {c}", item.Currency, item.FiatCurrency, item.Rate);
+                var RateMove = _configuration.GetValue($"RateMove:{item.Id}", 0m);
+                RateMove = RateMove.ToRound(2);//保留2位小数
+                if (RateMove != 0)
+                {
+                    item.Rate += RateMove;
+                }
+                _logger.LogInformation("更新汇率，{a}=>{b} = {c}", item.Currency, item.FiatCurrency, $"{item.Rate}{(RateMove!=0?$" ({RateMove:+0.##;-0.##;0})":"")}");
                 await _repository.InsertOrUpdateAsync(item);
             }
             _logger.LogInformation("------------------{tips}------------------", "结束更新汇率");
