@@ -1,7 +1,7 @@
 {
   "EVMChains": [
     {
-      "Enable": false,
+      "Enable": false, // false 表示不启用此区块链， true 表示启用
       "ChainName": "以太坊",
       "ChainNameEN": "ETH",
       "BaseCoin": "ETH",
@@ -22,7 +22,7 @@
       ]
     },
     {
-      "Enable": false,
+      "Enable": false, // false 表示不启用此区块链， true 表示启用
       "ChainName": "币安智能链",
       "ChainNameEN": "BSC",
       "BaseCoin": "BNB",
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "Enable": false,
+      "Enable": false, // false 表示不启用此区块链， true 表示启用
       "ChainName": "Polygon",
       "ChainNameEN": "Polygon",
       "BaseCoin": "MATIC",
