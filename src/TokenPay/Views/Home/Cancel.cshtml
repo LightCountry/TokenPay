@@ -1,28 +1,26 @@
-﻿@{
-    ViewData["Title"] = "订单已过期";
+﻿@model OrderCancellationModel
+@{
+    ViewData["Title"] = "Order canceled";
 }
-@model TokenPay.Domains.TokenOrders
-
 <section class="container-fluid">
     <div class="container d-grid gap-3 mx-auto my-4" style="max-width: 55rem;">
         <div class="row card p-5 rounded-0 border-0 shadow-sm">
             <div class="card-body border-0 p-4 d-flex flex-column align-items-center">
                 <img src="~/images/finish-error.png" alt="Order canceled" height="100" />
-                <h4 class="mt-5 mb-4 fw-bold">订单已过期</h4>
+                <h4 class="mt-5 mb-4 fw-bold">Order Canceled</h4>
                 <p class="text-secondary text-center lead fs-6">
-                    The order has been expired, please contact online service if you have any questions.
-                    此订单已经过期，如果有任何疑问可以联系在线客服。
+                    The order has been canceled, please contact online service if you have any questions.
                 </p>
                 <footer class="mt-5 justify-content-center">
-                    <a href="@Model.RedirectUrl" class="col btn btn-outline-secondary rounded-pill px-5 w-auto">
-                        继续
+                    <a href="@Model.ReturnUrl" class="col btn btn-outline-secondary rounded-pill px-5 w-auto">
+                        Continue
                     </a>
                 </footer>
             </div>
-
+            
             <div class="card-footer d-flex  flex-column align-items-center bg-white border-0 p-4">
-                <p class="text-secondary">订单号：</p>
-                <h4 class="fs-5 order-code">@Model.OutOrderId</h4>
+                <p class="text-secondary">Order Code:</p>
+                <h4 class="fs-5 order-code">@Model.OrderCode</h4>
             </div>
         </div>
     </div>
