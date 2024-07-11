@@ -86,7 +86,7 @@ class TokenPay_plugin{
 		echo $type;
 		$param = [
 		    'OutOrderId' => TRADE_NO, //外部订单号
-		    'OrderUserKey' => $order['uid'],   //支付用户标识
+		    'OrderUserKey' => (string)$order['uid'],   //支付用户标识
 		    'ActualAmount' => $order['realmoney'],   //订单实际支付的人民币金额，保留两位小数
 		    'Currency' => $order['typename'],   //加密货币的币种，直接以原样字符串传递即可
 		    'NotifyUrl' => $conf['localurl'].'pay/notify/'.TRADE_NO.'/',  //异步通知URL
