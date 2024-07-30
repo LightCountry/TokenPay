@@ -27,6 +27,9 @@ USDT、TRX交易监控机器人：[USDT、TRX交易监控](https://t.me/CoinList
 TG会员秒开机器人：[TG会员秒开-全自动发货](https://t.me/BuyYourPremiumBot)
 > 24小时自动开通Telegram Premium会员，只需一个用户名即可开通。
 
++888匿名号码租用机器人：[+888匿名号码租用机器人](https://t.me/Zu888Bot)
+> Telegram +888 匿名号码租用机器人。
+
 
 ## 项目简介
 - `TokenPay`是一个由`C#语言`编写的私有化部署的`区块链`支付解决方案。
