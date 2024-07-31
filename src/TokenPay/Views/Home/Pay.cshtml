@@ -1,134 +1,133 @@
 ﻿@{
-    ViewData["Title"] = "支付页";
-    var Now = DateTime.Now.ToUniversalTime();
-    var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
+    ViewData["Title"] = "订单支付";
 }
-@using TokenPay.Domains;
 @using TokenPay.Extensions
 @using TokenPay.Models.EthModel;
 @model TokenPay.Domains.TokenOrders
-@inject List<EVMChain> chain
-@if (Model == null)
-{
-    <div class="row align-items-center h-100">
-        <div class="text-center">
-            <h1 class="display-4">订单不存在！</h1>
+@inject List<EVMChain> Chain
+@inject IConfiguration Configuration
+
+<section class="container-fluid">
+    <div class="container d-grid gap-3 mx-auto my-4" style="max-width: 55rem;">
+        <div class="row card rounded-0 border-0 shadow-sm">
+            <div class="card-header border-0 d-flex justify-content-between align-items-center p-4"
+                 style="background-color: #F9FAFD;">
+                <div>
+                    <h2 class="card-title fs-4">您正在支付 @Model.Currency.ToBlockchainName(Chain) 的 @Model.Currency.ToCurrency(Chain,true)</h2>
+                    <p class="card-text text-secondary small">
+                        Open your encrypted wallet, scan the QR code, or copy the  address below to make a payment.
+                        打开您的加密币钱包扫码下方二维码，或者复制下方的 @Model.Currency.ToCurrency(Chain, true) 地址进行支付。
+                    </p>
+                </div>
+                <div class="ms-2" id="countdown-circle-progress"
+                     @* PLZ MAKE SURE this key in the configuration has been configured correctly. *@
+                     data-total-seconds="@Configuration["ExpireTime"]"
+                     @*
+                     The order will expire when the creation time of the order plus the configured expiration time is greater than the current time.
+                     So, I will calculate the remaining seconds for the order countdown here: f(x) = Second(Creation + Expiration - Now)
+                     *@
+                     data-remain-seconds="@((Model.CreateTime.AddSeconds(Configuration.GetValue("ExpireTime", 600)) - DateTime.Now).TotalSeconds)"
+                     data-redirect-url="@Model.RedirectUrl"
+                     data-order-id="@Model.Id">
+                </div>
+            </div>
+
+            <div class="progress rounded-0" style="height: 0.25rem;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                     id="countdown-progress-bar"
+                     style="width: 100%"
+                     aria-valuenow="100"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                </div>
+            </div>
+
+            <div class="card-body border-0 p-4">
+                <div class="alert alert-light small text-secondary d-flex" role="alert">
+                    <img src="~/images/info.svg" alt="Payment info" height="20" class="me-2"/>
+                    Only send @Model.Currency.ToCurrency(Chain, true) to this address from the @Model.Currency.ToBlockchainName(Chain) network.
+                    Do not send @Model.Currency.ToCurrency(Chain, true) from other networks,
+                    as doing so may result in loss of funds.
+                    请从 @Model.Currency.ToBlockchainName(Chain) 网络发送 @Model.Currency.ToCurrency(Chain, true) 到此地址，
+                    请勿通过其它网络发送 @Model.Currency.ToCurrency(Chain, true)，否则可能会导致您资金受损。
+                </div>
+                <div class="text-center py-5">
+                    <div class="d-inline-block p-2 shadow-sm">
+                        <img src="data:image/png;base64,@ViewData["QrCode"]" alt="Wallet address" style="height: 15rem; width: 15rem;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white border-0 p-4">
+                <h4 class="card-title text-secondary fs-6 px-2">@Model.Currency.ToCurrency(Chain) 地址</h4>
+                <div class="input-group rounded-start-3 shadow-sm">
+                    <input id="address" type="text"
+                           class="form-control form-control-lg bg-white border-0 fs-6"
+                           value="@Model.ToAddress"
+                           placeholder="@Model.Currency.ToCurrency(Chain) 地址"
+                           aria-label="@Model.Currency.ToCurrency(Chain) 地址"
+                           readonly>
+                    <button type="button" class="btn btn-primary btn-clipboard"
+                            data-clipboard-text="@Model.ToAddress"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
+                            title=""
+                            data-bs-original-title="Copy to clipboard">
+                        复制
+                    </button>
+                </div>
+
+                <h4 class="card-title text-secondary fs-6 px-2 mt-4">金额</h4>
+                <div class="input-group rounded-start-3 shadow-sm">
+                    <input id="amount" type="text"
+                           class="form-control form-control-lg bg-white border-0 fs-6"
+                           value="@Model.Amount @Model.Currency.ToCurrency(Chain)"
+                           placeholder="金额"
+                           aria-label="金额"
+                           readonly>
+                    <button type="button" class="btn btn-primary btn-clipboard"
+                            data-clipboard-text="@Model.Amount"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="bottom"
+                            title=""
+                            data-bs-original-title="Copy to clipboard">
+                        复制
+                    </button>
+                </div>
+            </div>
+        </div>
+        <footer class="row row-cols-1 mt-4 justify-content-center" style="gap: 1rem;">
+            <button type="button" class="col btn btn-outline-danger w-auto"
+                    data-bs-toggle="modal"
+                    data-bs-target="#confirm-cancel-order-model">
+                取消支付
+            </button>
+            <a href="@Model.RedirectUrl" class="col btn btn-outline-primary w-auto">
+                返回
+            </a>
+        </footer>
+    </div>
+</section>
+
+<div class="modal fade" id="confirm-cancel-order-model"
+     data-bs-backdrop="static"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="confirm-cancel-order-model-label"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirm-cancel-order-model-label">取消支付</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>是否取消支付此订单？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                <a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-danger">确认</a>
+            </div>
         </div>
     </div>
-
-}
-else
-{
-    <style>
-        .time {
-            font-family: Consolas,Menlo,Courier;
-        }
-
-        .address {
-        @if (@Model.ToAddress.StartsWith("T"))
-        {
-            @Html.Raw("font-size:14px;")
-        }
-        else
-        {
-            @Html.Raw("font-size:12px;")
-        }
-        }
-    </style>
-    <div class="text-center pt-2">
-        <h4 class="display-6">您正在支付 <span class="text-danger">@Model.Currency.ToBlockchainName(chain)</span> 的 <span class="text-danger">@Model.Currency.ToCurrency(chain,true)</span></h4>
-
-        <div class="d-flex mb-2">
-            <div class="input-group m-auto" style="width:410px;">
-                <input class="form-control form-control-sm" type="text" id="Token" value="@Model.ToAddress" readonly>
-                <button class="btn btn-primary btn-sm" data-clipboard-target="#Token">复制</button>
-            </div>
-        </div>
-        <div class="mb-2 fw-bold display-6 invisible time">
-            剩余时间：<span class="text-danger"><span id="day_show"></span><span id="hour_show"></span><span id="minute_show"></span><span id="second_show"></span></span>
-        </div>
-        <div class="text-danger fw-bold mb-2">请仔细核对区块链和币种，避免丢失资产或支付失败！！！</div>
-        <div class="mb-2">
-            <div class="text-danger fw-bold" style="position:relative;bottom:-6px;height:0;">区块链：@Model.Currency.ToBlockchainName(chain) 币种：@Model.Currency.ToCurrency(chain)</div>
-            <img src="data:image/png;base64,@ViewData["QrCode"]" class="border border-gray-300" alt="收款地址">
-            <div class="text-danger fw-semibold address" style="position:relative;top:-24px;height:0;">@Model.ToAddress</div>
-        </div>
-        <div class="text-start m-auto" style="width:300px;">
-            <div class="mb-2 fw-bold">
-                支付金额：<span class="text-danger">@Model.Amount @Model.Currency.ToCurrency(chain)</span><button class="btn btn-primary btn-sm ms-2" data-clipboard-text="@Model.Amount">复制</button>
-            </div>
-            <div class="mb-2">
-                订单编号：<span class="text-danger">@Model.OutOrderId</span>
-            </div>
-            <div class="mb-2">
-                过期时间：<span class="text-danger">@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
-            </div>
-            <div class="mt-4 text-start">
-                <div>区块链货币购买地址</div>
-                <div>1. 在 <a href="https://www.okx.com/buy-@Model.Currency.ToCurrency(chain)/cny" target="_blank">OKX（欧易）</a> 购买 <span class="text-danger">@Model.Currency.ToCurrency(chain)</span></div>
-                <div>2. 在 <a href="https://p2p.binance.com/zh-CN/express/buy/@Model.Currency.ToCurrency(chain)/CNY" target="_blank">Binance（币安）</a> 购买 <span class="text-danger">@Model.Currency.ToCurrency(chain)</span></div>
-            </div>
-        </div>
-    </div>
-
-    @section Scripts{
-    <script>
-        let Time;
-        var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
-        function timer() {
-            window.setInterval(function () {
-                var intDiff = (EndTime - new Date(new Date().toISOString().replace('T',' ').replace('Z',''))) / 1000
-                if (intDiff <= 0) return;
-                $(".time").removeClass("invisible")
-                var day = 0,
-                    hour = 0,
-                    minute = 0,
-                    second = 0;
-                if (intDiff > 0) {
-                    day = Math.floor(intDiff / (60 * 60 * 24));
-                    hour = Math.floor(intDiff / (60 * 60)) - (day * 24);
-                    minute = Math.floor(intDiff / 60) - (day * 24 * 60) - (hour * 60);
-                    second = Math.floor(intDiff) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60);
-                }
-                if (minute <= 9) minute = '0' + minute;
-                if (second <= 9) second = '0' + second;
-                if (day)
-                    $('#day_show').html(day + "天");
-                if (hour)
-                    $('#hour_show').html('<s id="h"></s>' + hour + '时');
-                if (minute)
-                    $('#minute_show').html('<s></s>' + minute + '分');
-                $('#second_show').html('<s></s>' + second + '秒');
-                intDiff--;
-            }, 1000);
-        }
-        $(() => {
-            timer();
-            Time = setInterval(Check, 1000);
-        })
-        function Check() {
-            var RedirectUrl = "@(Model?.RedirectUrl)";
-                $.get("/Check/@(Model?.Id)")
-                    .then(x => {
-                        if (x === 'Pending') {
-                            console.log('待支付')
-                        } else if (x === 'Expired') {
-                            clearInterval(Time)
-                            console.log('订单过期')
-                            location.reload();
-                        } else if (x === 'Paid') {
-                            clearInterval(Time)
-                            console.log('已支付')
-                            setTimeout(() => {
-                                if (RedirectUrl) {
-                                    location = RedirectUrl
-                                } else {
-                                    alert("已支付")
-                                }
-                            }, 0)
-                        }
-                    })
-            }
-        </script>
-    }
-}
+</div>
