@@ -1,0 +1,92 @@
+name: .NET
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    name: Build And Publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 6.0.x
+    - name: Publish for Linux-x64
+      run: dotnet publish -c Release -r linux-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o app/linux-x64
+    - name: Publish for Windows-x64
+      run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o app/win-x64
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: app
+        if-no-files-found: error
+        path: ${{ github.workspace }}/src/app
+
+  create_release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: app
+          path: app
+  
+      - name: Zip artifact
+        run: |
+          cd app
+          mv linux-x64/appsettings.Example.json linux-x64/appsettings.json
+          zip -r linux-x64.zip linux-x64/*
+          mv win-x64/appsettings.Example.json win-x64/appsettings.json
+          zip -r win-x64.zip win-x64/*
+          
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset for Linux-x64
+        id: upload_linux
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/linux-x64.zip
+          asset_name: linux-x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset for Windows-x64
+        id: upload_win
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/win-x64.zip
+          asset_name: win-x64.zip
+          asset_content_type: application/zip
+
+  cleanup:
+    name: Cleanup
+    needs: create_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: "*"

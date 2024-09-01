@@ -18,7 +18,8 @@ namespace TokenPay.BgServices
         private readonly List<EVMChain> _chains;
         private readonly IServiceProvider _serviceProvider;
         private readonly FlurlClient client;
-
+        private bool UseDynamicAddress => _configuration.GetValue("UseDynamicAddress", true);
+        private bool UseDynamicAddressAmountMove => _configuration.GetValue("DynamicAddressConfig:AmountMove", false);
         public OrderCheckEVMBaseService(ILogger<OrderCheckEVMBaseService> logger,
             IConfiguration configuration,
             IHostEnvironment env,
@@ -115,15 +116,39 @@ namespace TokenPay.BgServices
                                 var order = orders.Where(x => x.Amount == RealAmount && x.ToAddress.ToLower() == item.To.ToLower() && x.CreateTime < item.DateTime)
                                     .OrderByDescending(x => x.CreateTime)//优先付最后一单
                                     .FirstOrDefault();
+                            recheck:
                                 if (order != null)
                                 {
                                     order.FromAddress = item.From;
                                     order.BlockTransactionId = item.Hash;
                                     order.Status = OrderStatus.Paid;
-                                    order.PayTime = DateTime.Now;
+                                    order.PayTime = item.DateTime;
+                                    order.PayAmount = RealAmount;
                                     await _repository.UpdateAsync(order);
                                     orders.Remove(order);
                                     await SendAdminMessage(order);
+                                }
+                                else
+                                {
+                                    if (UseDynamicAddress && UseDynamicAddressAmountMove)
+                                    {
+                                        //允许非准确金额支付
+                                        var Move = _configuration.GetSection($"DynamicAddressConfig:{chain.BaseCoin}").Get<decimal[]>() ?? [];
+                                        if (Move.Length == 2)
+                                        {
+                                            var Down = Move[0]; //上浮金额
+                                            var Up = Move[1]; //下浮金额
+                                            order = orders.Where(x => x.Amount >= RealAmount - Down && x.Amount <= RealAmount + Up)
+                                                .Where(x => x.ToAddress == item.To && x.CreateTime < item.DateTime)
+                                               .OrderByDescending(x => x.CreateTime)//优先付最后一单
+                                               .FirstOrDefault();
+                                            if (order != null)
+                                            {
+                                                order.IsDynamicAmount = true;
+                                                goto recheck;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

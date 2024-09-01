@@ -57,11 +57,13 @@ namespace TokenPay.BgServices
             {
                 order.Currency = order.Currency.Replace(item, "");
             }
+            var curreny = order.Currency.Replace("TRC20", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Last();
             var message = @$"<b>您有新订单！({order.ActualAmount} {BaseCurrency})</b>
 
 订单编号：<code>{order.OutOrderId}</code>
 原始金额：<b>{order.ActualAmount} {BaseCurrency}</b>
-订单金额：<b>{order.Amount} {order.Currency.Replace("TRC20", "").Split("_", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Last()}</b>
+订单金额：<b>{order.Amount} {curreny}</b>
+实付金额：<b>{order.PayAmount} {curreny}</b>{(order.IsDynamicAmount ? "(动态金额订单)" : "")}
 付款地址：<code>{order.FromAddress}</code>
 收款地址：<code>{order.ToAddress}</code>
 创建时间：<b>{order.CreateTime:yyyy-MM-dd HH:mm:ss}</b>
@@ -85,7 +87,7 @@ namespace TokenPay.BgServices
                 {
                     if (order.Currency.StartsWith($"EVM_{chain.ChainNameEN}"))
                     {
-                        if(!string.IsNullOrEmpty(chain.ScanHost))
+                        if (!string.IsNullOrEmpty(chain.ScanHost))
                             message += @$"  <b><a href=""{chain.ScanHost}/tx/{order.BlockTransactionId}"">查看交易</a></b>";
                         break;
                     }

@@ -16,7 +16,8 @@ namespace TokenPay.BgServices
         private readonly IHostEnvironment _env;
         private readonly Channel<TokenOrders> _channel;
         private readonly IServiceProvider _serviceProvider;
-
+        private bool UseDynamicAddress => _configuration.GetValue("UseDynamicAddress", true);
+        private bool UseDynamicAddressAmountMove => _configuration.GetValue("DynamicAddressConfig:AmountMove", false);
         public OrderCheckTRC20Service(ILogger<OrderCheckTRC20Service> logger,
             IConfiguration configuration,
             IHostEnvironment env,
@@ -109,15 +110,39 @@ namespace TokenPay.BgServices
                         var order = orders.Where(x => x.Amount == item.Amount && x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
                             .OrderByDescending(x => x.CreateTime)//优先付最后一单
                             .FirstOrDefault();
+                    recheck:
                         if (order != null)
                         {
                             order.FromAddress = item.From;
                             order.BlockTransactionId = item.TransactionId;
                             order.Status = OrderStatus.Paid;
-                            order.PayTime = DateTime.Now;
+                            order.PayTime = item.BlockTimestamp.ToDateTime();
+                            order.PayAmount = item.Amount;
                             await _repository.UpdateAsync(order);
                             orders.Remove(order);
                             await SendAdminMessage(order);
+                        }
+                        else
+                        {
+                            if (UseDynamicAddress && UseDynamicAddressAmountMove)
+                            {
+                                //允许非准确金额支付
+                                var Move = _configuration.GetSection("DynamicAddressConfig:USDT").Get<decimal[]>() ?? [];
+                                if (Move.Length == 2)
+                                {
+                                    var Down = Move[0]; //上浮金额
+                                    var Up = Move[1]; //下浮金额
+                                    order = orders.Where(x => x.Amount >= item.Amount - Down && x.Amount <= item.Amount + Up)
+                                        .Where(x => x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
+                                       .OrderByDescending(x => x.CreateTime)//优先付最后一单
+                                       .FirstOrDefault();
+                                    if (order != null)
+                                    {
+                                        order.IsDynamicAmount = true;
+                                        goto recheck;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
