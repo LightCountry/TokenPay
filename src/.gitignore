@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /.editorconfig
 /TokenPay/appsettings.Development.json
 /TronTools
+
+*.db

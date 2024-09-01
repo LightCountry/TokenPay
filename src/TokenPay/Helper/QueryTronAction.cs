@@ -82,10 +82,6 @@ namespace TokenPay.Helper
         /// <summary>
         /// 转TRX
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="Id"></param>
-        /// <param name="value"></param>
-        /// <param name="ToAddress"></param>
         /// <returns></returns>
         public static async Task<(bool, string?)> TransferTrxAsync(this TronWallet wallet0, decimal value, string ToAddress)
         {
@@ -173,10 +169,6 @@ namespace TokenPay.Helper
         /// <summary>
         /// 转USDT
         /// </summary>
-        /// <param name="account"></param>
-        /// <param name="Id"></param>
-        /// <param name="value"></param>
-        /// <param name="ToAddress"></param>
         /// <returns></returns>
         public static async Task<(bool, string?)> TransferUSDTAsync(this TronWallet wallet0, decimal value, string ToAddress)
         {

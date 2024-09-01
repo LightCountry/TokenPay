@@ -178,7 +178,7 @@ namespace TokenPay.Helper
         public string ReceiveAddress { get; set; }
 
         [JsonProperty("price_in_sun")]
-        public int PriceInSun { get; set; }
+        public new int PriceInSun { get; set; }
 
         [JsonProperty("min_amount")]
         public int MinAmount { get; set; }
@@ -211,7 +211,7 @@ namespace TokenPay.Helper
         public int CreateTime { get; set; }
 
         [JsonProperty("resource_value")]
-        public int ResourceValue { get; set; }
+        public new int ResourceValue { get; set; }
 
         [JsonProperty("resource_split_value")]
         public int ResourceSplitValue { get; set; }
@@ -220,10 +220,10 @@ namespace TokenPay.Helper
         public int FrozenResourceValue { get; set; }
 
         [JsonProperty("rent_duration")]
-        public int RentDuration { get; set; }
+        public new int RentDuration { get; set; }
 
         [JsonProperty("rent_time_unit")]
-        public string RentTimeUnit { get; set; }
+        public new string RentTimeUnit { get; set; }
 
         [JsonProperty("rent_expire_time")]
         public int RentExpireTime { get; set; }
@@ -262,7 +262,7 @@ namespace TokenPay.Helper
         public string PaySymbol { get; set; }
 
         [JsonProperty("pay_amount")]
-        public decimal PayAmount { get; set; }
+        public new decimal PayAmount { get; set; }
 
         [JsonProperty("pay_status")]
         public int PayStatus { get; set; }

@@ -1,5 +1,3 @@
-
-using Exceptionless;
 using FreeSql;
 using FreeSql.DataAnnotations;
 using Microsoft.AspNetCore.Localization;
@@ -53,7 +51,6 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
                     .Enrich.FromLogContext()
                     .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
                     .WriteTo.Console()
-                    .WriteTo.Exceptionless(b => b.AddTags("Serilog"))
                     );
 builder.Services.AddControllersWithViews()
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
@@ -66,25 +63,12 @@ var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? n
 Services.AddSingleton(EVMChains);
 
 var connectionString = Configuration.GetConnectionString("DB");
-IFreeSql fsql;
-if (RuntimeInformation.OSArchitecture == Architecture.Arm64)
-{
-    Microsoft.Data.Sqlite.SqliteConnection _database = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
-    fsql = new FreeSqlBuilder()
-        .UseConnectionFactory(FreeSql.DataType.Sqlite, () => _database, typeof(FreeSql.Sqlite.SqliteProvider<>))
-        .UseAutoSyncStructure(true) //自动同步实体结构
-        .UseNoneCommandParameter(true)
-        .Build();
-}
-else
-{
-
-    fsql = new FreeSqlBuilder()
+IFreeSql fsql = new FreeSqlBuilder()
         .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
         .UseAutoSyncStructure(true) //自动同步实体结构
         .UseNoneCommandParameter(true)
         .Build();
-}
+
 
 Services.AddSingleton(fsql);
 Services.AddScoped<UnitOfWorkManager>();
@@ -98,7 +82,6 @@ Services.AddHostedService<OrderCheckTRXService>();
 Services.AddHostedService<OrderCheckEVMBaseService>();
 Services.AddHostedService<OrderCheckEVMERC20Service>();
 Services.AddHostedService<CollectionTRONService>();
-Services.AddExceptionless(Configuration);
 Services.AddHttpContextAccessor();
 Services.AddEndpointsApiExplorer();
 Services.AddSwaggerGen(c =>
@@ -150,7 +133,6 @@ else
     app.UseSwaggerUI();
 }
 app.UseStaticFiles();
-app.UseExceptionless();
 app.UseRouting();
 
 app.UseAuthorization();

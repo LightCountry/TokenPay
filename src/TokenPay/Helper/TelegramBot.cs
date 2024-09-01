@@ -15,7 +15,7 @@ namespace TokenPay.Helper
 
         public TelegramBot(IConfiguration configuration)
         {
-            _botToken = configuration.GetValue<string>("Telegram:BotToken");
+            _botToken = configuration.GetValue<string>("Telegram:BotToken")!;
             _userId = configuration.GetValue<long>("Telegram:AdminUserId");
             this._configuration = configuration;
             var WebProxy = configuration.GetValue<string>("WebProxy");

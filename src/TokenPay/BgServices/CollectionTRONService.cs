@@ -27,6 +27,10 @@ namespace TokenPay.BgServices
         /// </summary>
         private bool UseEnergy => _configuration.GetValue("Collection:UseEnergy", true);
         /// <summary>
+        /// 每次归集操作强制检查所有地址余额
+        /// </summary>
+        private bool ForceCheckAllAddress => _configuration.GetValue("Collection:ForceCheckAllAddress", false);
+        /// <summary>
         /// 是否保留0.000001USDT
         /// </summary>
         private bool RetainUSDT => _configuration.GetValue("Collection:RetainUSDT", true);
@@ -49,7 +53,7 @@ namespace TokenPay.BgServices
         /// <summary>
         /// 归集收款地址
         /// </summary>
-        private string Address => _configuration.GetValue<string>("Collection:Address");
+        private string Address => _configuration.GetValue<string>("Collection:Address")!;
         private int CheckTime => _configuration.GetValue("Collection:CheckTime", 1);
         /// <summary>
         /// 预估带宽消耗的TRX
@@ -158,7 +162,7 @@ namespace TokenPay.BgServices
             }
             using IServiceScope scope = _serviceProvider.CreateScope();
             var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Tokens>>();
-            var list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => x.USDT > MinUSDT || x.Value > 0.5m).ToListAsync();
+            var list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => ForceCheckAllAddress || (x.USDT > MinUSDT || x.Value > 0.5m)).ToListAsync();
             var count = 0;
             foreach (var item in list)
             {

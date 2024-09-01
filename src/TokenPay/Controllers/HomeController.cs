@@ -26,7 +26,7 @@ namespace TokenPay.Controllers
         private readonly IHostEnvironment _env;
         private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
-        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
+        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY")!);
         private int GetDecimals(string currency)
         {
             var decimals = currency switch
@@ -332,7 +332,7 @@ namespace TokenPay.Controllers
             {
                 throw new TokenPayException("汇率有误！");
             }
-            var Amount = (model.ActualAmount / rate).ToRound(GetDecimals(model.Currency));
+            var Amount = (model.ActualAmount / rate).ToRound(GetDecimals(model.Currency)); //因为每个用户一个独立支付地址，所以此处金额计算逻辑与静态地址不同
             return (UseTokenAdress, Amount);
         }
         /// <summary>
@@ -445,8 +445,8 @@ namespace TokenPay.Controllers
             //所有地址都存在此金额
             if (string.IsNullOrEmpty(UseTokenAdress))
             {
-                var decimals = GetDecimals(model.Currency);
-                var maxLoop = Math.Pow(10, decimals);
+                var decimals = GetDecimals(model.Currency);//根据小数位数计算递增次数，2位小数递增100次，三位小数递增1000次
+                var maxLoop = Math.Max(5, Math.Pow(10, decimals));//可能会存在0位小数的情况，限制最少递增5次
                 var AddAmount = Convert.ToDecimal(1 / maxLoop);//初始递增量
                 for (int i = 0; i < maxLoop; i++)//最多递增N次，根据精度控制
                 {
@@ -460,7 +460,7 @@ namespace TokenPay.Controllers
                             .Where(x => x.Currency == model.Currency)//虚拟币币种
                             .Where(x => x.Amount == currentAmount) //实际支付的虚拟币金额
                             .Where(x => x.Status == OrderStatus.Pending);
-                        var has = await query//代支付
+                        var has = await query//待支付
                             .AnyAsync();
                         if (!has)
                         {

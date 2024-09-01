@@ -19,7 +19,7 @@ namespace TokenPay.BgServices
         private readonly List<EVMChain> _chain;
         private readonly ILogger<UpdateRateService> _logger;
         private readonly FlurlClient client;
-        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY"));
+        private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY")!);
         public UpdateRateService(
             IConfiguration configuration,
             IServiceProvider serviceProvider,

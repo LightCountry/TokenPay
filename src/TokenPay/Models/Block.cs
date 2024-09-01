@@ -128,36 +128,13 @@ namespace TokenPay.Models
         transfer = 10,
         [Description("授权转账")]
         transferFrom,
-        [Description("授权")]
-        approve,
-        [Description("增加授权额度")]
-        increaseApproval,
-        [Description("减少授权额度")]
-        decreaseApproval,
-        [Description("TRX 闪兑 USDT")]
-        trxToTokenSwapInput,
-        [Description("USDT 闪兑 TRX")]
-        tokenToTrxSwapInput,
-        /// <summary>
-        /// Token Goodies 批量转账
-        /// </summary>
-        [Description("批量转账")]
-        FillOrderStraight,
-        //balanceOf
     }
     public class Value
     {
         private static Dictionary<string, AbiFunction> FuncDic = new Dictionary<string, AbiFunction>
         {
             {"a9059cbb", AbiFunction.transfer },
-            {"23b872dd", AbiFunction.transferFrom },
-            {"095ea7b3", AbiFunction.approve },
-            {"d73dd623", AbiFunction.increaseApproval },
-            {"66188463", AbiFunction.decreaseApproval },
-            {"4bf3e2d0", AbiFunction.trxToTokenSwapInput },
-            {"999bb7ac", AbiFunction.tokenToTrxSwapInput },
-            {"35cd050b", AbiFunction.FillOrderStraight },
-            //{"70a08231", AbiFunction.balanceOf }
+            {"23b872dd", AbiFunction.transferFrom }
         };
         [JsonProperty("amount")]
         public decimal AmountRaw { get; set; }
@@ -170,49 +147,6 @@ namespace TokenPay.Models
         public decimal CallValue => CallValueRaw / 1_000_000m;
         [JsonProperty("data")]
         public string? Data { get; set; }
-        public AbiFunction? Function
-        {
-            get
-            {
-                if (sha3Signature == null || Data == null) return null;
-                if (FuncDic.ContainsKey(sha3Signature))
-                {
-                    return FuncDic[sha3Signature];
-                }
-                return null;
-            }
-        }
-        public string? sha3Signature
-        {
-            get
-            {
-                if (Data == null) return null;
-                var data = Data[..8];
-                return data;
-            }
-        }
-        public string? AbiData
-        {
-            get
-            {
-                if (Data == null) return null;
-                var data = Data[8..];
-                return data;
-            }
-        }
-        public static FunctionCallDecoder functionCallDecoder = new FunctionCallDecoder();
-        /// <summary>
-        /// 提取ABIdata
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="type">address uint256 等</param>
-        /// <param name="name">字段名</param>
-        /// <returns></returns>
-        public T? DecodeFunctionInput<T>() where T : new()
-        {
-            if (Data == null || Function == null) return default;
-            return functionCallDecoder.DecodeFunctionInput<T>(sha3Signature, AbiData);
-        }
         [JsonProperty("asset_name")]
         public string AssetName { get; set; }
 

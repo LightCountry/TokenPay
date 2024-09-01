@@ -49,7 +49,7 @@ namespace TokenPay.BgServices
                 .Where(x => !x.CallbackConfirm)
                 .Where(x => x.CallbackNum < 3)
                 .Where(x => x.LastNotifyTime == null || x.LastNotifyTime < start) //未通知过，或通知失败N分钟后的
-                .Where(x => x.NotifyUrl.StartsWith("http"))
+                .Where(x => x.NotifyUrl!.StartsWith("http"))
                 .ToListAsync();
             foreach (var order in Orders)
             {
