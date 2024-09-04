@@ -27,6 +27,8 @@ namespace TokenPay.Extensions
                 { "BaseCurrency", BaseCurrency },
                 { "BlockChainName", order.Currency.ToBlockchainEnglishName(EVMChains) },
                 { "CurrencyName", order.Currency.ToCurrency(EVMChains) },
+                { nameof(order.PayAmount), order.PayAmount.ToString() },
+                { nameof(order.IsDynamicAmount), order.IsDynamicAmount.ToString() }
             };
             var nullKey = new List<string>();
             foreach (var item in dic)

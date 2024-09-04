@@ -18,7 +18,7 @@ namespace TokenPay.BgServices
             this.freeSql = freeSql;
         }
 
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(DateTime RunTime, CancellationToken stoppingToken)
         {
             var _repository = freeSql.GetRepository<TokenOrders>();
 

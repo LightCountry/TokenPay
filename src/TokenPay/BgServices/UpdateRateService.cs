@@ -48,7 +48,7 @@ namespace TokenPay.BgServices
             }
             return list;
         }
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(DateTime RunTime, CancellationToken stoppingToken)
         {
             var baseCurrencyList = new List<string>();
             var erc20Names = _chain.Select(x => x.ERC20Name).ToArray();

@@ -42,7 +42,7 @@ namespace TokenPay.Helper
                 }, new string[] { "0x" + hex.Substring(2, hex.Length - 2) });
 
             var encodedHex = Convert.ToHexString(encoded);
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
                 .AppendPathSegment("wallet/triggerconstantcontract")
                 .WithTimeout(5);
@@ -86,7 +86,7 @@ namespace TokenPay.Helper
         public static async Task<(bool, string?)> TransferTrxAsync(this TronWallet wallet0, decimal value, string ToAddress)
         {
             var address = wallet0.Address;
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request1 = BaseUrl
                 .WithTimeout(5);
             var request2 = BaseUrl
@@ -173,7 +173,7 @@ namespace TokenPay.Helper
         public static async Task<(bool, string?)> TransferUSDTAsync(this TronWallet wallet0, decimal value, string ToAddress)
         {
             var address = wallet0.Address;
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request1 = BaseUrl
                 .WithTimeout(5);
             var request2 = BaseUrl
@@ -271,7 +271,7 @@ namespace TokenPay.Helper
         /// <returns></returns>
         public static async Task<GetAccountResourceModel> GetAccountResourceAsync(string address)
         {
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
                 .AppendPathSegment("wallet/getaccountresource")
                 .WithTimeout(5);
@@ -296,7 +296,7 @@ namespace TokenPay.Helper
         /// <returns></returns>
         public static async Task<GetAccountModel> GetAccountAsync(string address)
         {
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
                 .AppendPathSegment("wallet/getaccount")
                 .WithTimeout(5);
@@ -320,7 +320,7 @@ namespace TokenPay.Helper
         /// <returns></returns>
         public static async Task<decimal> GetTRXAsync(string address)
         {
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
                 .AppendPathSegment("wallet/getaccount")
                 .WithTimeout(5);
@@ -348,7 +348,7 @@ namespace TokenPay.Helper
         /// <returns></returns>
         public static async Task<(bool, string?, JObject?)> GetTransferTrxSignedTxnToJobjectAsync(string OwnerAddress, string privateKey, decimal value, string ToAddress)
         {
-            var BaseUrl = configuration.GetValue("ApiHost", "https://api.trongrid.io");
+            var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
                 .WithTimeout(5);
 

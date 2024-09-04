@@ -19,7 +19,7 @@ namespace TokenPay.BgServices
             {
                 try
                 {
-                    await ExecuteAsync();
+                    await ExecuteAsync(DateTime.Now, stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -27,7 +27,7 @@ namespace TokenPay.BgServices
                 }
             } while (!stoppingToken.IsCancellationRequested && await _timer.WaitForNextTickAsync(stoppingToken));
         }
-        protected abstract Task ExecuteAsync();
+        protected abstract Task ExecuteAsync(DateTime RunTime, CancellationToken stoppingToken);
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             Logger.LogInformation("Service {JobName} is stopping.", jobName);

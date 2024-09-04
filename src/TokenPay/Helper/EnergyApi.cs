@@ -1,5 +1,6 @@
 using Flurl;
 using Flurl.Http;
+using Flurl.Http.Newtonsoft;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,7 @@ namespace TokenPay.Helper
             _logger = logger;
             _configuration = configuration;
             client = new FlurlClient(baseUrl);
+            client.WithSettings(fs => fs.JsonSerializer = new NewtonsoftJsonSerializer(null));
             client.BeforeCall(c =>
             {
                 c.Request.WithHeader("Lang", "zh-CN");

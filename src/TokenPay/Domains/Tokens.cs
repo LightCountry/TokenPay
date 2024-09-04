@@ -26,6 +26,10 @@ namespace TokenPay.Domains
         /// USDT代币余额
         /// </summary>
         public decimal USDT { get; set; }
+        /// <summary>
+        /// 最后检查时间
+        /// </summary>
+        public DateTime? LastCheckTime { get; set; }
     }
     public enum TokenCurrency
     {

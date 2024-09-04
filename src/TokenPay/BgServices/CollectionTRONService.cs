@@ -54,7 +54,7 @@ namespace TokenPay.BgServices
         /// 归集收款地址
         /// </summary>
         private string Address => _configuration.GetValue<string>("Collection:Address")!;
-        private int CheckTime => _configuration.GetValue("Collection:CheckTime", 1);
+        private int CheckTime => _configuration.GetValue("Collection:CheckTime", 3);
         /// <summary>
         /// 预估带宽消耗的TRX
         /// </summary>
@@ -71,7 +71,7 @@ namespace TokenPay.BgServices
             this._bot = bot;
             this.freeSql = freeSql;
         }
-        protected override async Task ExecuteAsync()
+        protected override async Task ExecuteAsync(DateTime RunTime, CancellationToken stoppingToken)
         {
             if (!Enable) return;
             var SendToTelegram = false;
@@ -105,7 +105,7 @@ namespace TokenPay.BgServices
             _logger.LogInformation("手续费钱包当前TRX余额：{trx}", mainTrx);
             if (mainTrx < 1)
             {
-                while (mainTrx < 1)
+                while (!stoppingToken.IsCancellationRequested && mainTrx < 1)
                 {
                     var TrxCheckTime = 10;
                     _logger.LogInformation("手续费钱包地址为：{a}", mainWallet.Address);
@@ -164,12 +164,19 @@ namespace TokenPay.BgServices
             var count = 0;
             foreach (var item in list)
             {
+                if (stoppingToken.IsCancellationRequested) return;
+                if (item.LastCheckTime.HasValue && (DateTime.Now - item.LastCheckTime.Value).TotalHours <= 1)
+                {
+                    //避免短时间重复检查余额
+                    continue;
+                }
                 var TRX = await QueryTronAction.GetTRXAsync(item.Address);
                 var USDT = await QueryTronAction.GetUsdtAmountAsync(item.Address);
                 item.Value = TRX;
                 item.USDT = USDT;
+                item.LastCheckTime = DateTime.Now;
                 await _repository.UpdateAsync(item);
-                _logger.LogInformation("更新地址余额数据：{a}/{b}", ++count, list.Count);
+                _logger.LogInformation("更新地址余额数据：{a}/{b}，TRX：{TRX}，USDT：{USDT}", ++count, list.Count, TRX, USDT);
                 await Task.Delay(1500);
             }
             list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => x.USDT > MinUSDT || x.Value > 0.5m).ToListAsync();
@@ -182,6 +189,7 @@ namespace TokenPay.BgServices
             Func<int, Task<(decimal, string)>> GetPrice = async (int ResourceValue) =>
             {
                 var resp = await energyApi.OrderPrice(ResourceValue);
+                _logger.LogInformation("能量价格预估：{@result}", resp);
                 if (resp != null && resp.Code == 0)
                 {
                     var EnergyPayAddress = resp.Data.PayAddress;
@@ -201,6 +209,7 @@ namespace TokenPay.BgServices
                 _logger.LogInformation("跳过归集TRX");
             foreach (var item in list.Where(x => x.Value > 0.5m))
             {
+                if (stoppingToken.IsCancellationRequested) return;
                 var wallet = new TronWallet(item.Key);
 
                 var account = await QueryTronAction.GetAccountResourceAsync(wallet.Address);
@@ -232,6 +241,7 @@ namespace TokenPay.BgServices
                 _logger.LogInformation("跳过归集USDT");
             foreach (var item in list.Where(x => x.USDT > MinUSDT))
             {
+                if (stoppingToken.IsCancellationRequested) return;
                 var wallet = new TronWallet(item.Key);
                 var account = await QueryTronAction.GetAccountAsync(wallet.Address);
                 if (account.CreateTime == 0)
@@ -346,7 +356,7 @@ namespace TokenPay.BgServices
                             {
                                 var count2 = 0;
                                 await Task.Delay(3000);
-                                while (count2 < 30)
+                                while (!stoppingToken.IsCancellationRequested && count2 < 30)
                                 {
                                     try
                                     {
@@ -360,7 +370,7 @@ namespace TokenPay.BgServices
                                                 var TxId = string.Empty;
 
                                                 var count3 = 0;
-                                                while (count3 < 5)
+                                                while (!stoppingToken.IsCancellationRequested && count3 < 5)
                                                 {
                                                     try
                                                     {
