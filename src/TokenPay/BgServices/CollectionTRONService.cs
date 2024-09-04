@@ -170,6 +170,7 @@ namespace TokenPay.BgServices
                 item.USDT = USDT;
                 await _repository.UpdateAsync(item);
                 _logger.LogInformation("更新地址余额数据：{a}/{b}", ++count, list.Count);
+                await Task.Delay(1500);
             }
             list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => x.USDT > MinUSDT || x.Value > 0.5m).ToListAsync();
             _logger.LogInformation(@"共计查询到{count}个需要归集的地址，有TRX的地址有{a}个，共有 {b} TRX，有USDT的地址有{c}个，共有 {d} USDT",
