@@ -17,8 +17,7 @@ namespace TokenPay.BgServices
         private readonly IHostEnvironment _env;
         private readonly List<EVMChain> _chains;
         private readonly Channel<TokenOrders> _channel;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly FlurlClient client;
+        private readonly IFreeSql freeSql;
         private bool UseDynamicAddress => _configuration.GetValue("UseDynamicAddress", true);
         private bool UseDynamicAddressAmountMove => _configuration.GetValue("DynamicAddressConfig:AmountMove", false);
         public OrderCheckEVMERC20Service(ILogger<OrderCheckEVMERC20Service> logger,
@@ -26,26 +25,19 @@ namespace TokenPay.BgServices
             IHostEnvironment env,
             List<EVMChain> Chains,
             Channel<TokenOrders> channel,
-            IServiceProvider serviceProvider) : base("ERC20订单检测", TimeSpan.FromSeconds(15), logger)
+            IFreeSql freeSql) : base("ERC20订单检测", TimeSpan.FromSeconds(15), logger)
         {
             _logger = logger;
             this._configuration = configuration;
             this._env = env;
             _chains = Chains;
             this._channel = channel;
-            _serviceProvider = serviceProvider;
-            var WebProxy = configuration.GetValue<string>("WebProxy");
-            client = new FlurlClient();
-            if (!string.IsNullOrEmpty(WebProxy))
-            {
-                client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
-            }
+            this.freeSql = freeSql;
         }
 
         protected override async Task ExecuteAsync()
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            var _repository = freeSql.GetRepository<TokenOrders>();
             foreach (var chain in _chains)
             {
                 if (chain == null || !chain.Enable || chain.ERC20 == null) continue;
@@ -108,7 +100,6 @@ namespace TokenPay.BgServices
                 var req = BaseUrl
                     .AppendPathSegment($"api")
                     .SetQueryParams(query)
-                    .WithClient(client)
                     .WithTimeout(15);
                 var result = await req
                     .GetJsonAsync<BaseResponse<ERC20Transaction>>();

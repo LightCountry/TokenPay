@@ -15,7 +15,7 @@ namespace TokenPay.BgServices
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment _env;
         private readonly Channel<TokenOrders> _channel;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IFreeSql freeSql;
         private bool UseDynamicAddress => _configuration.GetValue("UseDynamicAddress", true);
         private bool UseDynamicAddressAmountMove => _configuration.GetValue("DynamicAddressConfig:AmountMove", false);
 
@@ -23,20 +23,19 @@ namespace TokenPay.BgServices
             IConfiguration configuration,
             IHostEnvironment env,
             Channel<TokenOrders> channel,
-            IServiceProvider serviceProvider) : base("TRX订单检测", TimeSpan.FromSeconds(3), logger)
+            IFreeSql freeSql) : base("TRX订单检测", TimeSpan.FromSeconds(3), logger)
         {
             _logger = logger;
             this._configuration = configuration;
             this._env = env;
             this._channel = channel;
-            _serviceProvider = serviceProvider;
+            this.freeSql = freeSql;
         }
 
         protected override async Task ExecuteAsync()
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
-            var _TokensRepository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Tokens>>();
+            var _repository = freeSql.GetRepository<TokenOrders>();
+            var _TokensRepository = freeSql.GetRepository<Tokens>();
 
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)

@@ -15,29 +15,20 @@ namespace TokenPay.BgServices
         const string baseUrl = "https://www.okx.com";
         const string User_Agent = "TokenPay/1.0 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36";
         private readonly IConfiguration _configuration;
-        private readonly IServiceProvider _serviceProvider;
         private readonly List<EVMChain> _chain;
+        private readonly IFreeSql freeSql;
         private readonly ILogger<UpdateRateService> _logger;
-        private readonly FlurlClient client;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY")!);
         public UpdateRateService(
             IConfiguration configuration,
-            IServiceProvider serviceProvider,
             List<EVMChain> chain,
+            IFreeSql freeSql,
             ILogger<UpdateRateService> logger) : base("更新汇率", TimeSpan.FromSeconds(3600), logger)
         {
             this._configuration = configuration;
-            this._serviceProvider = serviceProvider;
             this._chain = chain;
+            this.freeSql = freeSql;
             this._logger = logger;
-            var WebProxy = configuration.GetValue<string>("WebProxy");
-            client = new FlurlClient();
-            client.Settings.Timeout = TimeSpan.FromSeconds(5);
-            if (!string.IsNullOrEmpty(WebProxy))
-            {
-                client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
-            }
-
         }
 
         private List<string> GetActiveCurrency()
@@ -79,8 +70,7 @@ namespace TokenPay.BgServices
                 _logger.LogInformation("没有需要更新汇率的币种");
             }
             _logger.LogInformation("------------------{tips}------------------", "开始更新汇率");
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenRate>>();
+            var _repository = freeSql.GetRepository<TokenRate>();
             var list = new List<TokenRate>();
 
             foreach (var item in baseCurrencyList)
@@ -89,8 +79,8 @@ namespace TokenPay.BgServices
                 try
                 {
                     var result = await baseUrl
-                        .WithClient(client)
-                        .WithHeaders(new { User_Agent = User_Agent })
+                        .WithTimeout(5)
+                        .WithHeaders(new { User_Agent })
                         .AppendPathSegment("/v3/c2c/otc-ticker/quotedPrice")
                         .SetQueryParams(new
                         {
@@ -130,13 +120,14 @@ namespace TokenPay.BgServices
                 {
                     item.Rate += RateMove;
                 }
-                _logger.LogInformation("更新汇率，{a}=>{b} = {c}", item.Currency, item.FiatCurrency, $"{item.Rate}{(RateMove!=0?$" ({RateMove:+0.##;-0.##;0})":"")}");
+                _logger.LogInformation("更新汇率，{a}=>{b} = {c}", item.Currency, item.FiatCurrency, $"{item.Rate}{(RateMove != 0 ? $" ({RateMove:+0.##;-0.##;0})" : "")}");
                 await _repository.InsertOrUpdateAsync(item);
             }
             _logger.LogInformation("------------------{tips}------------------", "结束更新汇率");
         }
     }
 
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
     class Datum
     {
         public bool bestOption { get; set; }
@@ -160,4 +151,5 @@ namespace TokenPay.BgServices
         Sell
     }
 
+#pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
 }

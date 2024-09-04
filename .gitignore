@@ -366,3 +366,4 @@ FodyWeavers.xsd
 /src/TokenPay/EVMChains.json
 /src/TokenPay/EVMChains.Development.json
 /src/TokenPay/手续费钱包私钥.txt
+/src/TokenPay/.config

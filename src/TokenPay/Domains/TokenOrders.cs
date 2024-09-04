@@ -49,7 +49,7 @@ namespace TokenPay.Domains
         /// <summary>
         /// 区块链币种
         /// </summary>
-        public string Currency { get; set; }
+        public required string Currency { get; set; }
         /// <summary>
         /// 订单金额，保留4位小数
         /// </summary>

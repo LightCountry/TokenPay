@@ -10,39 +10,35 @@ namespace TokenPay.BgServices
     {
         private readonly ILogger<OrderNotifyService> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IFreeSql freeSql;
         private readonly FlurlClient client;
 
         public OrderNotifyService(ILogger<OrderNotifyService> logger,
             IConfiguration configuration,
-            IServiceProvider serviceProvider) : base("订单通知", TimeSpan.FromSeconds(1), logger)
+            IFreeSql freeSql) : base("订单通知", TimeSpan.FromSeconds(3), logger)
         {
             _logger = logger;
             this._configuration = configuration;
-            _serviceProvider = serviceProvider;
+            this.freeSql = freeSql;
             client = new FlurlClient();
             client.Settings.Timeout = TimeSpan.FromSeconds(configuration.GetValue("NotifyTimeOut", 3));
-            client.Configure(settings =>
+            client.BeforeCall(c =>
             {
-                settings.BeforeCall = c =>
+                c.Request.WithHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 TokenPay/1.0");
+                _logger.LogInformation("发起请求\nURL：{url}\n参数：{body}", c.Request.Url, c.RequestBody);
+            });
+            client.AfterCall(async c =>
+            {
+                if (c.Response != null)
                 {
-                    c.Request.WithHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 TokenPay/1.0");
-                    _logger.LogInformation("发起请求\nURL：{url}\n参数：{body}", c.Request.Url, c.RequestBody);
-                };
-                settings.AfterCallAsync = async c =>
-                {
-                    if (c.Response != null)
-                    {
-                        _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, await c.Response.GetStringAsync());
-                    }
-                };
+                    _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, await c.Response.GetStringAsync());
+                }
             });
         }
 
         protected override async Task ExecuteAsync()
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            var _repository = freeSql.GetRepository<TokenOrders>();
             var start = DateTime.Now.AddMinutes(-1);
             var Orders = await _repository
                 .Where(x => x.Status == OrderStatus.Paid)
@@ -80,7 +76,7 @@ namespace TokenPay.BgServices
                     SignatureStr += ApiToken;
                     var Signature = SignatureStr.ToMD5();
                     dic.Add(nameof(Signature), Signature);
-                    var result = await order.NotifyUrl.WithClient(client).PostJsonAsync(dic);
+                    var result = await client.Request(order.NotifyUrl).PostJsonAsync(dic);
                     var message = await result.GetStringAsync();
                     if (result.StatusCode == 200 && message == "ok")
                     {

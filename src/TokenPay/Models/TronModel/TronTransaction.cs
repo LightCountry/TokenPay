@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 
 namespace TokenPay.Models.TronModel
 {
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
     public class TronTransaction
     {
         [JsonProperty("transaction_id")]
@@ -44,4 +45,5 @@ namespace TokenPay.Models.TronModel
         [JsonProperty("name")]
         public string Name { get; set; }
     }
+#pragma warning restore CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
 }

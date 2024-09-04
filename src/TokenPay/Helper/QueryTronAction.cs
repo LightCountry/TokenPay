@@ -28,7 +28,7 @@ namespace TokenPay.Helper
 
     public static partial class QueryTronAction
     {
-        public static IConfiguration configuration { get; set; }
+        public static IConfiguration configuration { get; set; } = null!;
         /// <summary>
         /// 获取USDT余额
         /// </summary>
@@ -370,11 +370,11 @@ namespace TokenPay.Helper
             var result = await resultData.ReceiveJson<JObject>();
             if (result.ContainsKey("Error") && result["Error"] != null)
             {
-                return (false, result["Error"].ToString(), null);
+                return (false, result["Error"]?.ToString(), null);
             }
             var transaction = result;
             // Sign
-            var txId = transaction["txID"].ToString().FromHexToByteArray();
+            var txId = transaction["txID"]?.ToString().FromHexToByteArray();
             var wallet0 = new TronWallet(privateKey);
             Signature signature = wallet0.Sign(txId);
             TronSignature tronSignature = new TronSignature(signature);

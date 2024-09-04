@@ -28,23 +28,14 @@ namespace TokenPay.Helper
             _logger = logger;
             _configuration = configuration;
             client = new FlurlClient(baseUrl);
-            client.Configure(settings =>
+            client.BeforeCall(c =>
             {
-                settings.BeforeCall = c =>
-                {
-                    c.Request.WithHeader("Lang", "zh-CN");
-                };
+                c.Request.WithHeader("Lang", "zh-CN");
+                _logger.LogInformation("发起请求\nURL：{url}\n参数：{body}", c.Request.Url, c.RequestBody);
             });
-            client.Configure(settings =>
+            client.AfterCall(async c =>
             {
-                settings.BeforeCall = c =>
-                {
-                    _logger.LogInformation("发起请求\nURL：{url}\n参数：{body}", c.Request.Url, c.RequestBody);
-                };
-                settings.AfterCallAsync = async c =>
-                {
-                    _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, c.Response != null ? await c.Response.GetStringAsync() : null);
-                };
+                _logger.LogInformation("收到响应\nURL：{url}\n响应：{@body}", c.Request.Url, c.Response != null ? await c.Response.GetStringAsync() : null);
             });
         }
         /// <summary>
@@ -87,6 +78,7 @@ namespace TokenPay.Helper
         }
 
     }
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
     public class CreateOrderModel
     {
         /// <summary>
@@ -316,4 +308,5 @@ namespace TokenPay.Helper
         [JsonProperty("pay_amount")]
         public decimal Price { get; set; }
     }
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
 }

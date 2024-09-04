@@ -1,4 +1,4 @@
-name: .NET
+name: Build Pre-Release
 
 on:
   push:
@@ -17,11 +17,16 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 6.0.x
-    - name: Publish for Linux-x64
-      run: dotnet publish -c Release -r linux-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o app/linux-x64
-    - name: Publish for Windows-x64
-      run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -p:PublishReadyToRun=true -o app/win-x64
+        dotnet-version: 8.0.x
+    - name: Publish
+      run: |
+          dotnet publish -c Release -r linux-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/linux-x64
+          dotnet publish -c Release -r win-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/win-x64
+          dotnet publish -c Release -r linux-arm64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/linux-arm64
+          cd app
+          find . -type f -name 'appsettings.Example.json' -execdir mv {} appsettings.json \;
+          find . -maxdepth 1 -type d ! -name '.' | xargs -I {} sh -c 'cd "{}" && zip -r "../${{ github.ref_name }}-$(basename {}).zip" *'
+          find . -maxdepth 1 -type d ! -name '.' -exec rm -rf {} +
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -39,14 +44,6 @@ jobs:
         with:
           name: app
           path: app
-  
-      - name: Zip artifact
-        run: |
-          cd app
-          mv linux-x64/appsettings.Example.json linux-x64/appsettings.json
-          zip -r linux-x64.zip linux-x64/*
-          mv win-x64/appsettings.Example.json win-x64/appsettings.json
-          zip -r win-x64.zip win-x64/*
           
       - name: Create Release
         id: create_release
@@ -59,27 +56,27 @@ jobs:
           draft: false
           prerelease: true
 
-      - name: Upload Release Asset for Linux-x64
-        id: upload_linux
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload ZIP files to Release
+        id: upload_zip
+        uses: actions/github-script@v3
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/linux-x64.zip
-          asset_name: linux-x64.zip
-          asset_content_type: application/zip
-
-      - name: Upload Release Asset for Windows-x64
-        id: upload_win
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/win-x64.zip
-          asset_name: win-x64.zip
-          asset_content_type: application/zip
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const path = require('path');
+            const fs = require('fs');
+            const release_id = '${{ steps.create_release.outputs.id }}';
+            for (let file of await fs.readdirSync('app/')) {
+              if (path.extname(file) === '.zip') {
+                console.log('uploadReleaseAsset', file);
+                await github.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release_id,
+                  name: file,
+                  data: await fs.readFileSync(`app/${file}`)
+                });
+              }
+            }
 
   cleanup:
     name: Cleanup

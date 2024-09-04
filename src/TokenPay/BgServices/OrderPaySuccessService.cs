@@ -33,13 +33,13 @@ namespace TokenPay.BgServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested && await _channel.Reader.WaitToReadAsync())
+            while (!stoppingToken.IsCancellationRequested && await _channel.Reader.WaitToReadAsync(stoppingToken))
             {
                 while (!stoppingToken.IsCancellationRequested && _channel.Reader.TryRead(out var item))
                 {
                     try
                     {
-                        await SendAdminMessage(item);
+                        await SendAdminMessage(item, stoppingToken);
                     }
                     catch (Exception e)
                     {
@@ -48,7 +48,7 @@ namespace TokenPay.BgServices
                 }
             }
         }
-        private async Task SendAdminMessage(TokenOrders order)
+        private async Task SendAdminMessage(TokenOrders order, CancellationToken? cancellationToken = null)
         {
             //默认货币
             var BaseCurrency = _configuration.GetValue<string>("BaseCurrency", "CNY");
@@ -93,7 +93,7 @@ namespace TokenPay.BgServices
                     }
                 }
             }
-            await _bot.SendTextMessageAsync(message);
+            await _bot.SendTextMessageAsync(message, cancellationToken: cancellationToken);
         }
     }
 }

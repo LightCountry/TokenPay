@@ -16,7 +16,7 @@ namespace TokenPay.BgServices
     {
         private readonly IConfiguration _configuration;
         private readonly TelegramBot _bot;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IFreeSql freeSql;
         private readonly ILogger<CollectionTRONService> _logger;
         /// <summary>
         /// 是否启用归集功能
@@ -63,14 +63,13 @@ namespace TokenPay.BgServices
         public CollectionTRONService(
             IConfiguration configuration,
             TelegramBot bot,
-            IServiceProvider serviceProvider,
+            IFreeSql freeSql,
             ILogger<CollectionTRONService> logger) : base("TRON归集任务", TimeSpan.FromHours(configuration.GetValue("Collection:CheckTime", 1)), logger)
         {
             this._configuration = configuration;
-            this._serviceProvider = serviceProvider;
             this._logger = logger;
             this._bot = bot;
-
+            this.freeSql = freeSql;
         }
         protected override async Task ExecuteAsync()
         {
@@ -160,8 +159,7 @@ namespace TokenPay.BgServices
 当前TRX余额：{trx} USDT
 当前USDT余额：{usdt} USDT");
             }
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<Tokens>>();
+            var _repository = freeSql.GetRepository<Tokens>();
             var list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => ForceCheckAllAddress || (x.USDT > MinUSDT || x.Value > 0.5m)).ToListAsync();
             var count = 0;
             foreach (var item in list)

@@ -7,16 +7,20 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <SatelliteResourceLanguages>en;zh</SatelliteResourceLanguages>
     <NoWarn>1591;</NoWarn>
+    <RazorCompileOnBuild>false</RazorCompileOnBuild>
+    <RazorCompileOnPublish>false</RazorCompileOnPublish>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <TrimMode>partial</TrimMode>
   </PropertyGroup>
+  
   <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Flurl.Http" Version="3.2.4" />
+    <PackageReference Include="Flurl.Http" Version="4.0.2" />
+    <PackageReference Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
     <PackageReference Include="FreeSql.Provider.SqliteCore" Version="3.2.833" />
     <PackageReference Include="FreeSql.Repository" Version="3.2.833" />
     <PackageReference Include="HDWallet.Tron" Version="0.7.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.8" />
     <PackageReference Include="NokitaKaze.Base58Check" Version="0.4.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.8" />

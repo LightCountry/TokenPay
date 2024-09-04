@@ -16,8 +16,7 @@ namespace TokenPay.BgServices
         private readonly IHostEnvironment _env;
         private readonly Channel<TokenOrders> _channel;
         private readonly List<EVMChain> _chains;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly FlurlClient client;
+        private readonly IFreeSql freeSql;
         private bool UseDynamicAddress => _configuration.GetValue("UseDynamicAddress", true);
         private bool UseDynamicAddressAmountMove => _configuration.GetValue("DynamicAddressConfig:AmountMove", false);
         public OrderCheckEVMBaseService(ILogger<OrderCheckEVMBaseService> logger,
@@ -25,26 +24,19 @@ namespace TokenPay.BgServices
             IHostEnvironment env,
             Channel<TokenOrders> channel,
             List<EVMChain> Chains,
-            IServiceProvider serviceProvider) : base("ETH订单检测", TimeSpan.FromSeconds(15), logger)
+            IFreeSql freeSql) : base("ETH订单检测", TimeSpan.FromSeconds(15), logger)
         {
             _logger = logger;
             this._configuration = configuration;
             this._env = env;
             this._channel = channel;
             _chains = Chains;
-            _serviceProvider = serviceProvider;
-            var WebProxy = configuration.GetValue<string>("WebProxy");
-            client = new FlurlClient();
-            if (!string.IsNullOrEmpty(WebProxy))
-            {
-                client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
-            }
+            this.freeSql = freeSql;
         }
 
         protected override async Task ExecuteAsync()
         {
-            using IServiceScope scope = _serviceProvider.CreateScope();
-            var _repository = scope.ServiceProvider.GetRequiredService<IBaseRepository<TokenOrders>>();
+            var _repository = freeSql.GetRepository<TokenOrders>();
             foreach (var chain in _chains)
             {
                 if (chain == null || !chain.Enable) continue;
@@ -87,7 +79,6 @@ namespace TokenPay.BgServices
                         var req = BaseUrl
                             .AppendPathSegment($"api")
                             .SetQueryParams(query)
-                            .WithClient(client)
                             .WithTimeout(15);
                         var result = await req
                             .GetJsonAsync<BaseResponse<EthTransaction>>();

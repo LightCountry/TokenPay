@@ -3,20 +3,17 @@ using System.Net;
 
 namespace TokenPay.Helper
 {
-    public class ProxyHttpClientFactory : DefaultHttpClientFactory
+    public class ProxyHttpClientFactory : DelegatingHandler
     {
-        private string _address;
 
-        public ProxyHttpClientFactory(string address)
+        public ProxyHttpClientFactory(string address) : base(CreateMessageHandler(address))
         {
-            _address = address;
         }
-
-        public override HttpMessageHandler CreateMessageHandler()
+        public static HttpMessageHandler CreateMessageHandler(string address)
         {
-            var uri = new Uri(_address);
+            var uri = new Uri(address);
             var userinfo = uri.UserInfo.Split(":");
-            if (_address.ToLower().StartsWith("http"))
+            if (address.ToLower().StartsWith("http"))
             {
                 var webProxy = new WebProxy(Host: uri.Host, Port: uri.Port)
                 {
@@ -30,7 +27,7 @@ namespace TokenPay.Helper
                 };
 
             }
-            else if (_address.ToLower().StartsWith("socks"))
+            else if (address.ToLower().StartsWith("socks"))
             {
                 var proxy = new WebProxy($"{uri.Scheme}://{uri.Authority}")
                 {
@@ -46,7 +43,7 @@ namespace TokenPay.Helper
             {
                 return new HttpClientHandler
                 {
-                    Proxy = new WebProxy(_address),
+                    Proxy = new WebProxy(address),
                     UseProxy = true
                 };
             }

@@ -11,22 +11,13 @@ namespace TokenPay.Helper
         private readonly string _botToken;
         private readonly long _userId;
         private readonly IConfiguration _configuration;
-        private readonly FlurlClient client;
-
         public TelegramBot(IConfiguration configuration)
         {
             _botToken = configuration.GetValue<string>("Telegram:BotToken")!;
             _userId = configuration.GetValue<long>("Telegram:AdminUserId");
             this._configuration = configuration;
-            var WebProxy = configuration.GetValue<string>("WebProxy");
-            client = new FlurlClient();
-            client.Settings.Timeout = TimeSpan.FromSeconds(5);
-            if (!string.IsNullOrEmpty(WebProxy))
-            {
-                client.Settings.HttpClientFactory = new ProxyHttpClientFactory(WebProxy);
-            }
         }
-        public static TelegramBotInfo BotInfo;
+        public static TelegramBotInfo BotInfo = null!;
         public async Task<TelegramResult<TelegramBotInfo>?> GetMeAsync(string? TelegramApiHost = null)
         {
             if (string.IsNullOrEmpty(_botToken) || _userId == 0)
@@ -37,8 +28,8 @@ namespace TokenPay.Helper
             var ApiHost = TelegramApiHost ?? BaseTelegramApiHost;
 
             var request = ApiHost
+                    .WithTimeout(5)
                     .AppendPathSegment($"bot{_botToken}/getMe")
-                    .WithClient(client)
                     .WithTimeout(10);
             var result = await request.GetJsonAsync<TelegramResult<TelegramBotInfo>>();
             Log.Logger.Information("机器人启动成功！我是{@result}。", result.Result.FirstName);
@@ -46,7 +37,7 @@ namespace TokenPay.Helper
             await SendTextMessageAsync("你好呀~我是TokenPay通知机器人！");
             return result;
         }
-        public async Task<TelegramResult<SendMessageResult>?> SendTextMessageAsync(string Message, string? TelegramApiHost = null)
+        public async Task<TelegramResult<SendMessageResult>?> SendTextMessageAsync(string Message, string? TelegramApiHost = null, CancellationToken? cancellationToken = null)
         {
             if (string.IsNullOrEmpty(_botToken) || _userId == 0)
             {
@@ -56,8 +47,8 @@ namespace TokenPay.Helper
             var ApiHost = TelegramApiHost ?? BaseTelegramApiHost;
 
             var request = ApiHost
+                    .WithTimeout(5)
                     .AppendPathSegment($"bot{_botToken}/sendMessage")
-                    .WithClient(client)
                     .SetQueryParams(new
                     {
                         chat_id = _userId,
@@ -68,7 +59,7 @@ namespace TokenPay.Helper
                     .WithTimeout(10);
             try
             {
-                var result = await request.GetJsonAsync<TelegramResult<SendMessageResult>>();
+                var result = await request.GetJsonAsync<TelegramResult<SendMessageResult>>(cancellationToken: cancellationToken ?? default);
                 Log.Logger.Information("机器人消息发送结果：{result}", result.Ok);
                 return result;
             }
@@ -80,6 +71,7 @@ namespace TokenPay.Helper
         }
     }
 
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
     public class TelegramBotInfo
     {
         [JsonProperty("id")]
@@ -158,4 +150,5 @@ namespace TokenPay.Helper
         [JsonProperty("result")]
         public T Result { get; set; }
     }
+#pragma warning disable CS8618 // 在退出构造函数时，不可为 null 的字段必须包含非 null 值。请考虑声明为可以为 null。
 }

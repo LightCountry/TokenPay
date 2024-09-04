@@ -1,12 +1,9 @@
+using Flurl.Http;
+using Flurl.Http.Newtonsoft;
 using FreeSql;
-using FreeSql.DataAnnotations;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
-using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -53,6 +50,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
                     .WriteTo.Console()
                     );
 builder.Services.AddControllersWithViews()
+    .AddRazorRuntimeCompilation()
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddJsonOptions(o =>
     {
@@ -68,7 +66,6 @@ IFreeSql fsql = new FreeSqlBuilder()
         .UseAutoSyncStructure(true) //自动同步实体结构
         .UseNoneCommandParameter(true)
         .Build();
-
 
 Services.AddSingleton(fsql);
 Services.AddScoped<UnitOfWorkManager>();
@@ -118,6 +115,16 @@ Services.AddSingleton(s =>
 // 订单广播 
 var channel = Channel.CreateUnbounded<TokenOrders>();
 Services.AddSingleton(channel);
+
+var WebProxy = Configuration.GetValue<string>("WebProxy");
+FlurlHttp.Clients.UseNewtonsoft();
+if (!string.IsNullOrEmpty(WebProxy))
+{
+    FlurlHttp.Clients.WithDefaults(c =>
+    {
+        c.AddMiddleware(() => new ProxyHttpClientFactory(WebProxy));
+    });
+}
 
 
 var app = builder.Build();

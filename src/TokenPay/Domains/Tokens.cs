@@ -5,15 +5,15 @@ namespace TokenPay.Domains
     public class Tokens
     {
         [Key]
-        public string Id { get; set; }
+        public required string Id { get; set; }
         /// <summary>
         /// 地址
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
         /// <summary>
         /// 密钥
         /// </summary>
-        public string Key { get; set; }
+        public required string Key { get; set; }
         /// <summary>
         /// 币种
         /// </summary>

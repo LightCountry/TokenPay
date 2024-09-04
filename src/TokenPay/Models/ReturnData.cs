@@ -7,7 +7,7 @@ namespace TokenPay.Models
         public bool Success { get; set; }
         public string? Message { get; set; }
         public T? Data { get; set; }
-        public SortedDictionary<string, object?> Info { get; set; }
+        public SortedDictionary<string, object?>? Info { get; set; }
     }
     public class ReturnData
     {
