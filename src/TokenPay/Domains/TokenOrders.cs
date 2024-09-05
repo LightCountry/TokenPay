@@ -94,6 +94,7 @@ namespace TokenPay.Domains
     {
         Pending,
         Paid,
-        Expired
+        Expired,
+        Closed,
     }
 }

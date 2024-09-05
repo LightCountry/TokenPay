@@ -113,6 +113,13 @@ namespace TokenPay.Controllers
             {
                 return View(order);
             }
+
+            // Redirect to `Cancel` page when the status of the order is closed.
+            if (order.Status == OrderStatus.Closed)
+            {
+                return RedirectToAction("Cancel", new { order.Id });
+            }
+
             ViewData["QrCode"] = Convert.ToBase64String(CreateQrCode(order.ToAddress));
             var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);
             if (DateTime.Now > order.CreateTime.AddSeconds(ExpireTime) || order.Status == OrderStatus.Expired)
@@ -534,6 +541,33 @@ namespace TokenPay.Controllers
             var qrCode = new QrCode(qrcode, new Vector2Slim(size, size), SKEncodedImageFormat.Png);
             qrCode.GenerateImage(stream);
             return stream.ToArray();
+        }
+
+        /// <summary>
+        /// Cancel the payment of an order.
+        /// </summary>
+        /// <param name="id">The id of the order.</param>
+        /// <returns>The result of the cancellation.</returns>
+        [HttpGet("/Cancel/{id:guid}")]
+        public async Task<IActionResult> CancelAsync(Guid id)
+        {
+            var order = await _repository.Where(order => order.Id == id).FirstAsync();
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            if (order.Status is not OrderStatus.Closed)
+            {
+                order.Status = OrderStatus.Closed;
+                await _repository.UpdateAsync(order);
+            }
+
+            return View(new OrderCancellationModel(
+                orderId: order.Id,
+                orderCode: order.OutOrderId,
+                returnUrl: order.RedirectUrl ?? string.Empty));
         }
     }
 }
