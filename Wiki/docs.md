@@ -114,7 +114,7 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
 | PayAmount | string | 实际支付金额，新增动态金额功能时新增此字段 |
 | IsDynamicAmount | int | 是否是动态金额订单，新增动态金额功能时新增此字段 |
 | Signature | string | 签名，`接口请务必验证此参数！！！`将除`Signature`字段外的所有字段，按照字母升序排序，忽略没有值的字段，按顺序拼接为`key1=value1&key2=value2`形式，然后在末尾拼接上`异步通知密钥`，将此字符串计算MD5，即为签名。 |
-| **重要说明** | ---- | **以上字段列表仅供参考，具体以实际传递的字段为准，实际字段数量可能会有增减，因此签名验证算法建议直接解析body内的json字符串，可参考 [TokenPayController.php](../Plugs//dujiaoka/app/Http/Controllers/Pay/TokenPayController.php) 中的 `VerifySign` ** |
+| **重要说明** | ---- | **以上字段列表仅供参考，具体以实际传递的字段为准，实际字段数量可能会有增减，因此签名验证算法建议直接解析body内的json字符串，可参考 [TokenPayController.php](../Plugs//dujiaoka/app/Http/Controllers/Pay/TokenPayController.php) 中的 `VerifySign`** |
 
 ### ①示例POST参数
 ```json
