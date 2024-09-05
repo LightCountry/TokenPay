@@ -34,8 +34,8 @@ class TokenPayController extends PayController
             ];
             $parameter['Signature'] = $this->VerifySign($parameter, $this->payGateway->merchant_key);
             $client = new Client([
-				'headers' => [ 'Content-Type' => 'application/json' ]
-			]);
+                'headers' => [ 'Content-Type' => 'application/json' ]
+            ]);
             $response = $client->post($this->payGateway->merchant_pem.'/CreateOrder', ['body' =>  json_encode($parameter)]);
             $body = json_decode($response->getBody()->getContents(), true);
             if (!isset($body['success']) || $body['success'] != true) {
@@ -83,7 +83,7 @@ class TokenPayController extends PayController
             return 'fail';
         }
         //合法的数据
-		$signature = $this->VerifySign($data, $payGateway->merchant_key);
+        $signature = $this->VerifySign($data, $payGateway->merchant_key);
         if ($data['Signature'] != $signature) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else {

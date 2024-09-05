@@ -83,7 +83,7 @@ class TokenPayController extends PayController
             return 'fail';
         }
         //合法的数据
-		$signature = $this->VerifySign($data, $payGateway->merchant_key);
+        $signature = $this->VerifySign($data, $payGateway->merchant_key);
         if ($data['Signature'] != $signature) { //不合法的数据
             return 'fail';  //返回失败 继续补单
         } else {
