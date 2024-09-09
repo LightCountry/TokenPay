@@ -6,6 +6,7 @@ using Serilog;
 using Serilog.Events;
 using System.Globalization;
 using System.Reflection;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,6 +33,9 @@ Log.Information("X64: {value}", (Environment.Is64BitOperatingSystem ? "Yes" : "N
 Log.Information("CPU CORE: {value}", Environment.ProcessorCount);
 Log.Information("HostName: {value}", Environment.MachineName);
 Log.Information("Version: {value}", Environment.OSVersion);
+Log.Information("IsServerGC: {value}", GCSettings.IsServerGC);
+Log.Information("IsConcurrent: {value}", GC.GetGCMemoryInfo().Concurrent);
+Log.Information("LatencyMode: {value}", GCSettings.LatencyMode);
 Log.Information("-------------{value}-------------", "System Info End");
 
 var builder = WebApplication.CreateBuilder(args);
