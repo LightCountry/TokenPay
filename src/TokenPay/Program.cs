@@ -4,6 +4,7 @@ using FreeSql;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Serilog;
 using Serilog.Events;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime;
@@ -22,7 +23,12 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
     .WriteTo.Console()
     .CreateBootstrapLogger();
-Log.Information("-------------{value}-------------", "System Info Begin");
+Assembly assembly = Assembly.GetExecutingAssembly();
+var fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+Log.Information("-------------{value}-------------", "TokenPay Info");
+Log.Information("File Version: {value}", fileVersionInfo.FileVersion);
+Log.Information("Product Version: {value}", fileVersionInfo.ProductVersion);
+Log.Information("-------------{value}-------------", "System Info");
 Log.Information("Platform: {value}", (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" :
                     RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "OSX" :
                     RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "Unknown"));
@@ -32,11 +38,11 @@ Log.Information("ProcessArchitecture: {value}", RuntimeInformation.ProcessArchit
 Log.Information("X64: {value}", (Environment.Is64BitOperatingSystem ? "Yes" : "No"));
 Log.Information("CPU CORE: {value}", Environment.ProcessorCount);
 Log.Information("HostName: {value}", Environment.MachineName);
-Log.Information("Version: {value}", Environment.OSVersion);
+Log.Information("OSVersion: {value}", Environment.OSVersion);
 Log.Information("IsServerGC: {value}", GCSettings.IsServerGC);
 Log.Information("IsConcurrent: {value}", GC.GetGCMemoryInfo().Concurrent);
 Log.Information("LatencyMode: {value}", GCSettings.LatencyMode);
-Log.Information("-------------{value}-------------", "System Info End");
+Log.Information("-------------{value}-------------", "Info End");
 
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
