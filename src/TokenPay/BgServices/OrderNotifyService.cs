@@ -8,7 +8,6 @@ namespace TokenPay.BgServices
 {
     public class OrderNotifyService : BaseScheduledService
     {
-        private readonly ILogger<OrderNotifyService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IFreeSql freeSql;
         private readonly FlurlClient client;
@@ -17,7 +16,6 @@ namespace TokenPay.BgServices
             IConfiguration configuration,
             IFreeSql freeSql) : base("订单通知", TimeSpan.FromSeconds(3), logger)
         {
-            _logger = logger;
             this._configuration = configuration;
             this.freeSql = freeSql;
             client = new FlurlClient();

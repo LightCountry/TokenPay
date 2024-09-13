@@ -12,7 +12,6 @@ namespace TokenPay.BgServices
 {
     public class OrderCheckEVMERC20Service : BaseScheduledService
     {
-        private readonly ILogger<OrderCheckEVMERC20Service> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment _env;
         private readonly List<EVMChain> _chains;
@@ -27,7 +26,6 @@ namespace TokenPay.BgServices
             Channel<TokenOrders> channel,
             IFreeSql freeSql) : base("ERC20订单检测", TimeSpan.FromSeconds(15), logger)
         {
-            _logger = logger;
             this._configuration = configuration;
             this._env = env;
             _chains = Chains;

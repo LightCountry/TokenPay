@@ -17,7 +17,6 @@ namespace TokenPay.BgServices
         private readonly IConfiguration _configuration;
         private readonly List<EVMChain> _chain;
         private readonly IFreeSql freeSql;
-        private readonly ILogger<UpdateRateService> _logger;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY")!);
         public UpdateRateService(
             IConfiguration configuration,
@@ -28,7 +27,6 @@ namespace TokenPay.BgServices
             this._configuration = configuration;
             this._chain = chain;
             this.freeSql = freeSql;
-            this._logger = logger;
         }
 
         private List<string> GetActiveCurrency()

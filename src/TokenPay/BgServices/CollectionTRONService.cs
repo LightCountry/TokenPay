@@ -17,7 +17,6 @@ namespace TokenPay.BgServices
         private readonly IConfiguration _configuration;
         private readonly TelegramBot _bot;
         private readonly IFreeSql freeSql;
-        private readonly ILogger<CollectionTRONService> _logger;
         /// <summary>
         /// 是否启用归集功能
         /// </summary>
@@ -67,7 +66,6 @@ namespace TokenPay.BgServices
             ILogger<CollectionTRONService> logger) : base("TRON归集任务", TimeSpan.FromHours(configuration.GetValue("Collection:CheckTime", 1)), logger)
         {
             this._configuration = configuration;
-            this._logger = logger;
             this._bot = bot;
             this.freeSql = freeSql;
         }

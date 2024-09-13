@@ -11,7 +11,6 @@ namespace TokenPay.BgServices
 {
     public class OrderCheckTRXService : BaseScheduledService
     {
-        private readonly ILogger<OrderCheckTRXService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment _env;
         private readonly Channel<TokenOrders> _channel;
@@ -25,7 +24,6 @@ namespace TokenPay.BgServices
             Channel<TokenOrders> channel,
             IFreeSql freeSql) : base("TRX订单检测", TimeSpan.FromSeconds(3), logger)
         {
-            _logger = logger;
             this._configuration = configuration;
             this._env = env;
             this._channel = channel;
@@ -75,7 +73,7 @@ namespace TokenPay.BgServices
                     .SetQueryParams(query)
                     .WithTimeout(15);
                 if (_env.IsProduction())
-                    req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue("TRON-PRO-API-KEY", ""));
+                    req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue<string>("TRON-PRO-API-KEY"));
                 var result = await req
                     .GetJsonAsync<BaseResponse<TrxTransaction>>();
 

@@ -2,6 +2,7 @@ using Flurl.Http;
 using Flurl.Http.Newtonsoft;
 using FreeSql;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Data.Sqlite;
 using Serilog;
 using Serilog.Events;
 using System.Diagnostics;
@@ -72,8 +73,9 @@ Services.AddSingleton(EVMChains);
 
 var connectionString = Configuration.GetConnectionString("DB");
 IFreeSql fsql = new FreeSqlBuilder()
-        .UseConnectionString(FreeSql.DataType.Sqlite, connectionString)
+        .UseConnectionString(DataType.Sqlite, connectionString)
         .UseAutoSyncStructure(true) //自动同步实体结构
+        .UseAdoConnectionPool(true)
         .UseNoneCommandParameter(true)
         .Build();
 

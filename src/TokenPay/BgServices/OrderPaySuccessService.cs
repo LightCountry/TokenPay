@@ -13,7 +13,6 @@ namespace TokenPay.BgServices
         private readonly TelegramBot _bot;
         private readonly List<EVMChain> _chain;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<OrderPaySuccessService> _logger;
 
         public OrderPaySuccessService(
             Channel<TokenOrders> channel,
@@ -28,7 +27,6 @@ namespace TokenPay.BgServices
             this._bot = bot;
             this._chain = chain;
             this._configuration = configuration;
-            this._logger = logger;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

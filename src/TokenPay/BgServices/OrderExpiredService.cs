@@ -5,7 +5,6 @@ namespace TokenPay.BgServices
 {
     public class OrderExpiredService : BaseScheduledService
     {
-        private readonly ILogger<OrderExpiredService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IFreeSql freeSql;
 
@@ -13,7 +12,6 @@ namespace TokenPay.BgServices
             IConfiguration configuration,
             IFreeSql freeSql) : base("订单过期", TimeSpan.FromSeconds(10), logger)
         {
-            _logger = logger;
             this._configuration = configuration;
             this.freeSql = freeSql;
         }

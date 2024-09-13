@@ -11,7 +11,6 @@ namespace TokenPay.BgServices
 {
     public class OrderCheckEVMBaseService : BaseScheduledService
     {
-        private readonly ILogger<OrderCheckEVMBaseService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHostEnvironment _env;
         private readonly Channel<TokenOrders> _channel;
@@ -26,7 +25,6 @@ namespace TokenPay.BgServices
             List<EVMChain> Chains,
             IFreeSql freeSql) : base("ETH订单检测", TimeSpan.FromSeconds(15), logger)
         {
-            _logger = logger;
             this._configuration = configuration;
             this._env = env;
             this._channel = channel;
