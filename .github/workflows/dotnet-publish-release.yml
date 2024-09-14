@@ -28,7 +28,7 @@ jobs:
           dotnet publish -c Release -p:Version=$VERSION -r linux-arm64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/linux-arm64
           cd app
           find . -type f -name 'appsettings.Example.json' -execdir mv {} appsettings.json \;
-          find . -maxdepth 1 -type d ! -name '.' | xargs -I {} sh -c 'cd "{}" && zip -r "../${{ github.ref_name }}-$(basename {}).zip" *'
+          find . -maxdepth 1 -type d ! -name '.' | xargs -I {} sh -c 'cd "{}" && zip -r "../${{ github.event.repository.name }}-${{ github.ref_name }}-$(basename {}).zip" *'
           find . -maxdepth 1 -type d ! -name '.' -exec rm -rf {} +
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

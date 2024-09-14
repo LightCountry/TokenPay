@@ -46,7 +46,7 @@
       "Enable": false, // false 表示不启用此区块链， true 表示启用
       "ChainName": "Polygon",
       "ChainNameEN": "Polygon",
-      "BaseCoin": "MATIC",
+      "BaseCoin": "POL",
       "Decimals": 18,
       "ScanHost": "https://polygonscan.com",
       "ApiHost": "https://api.polygonscan.com",
