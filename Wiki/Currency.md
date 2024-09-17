@@ -18,3 +18,8 @@ ERC20代币格式为：`EVM_[ChainNameEN]_[Erc20.Name]_[ERC20Name]`
 > BSC的USDT代币为：`EVM_BSC_USDT_BEP20`
 
 以此类推。
+
+如果开启`EVMChains.json`中的所有区块链后，TokenPay默认支持的币种如下：
+```
+['TRX', 'USDT_TRC20', 'EVM_ETH_ETH', 'EVM_ETH_USDT_ERC20', 'EVM_ETH_USDC_ERC20', 'EVM_BSC_BNB', 'EVM_BSC_USDT_BEP20', 'EVM_BSC_USDC_BEP20', 'EVM_Polygon_POL', 'EVM_Polygon_USDT_ERC20', 'EVM_Polygon_USDC_ERC20']
+```

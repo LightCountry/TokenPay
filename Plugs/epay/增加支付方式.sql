@@ -9,6 +9,6 @@ INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_BS
 INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_BSC_USDT_BEP20', 0, 'USDT-BEP20', 1);
 INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_BSC_USDC_BEP20', 0, 'USDC-BEP20', 1);
 
-INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_Polygon_MATIC', 0, 'MATIC', 1);
+INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_Polygon_POL', 0, 'POL', 1);
 INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_Polygon_USDT_ERC20', 0, 'USDT-Polygon', 1);
 INSERT INTO `pay_type` ( `name`, `device`, `showname`, `status`) VALUES ('EVM_Polygon_USDC_ERC20', 0, 'USDC-Polygon', 1);
