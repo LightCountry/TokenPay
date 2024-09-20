@@ -48,7 +48,7 @@ namespace TokenPay.BgServices
         /// <summary>
         /// 当前能量单价（请勿修改）
         /// </summary>
-        private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 420m);
+        private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 210m);
         /// <summary>
         /// 归集收款地址
         /// </summary>
