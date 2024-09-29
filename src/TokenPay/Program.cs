@@ -48,6 +48,11 @@ Log.Information("LatencyMode: {value}", GCSettings.LatencyMode);
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
 var Configuration = builder.Configuration;
+Configuration.AddJsonFile("EVMChains.json", optional: true, reloadOnChange: true);
+if (!builder.Environment.IsProduction())
+    Configuration.AddJsonFile($"EVMChains.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+QueryTronAction.configuration = Configuration;
 
 var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
 Services.AddSingleton(EVMChains);
@@ -69,11 +74,6 @@ if (CollectionEnable)
     Log.Information("启用强制检查所有地址余额: {value}", CollectionForceCheckAllAddress);
 }
 Log.Information("-------------{value}-------------", "End");
-
-QueryTronAction.configuration = Configuration;
-Configuration.AddJsonFile("EVMChains.json", optional: true, reloadOnChange: true);
-if (!builder.Environment.IsProduction())
-    Configuration.AddJsonFile($"EVMChains.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
 builder.Host.UseSerilog((context, services, configuration) => configuration
                     .ReadFrom.Configuration(context.Configuration)
