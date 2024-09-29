@@ -127,7 +127,7 @@ namespace TokenPay.BgServices
                                         {
                                             var Down = Move[0]; //上浮金额
                                             var Up = Move[1]; //下浮金额
-                                            order = orders.Where(x => x.Amount >= RealAmount - Down && x.Amount <= RealAmount + Up)
+                                            order = orders.Where(x => RealAmount >= x.Amount - Down && RealAmount <= x.Amount + Up)
                                                 .Where(x => x.ToAddress == item.To && x.CreateTime < item.DateTime)
                                                .OrderByDescending(x => x.CreateTime)//优先付最后一单
                                                .FirstOrDefault();

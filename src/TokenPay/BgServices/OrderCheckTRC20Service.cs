@@ -130,7 +130,7 @@ namespace TokenPay.BgServices
                                 {
                                     var Down = Move[0]; //上浮金额
                                     var Up = Move[1]; //下浮金额
-                                    order = orders.Where(x => x.Amount >= item.Amount - Down && x.Amount <= item.Amount + Up)
+                                    order = orders.Where(x => item.Amount >= x.Amount - Down && item.Amount <= x.Amount + Up)
                                         .Where(x => x.ToAddress == item.To && x.CreateTime < item.BlockTimestamp.ToDateTime())
                                        .OrderByDescending(x => x.CreateTime)//优先付最后一单
                                        .FirstOrDefault();

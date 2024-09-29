@@ -127,10 +127,10 @@ namespace TokenPay.BgServices
                                 {
                                     var Down = Move[0]; //上浮金额
                                     var Up = Move[1]; //下浮金额
-                                    var orderMove = orders.Where(x => x.Amount >= raw.RealAmount - Down && x.Amount <= raw.RealAmount + Up)
+                                    order = orders.Where(x => raw.RealAmount >= x.Amount - Down && raw.RealAmount <= x.Amount + Up)
                                         .Where(x => x.ToAddress == raw.ToAddressBase58 && x.CreateTime < item.BlockTimestamp.ToDateTime())
-                                       .OrderByDescending(x => x.CreateTime)//优先付最后一单
-                                       .FirstOrDefault();
+                                        .OrderByDescending(x => x.CreateTime)//优先付最后一单
+                                        .FirstOrDefault();
                                     if (order != null)
                                     {
                                         order.IsDynamicAmount = true;
