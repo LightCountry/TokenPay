@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using TokenPay.BgServices;
+using TokenPay.Controllers;
 using TokenPay.Domains;
 using TokenPay.Helper;
 using TokenPay.Models.EthModel;
@@ -43,11 +44,32 @@ Log.Information("OSVersion: {value}", Environment.OSVersion);
 Log.Information("IsServerGC: {value}", GCSettings.IsServerGC);
 Log.Information("IsConcurrent: {value}", GC.GetGCMemoryInfo().Concurrent);
 Log.Information("LatencyMode: {value}", GCSettings.LatencyMode);
-Log.Information("-------------{value}-------------", "Info End");
 
 var builder = WebApplication.CreateBuilder(args);
 var Services = builder.Services;
 var Configuration = builder.Configuration;
+
+var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
+Services.AddSingleton(EVMChains);
+
+var UseDynamicAddress = Configuration.GetValue("UseDynamicAddress", true);
+var UseDynamicAddressAmountMove = Configuration.GetValue("DynamicAddressConfig:AmountMove", false);
+var CollectionEnable = Configuration.GetValue("Collection:Enable", false);
+Log.Information("-------------{value}-------------", "AppSettings");
+Log.Information("支持的币种: {value}", HomeController.GetActiveCurrency(EVMChains));
+Log.Information("启用动态地址: {value}", UseDynamicAddress);
+Log.Information("启用动态金额: {value}", UseDynamicAddressAmountMove);
+Log.Information("动态金额生效状态: {value}", UseDynamicAddress && UseDynamicAddressAmountMove);
+Log.Information("启用波场自动归集: {value}", CollectionEnable);
+if (CollectionEnable)
+{
+    var CollectionUseEnergy = Configuration.GetValue("Collection:UseEnergy", true);
+    var CollectionForceCheckAllAddress = Configuration.GetValue("Collection:ForceCheckAllAddress", false);
+    Log.Information("启用租用能量: {value}", CollectionUseEnergy);
+    Log.Information("启用强制检查所有地址余额: {value}", CollectionForceCheckAllAddress);
+}
+Log.Information("-------------{value}-------------", "End");
+
 QueryTronAction.configuration = Configuration;
 Configuration.AddJsonFile("EVMChains.json", optional: true, reloadOnChange: true);
 if (!builder.Environment.IsProduction())
@@ -68,8 +90,6 @@ builder.Services.AddControllersWithViews()
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-var EVMChains = Configuration.GetSection("EVMChains").Get<List<EVMChain>>() ?? new List<EVMChain>();
-Services.AddSingleton(EVMChains);
 
 var connectionString = Configuration.GetConnectionString("DB");
 IFreeSql fsql = new FreeSqlBuilder()

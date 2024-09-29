@@ -22,7 +22,7 @@ namespace TokenPay.Controllers
         private readonly IBaseRepository<TokenOrders> _repository;
         private readonly IBaseRepository<TokenRate> _rateRepository;
         private readonly IBaseRepository<Tokens> _tokenRepository;
-        private readonly List<EVMChain> _chain;
+        private readonly List<EVMChain> _chains;
         private readonly IHostEnvironment _env;
         private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
@@ -41,7 +41,7 @@ namespace TokenPay.Controllers
         private List<string> GetErc20Name()
         {
             var list = new List<string>();
-            foreach (var item in _chain)
+            foreach (var item in _chains)
             {
                 list.Add(item.ERC20Name);
             }
@@ -67,13 +67,13 @@ namespace TokenPay.Controllers
             };
             return value;
         }
-        private List<string> GetActiveCurrency()
+        public static List<string> GetActiveCurrency(List<EVMChain> chains)
         {
             var list = new List<string>()
             {
                 "TRX","USDT_TRC20"
             };
-            foreach (var chain in _chain)
+            foreach (var chain in chains)
             {
                 if (chain == null || !chain.Enable || chain.ERC20 == null) continue;
                 list.Add($"EVM_{chain.ChainNameEN}_{chain.BaseCoin}");
@@ -95,7 +95,7 @@ namespace TokenPay.Controllers
             this._repository = repository;
             this._rateRepository = rateRepository;
             this._tokenRepository = tokenRepository;
-            this._chain = chain;
+            this._chains = chain;
             this._env = env;
             this._logger = logger;
             this._configuration = configuration;
@@ -187,11 +187,11 @@ namespace TokenPay.Controllers
                     });
                 }
             }
-            if (!GetActiveCurrency().Contains(model.Currency))
+            if (!GetActiveCurrency(_chains).Contains(model.Currency))
             {
                 return Json(new ReturnData
                 {
-                    Message = $"不支持的币种【{model.Currency}】！\n当前支持的币种参数有：{string.Join(", ", GetActiveCurrency())}"
+                    Message = $"不支持的币种【{model.Currency}】！\n当前支持的币种参数有：{string.Join(", ", GetActiveCurrency(_chains))}"
                 });
             }
             if (model.ActualAmount <= 0)
@@ -280,8 +280,8 @@ namespace TokenPay.Controllers
                 { nameof(order.ToAddress), order.ToAddress },
                 { nameof(order.PassThroughInfo), order.PassThroughInfo },
                 { "BaseCurrency", BaseCurrency },
-                { "BlockChainName", order.Currency.ToBlockchainEnglishName(_chain) },
-                { "CurrencyName", order.Currency.ToCurrency(_chain) },
+                { "BlockChainName", order.Currency.ToBlockchainEnglishName(_chains) },
+                { "CurrencyName", order.Currency.ToCurrency(_chains) },
                 { "ExpireTime", order.CreateTime.AddSeconds(ExpireTime).ToString("yyyy-MM-dd HH:mm:ss")},
                 { "QrCodeBase64", "data:image/png;base64," + Convert.ToBase64String(CreateQrCode(order.ToAddress))},
                 { "QrCodeLink", Host + Url.Action(nameof(GetQrCode), new { Id = order.Id })},
@@ -325,7 +325,7 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                var Currency = model.Currency.ToCurrency(_chain);
+                var Currency = model.Currency.ToCurrency(_chains);
                 rate = await _rateRepository.Where(x => x.Currency == Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)
@@ -415,7 +415,7 @@ namespace TokenPay.Controllers
             var rate = GetRate(model.Currency);
             if (rate <= 0)
             {
-                var Currency = model.Currency.ToCurrency(_chain);
+                var Currency = model.Currency.ToCurrency(_chains);
                 rate = await _rateRepository.Where(x => x.Currency == Currency && x.FiatCurrency == BaseCurrency).FirstAsync(x => x.Rate);
             }
             if (rate <= 0)

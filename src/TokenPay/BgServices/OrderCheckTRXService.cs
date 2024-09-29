@@ -112,7 +112,7 @@ namespace TokenPay.BgServices
                             order.BlockTransactionId = item.TxID;
                             order.Status = OrderStatus.Paid;
                             order.PayTime = item.BlockTimestamp.ToDateTime();
-                            order.PayAmount = raw.Amount;
+                            order.PayAmount = raw.RealAmount;
                             await _repository.UpdateAsync(order);
                             orders.Remove(order);
                             await SendAdminMessage(order);
