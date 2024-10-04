@@ -44,7 +44,7 @@ namespace TokenPay.Helper
         /// 价格估算
         /// </summary>
         /// <returns></returns>
-        public async Task<EnergyResponse<OrderPriceData>> OrderPrice(int resource_value, int rent_duration = 1, string rent_time_unit = "h")
+        public async Task<EnergyResponse<OrderPriceData>> OrderPrice(int resource_value, int rent_duration = 10, string rent_time_unit = "m")
         {
             var result = await client
                 .Request("OrderPrice")

@@ -122,6 +122,39 @@ namespace TokenPay.Controllers
             ViewData["ExpireTime"] = order.CreateTime.AddSeconds(ExpireTime);
             return View(order);
         }
+        [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = false)]
+        public async Task<IActionResult> Query(Guid Id, string Signature)
+        {
+            if (_env.IsProduction())
+            {
+                if (!VerifySignature(new
+                {
+                    Id,
+                    Signature
+                }))
+                {
+                    return Json(new ReturnData
+                    {
+                        Message = "签名验证失败！"
+                    });
+                }
+            }
+            var order = await _repository.Where(x => x.Id == Id).FirstAsync();
+            if (order == null)
+            {
+                return Json(new ReturnData
+                {
+                    Message = "订单不存在！"
+                });
+            }
+            return Json(new ReturnData<TokenOrders>
+            {
+                Success = true,
+                Message = "订单信息获取成功！",
+                Data = order,
+            });
+        }
         [Route("/{action}/{id}")]
         public async Task<IActionResult> Check(Guid Id)
         {
@@ -132,7 +165,7 @@ namespace TokenPay.Controllers
             }
             return Content(order.Status.ToString());
         }
-        private bool VerifySignature(CreateOrderViewModel model)
+        private bool VerifySignature(object model)
         {
             if (model == null) return false;
             var dic = new SortedDictionary<string, string?>();
@@ -266,7 +299,7 @@ namespace TokenPay.Controllers
             });
         }
 
-        public SortedDictionary<string, object?> ToPayDic(TokenOrders order)
+        private SortedDictionary<string, object?> ToPayDic(TokenOrders order)
         {
             var BaseCurrency = _configuration.GetValue<string>("BaseCurrency", "CNY");
             var ExpireTime = _configuration.GetValue("ExpireTime", 10 * 60);

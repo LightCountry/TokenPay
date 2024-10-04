@@ -137,7 +137,7 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
 ### ②按照ASCII排序后拼接
 `ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockChainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb`
 
-异步通知密钥为：`666`
+假设异步通知密钥为：`666`
 
 拼接密钥后
 `ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockChainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TLUF41C386CMU1Wc8pTSCE4QaiZ2xkhTCb666`
@@ -146,3 +146,52 @@ URL: `创建订单`接口传递的`NotifyUrl`字段内的URL
 `a8f9d179a8d2798c8b5bb90c31db2c9e`
 
 对比POST中的`Signature`是否与此值一致
+
+
+## 3. 查单接口
+
+URL: `/Query?Id=[订单Id]&Signature=[签名]`  
+
+类型： `GET`
+
+示例返回
+```json
+{
+    "success": false,
+    "message": "订单不存在！"
+}
+```
+```json
+{
+    "success": true,
+    "message": "订单信息获取成功！",
+    "data": {
+        "id": "66f9d5a8-d9c7-0224-004f-a16a1c068e08",
+        ......
+    }
+}
+```
+
+| 字段 | 类型 |说明 |
+| ---- | ---- | ---- |
+| **此接口返回订单表所有字段** |
+| **可参考回调数据的字段，也可查阅源代码** |
+
+### 查单接口 `Signature` 计算说明
+### ①示例参数
+```
+/Query?Id=66f9d5a8-d9c7-0224-004f-a16a1c068e08
+```
+### ②按照ASCII排序后拼接
+`Id=66f9d5a8-d9c7-0224-004f-a16a1c068e08`
+
+假设异步通知密钥为：`666`
+
+拼接密钥后
+`Id=66f9d5a8-d9c7-0224-004f-a16a1c068e08666`
+
+### ③计算MD5
+`baa261cc6af3f5efbed15e17a285f653`
+
+### ④最终请求参数为
+`/Query?Id=66f9d5a8-d9c7-0224-004f-a16a1c068e08&Signature=baa261cc6af3f5efbed15e17a285f653`

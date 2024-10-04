@@ -40,15 +40,23 @@ namespace TokenPay.BgServices
         /// <summary>
         /// 消耗能量数量（请勿修改）
         /// </summary>
-        private long DefaultNeedEnergy => _configuration.GetValue("Collection:NeedEnergy", 31895);
+        private long DefaultNeedEnergy => _configuration.GetValue("Collection:NeedEnergy", 64285);
         /// <summary>
         /// 最低租赁能量数量（请勿修改）
         /// </summary>
-        private long EnergyMinValue => _configuration.GetValue("Collection:EnergyMinValue", 32000);
+        private long EnergyMinValue => _configuration.GetValue("Collection:EnergyMinValue", 64400);
         /// <summary>
         /// 当前能量单价（请勿修改）
         /// </summary>
         private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 210m);
+        /// <summary>
+        /// 租赁能量时长（请勿修改）
+        /// </summary>
+        private int RentDuration => _configuration.GetValue("Collection:RentDuration", 10);
+        /// <summary>
+        /// 租赁能量时长单位（请勿修改）
+        /// </summary>
+        private string RentTimeUnit => _configuration.GetValue("Collection:RentTimeUnit", "m")!;
         /// <summary>
         /// 归集收款地址
         /// </summary>
@@ -186,7 +194,7 @@ namespace TokenPay.BgServices
                 list.Where(x => x.USDT > MinUSDT).Sum(x => x.USDT));
             Func<int, Task<(decimal, string)>> GetPrice = async (int ResourceValue) =>
             {
-                var resp = await energyApi.OrderPrice(ResourceValue);
+                var resp = await energyApi.OrderPrice(ResourceValue, RentDuration, RentTimeUnit);
                 _logger.LogInformation("能量价格预估：{@result}", resp);
                 if (resp != null && resp.Code == 0)
                 {
@@ -344,8 +352,8 @@ namespace TokenPay.BgServices
                                 PayAddress = mainWallet.Address,
                                 PayAmount = amountTrx,
                                 ReceiveAddress = wallet.Address,
-                                RentDuration = 1,
-                                RentTimeUnit = "h",
+                                RentDuration = RentDuration,
+                                RentTimeUnit = RentTimeUnit,
                                 ResourceValue = (int)NeedEnergy,
                                 SignedTxn = txn!
                             };
