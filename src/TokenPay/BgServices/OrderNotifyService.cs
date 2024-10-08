@@ -14,7 +14,7 @@ namespace TokenPay.BgServices
 
         public OrderNotifyService(ILogger<OrderNotifyService> logger,
             IConfiguration configuration,
-            IFreeSql freeSql) : base("订单通知", TimeSpan.FromSeconds(3), logger)
+            IFreeSql freeSql) : base("订单通知", TimeSpan.FromSeconds(1), logger)
         {
             this._configuration = configuration;
             this.freeSql = freeSql;
