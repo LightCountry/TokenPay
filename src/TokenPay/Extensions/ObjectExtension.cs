@@ -34,7 +34,7 @@ namespace TokenPay.Extensions
             var nullKey = new List<string>();
             foreach (var item in dic)
             {
-                if (item.Value == null)
+                if (item.Value == null || item.Value is string s && string.IsNullOrEmpty(s))
                     nullKey.Add(item.Key);
             }
             foreach (var item in nullKey)
