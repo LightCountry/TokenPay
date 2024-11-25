@@ -7,7 +7,7 @@ namespace TokenPay.Models.EthModel
     public class EthTransaction
     {
         [JsonProperty("blockNumber")]
-        public string BlockNumber { get; set; }
+        public int BlockNumber { get; set; }
 
         [JsonProperty("timeStamp")]
         public long TimeStamp { get; set; }

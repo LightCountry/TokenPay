@@ -24,7 +24,7 @@ namespace TokenPay.BgServices
             IHostEnvironment env,
             List<EVMChain> Chains,
             Channel<TokenOrders> channel,
-            IFreeSql freeSql) : base("ERC20订单检测", TimeSpan.FromSeconds(15), logger)
+            IFreeSql freeSql) : base("EVM代币订单检测", TimeSpan.FromSeconds(15), logger)
         {
             this._configuration = configuration;
             this._env = env;
@@ -100,7 +100,7 @@ namespace TokenPay.BgServices
                     .SetQueryParams(query)
                     .WithTimeout(15);
                 var result = await req
-                    .GetJsonAsync<BaseResponse<ERC20Transaction>>();
+                    .GetJsonAsync<BaseResponseList<ERC20Transaction>>();
 
                 if (result.Status == "1" && result.Result?.Count > 0)
                 {
