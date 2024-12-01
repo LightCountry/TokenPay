@@ -188,9 +188,9 @@ namespace TokenPay.BgServices
                             .WithTimeout(15);
                         var resultInternal = await reqInternal
                             .GetJsonAsync<BaseResponseList<EthTransaction>>();
-                        if (result.Status == "1" && result.Result?.Count > 0)
+                        if (resultInternal.Status == "1" && resultInternal.Result?.Count > 0)
                         {
-                            foreach (var item in result.Result)
+                            foreach (var item in resultInternal.Result)
                             {
                                 //没有需要匹配的订单了
                                 if (!orders.Any())
