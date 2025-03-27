@@ -31,7 +31,7 @@ jobs:
           find . -maxdepth 1 -type d ! -name '.' | xargs -I {} sh -c 'cd "{}" && zip -r "../${{ github.event.repository.name }}-${{ github.ref_name }}-$(basename {}).zip" *'
           find . -maxdepth 1 -type d ! -name '.' -exec rm -rf {} +
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app
         if-no-files-found: error
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: app
           path: app
