@@ -61,7 +61,13 @@ var UseDynamicAddress = Configuration.GetValue("UseDynamicAddress", true);
 var UseDynamicAddressAmountMove = Configuration.GetValue("DynamicAddressConfig:AmountMove", false);
 var CollectionEnable = Configuration.GetValue("Collection:Enable", false);
 Log.Information("-------------{value}-------------", "AppSettings");
-Log.Information("支持的币种: {value}", HomeController.GetActiveCurrency(EVMChains));
+var currencies = HomeController.GetActiveCurrency(EVMChains);
+Log.Information("支持的币种: {value}", currencies);
+Log.Information("币种小数点位数: ");
+foreach (var currency in currencies)
+{
+    Log.Information("\t{currency}={value}", currency, HomeController.GetDecimals(currency, Configuration));
+}
 Log.Information("启用动态地址: {value}", UseDynamicAddress);
 Log.Information("启用动态金额: {value}", UseDynamicAddressAmountMove);
 Log.Information("动态金额生效状态: {value}", UseDynamicAddress && UseDynamicAddressAmountMove);
