@@ -47,7 +47,7 @@ namespace TokenPay.BgServices
                         .Distinct()
                         .ToListAsync(x => x.ToAddress);
 
-                    var BaseUrl = chain.ApiHost;
+                    var BaseUrl = chain.ApiHost ?? "https://api.etherscan.io/v2/";
 
                     foreach (var address in Address)
                     {
@@ -66,6 +66,7 @@ namespace TokenPay.BgServices
                         #region 查询最新区块数
                         var queryBlockNumber = new Dictionary<string, object>
                         {
+                            { "chainid", chain.ChainId },
                             { "module", "proxy" },
                             { "action", "eth_blockNumber" }
                         };
@@ -127,6 +128,7 @@ namespace TokenPay.BgServices
                         #region 外部交易
                         var query = new Dictionary<string, object>
                         {
+                            { "chainid", chain.ChainId },
                             { "module", "account" },
                             { "action", "txlist" },
                             { "address", address },
@@ -172,6 +174,7 @@ namespace TokenPay.BgServices
                         #region 内部交易
                         var queryInternal = new Dictionary<string, object>
                         {
+                            { "chainid", chain.ChainId },
                             { "module", "account" },
                             { "action", "txlistinternal" },
                             { "address", address },

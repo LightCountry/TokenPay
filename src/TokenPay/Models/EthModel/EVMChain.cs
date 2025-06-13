@@ -41,6 +41,10 @@ namespace TokenPay.Models.EthModel
         /// </summary>
         public string ApiKey { get; set; }
         /// <summary>
+        /// 区块链id
+        /// </summary>
+        public int ChainId { get; set; }
+        /// <summary>
         /// ERC20Name
         /// </summary>
         public string ERC20Name { get; set; }

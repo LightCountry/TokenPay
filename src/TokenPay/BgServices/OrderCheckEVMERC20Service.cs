@@ -67,7 +67,7 @@ namespace TokenPay.BgServices
                 .Distinct()
                 .ToListAsync(x => x.ToAddress);
 
-            var BaseUrl = chain.ApiHost;
+            var BaseUrl = chain.ApiHost ?? "https://api.etherscan.io/v2/";
 
             foreach (var address in Address)
             {
@@ -84,6 +84,7 @@ namespace TokenPay.BgServices
                 }
                 var query = new Dictionary<string, object>
                 {
+                    { "chainid", chain.ChainId },
                     { "module", "account" },
                     { "action", "tokentx" },
                     { "contractaddress", erc20.ContractAddress },
