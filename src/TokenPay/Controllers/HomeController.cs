@@ -515,8 +515,9 @@ namespace TokenPay.Controllers
             return (UseTokenAdress, Amount);
         }
 
+        [Route("/CheckTron/{address}")]
         [Route("/{action}/{address}")]
-        public async Task<IActionResult> CheckAddress(string address)
+        public async Task<IActionResult> CheckTronAddress(string address)
         {
             var item = await _tokenRepository.Where(x => x.Address == address && x.Currency == TokenCurrency.TRX).FirstAsync();
             if (item == null)
