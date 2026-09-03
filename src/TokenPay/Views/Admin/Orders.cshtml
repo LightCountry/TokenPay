@@ -21,7 +21,7 @@
 <div class="admin-table-card">
 <div class="table-responsive">
     <table class="table admin-table table-hover align-middle mb-0">
-        <thead><tr><th>外部订单号</th><th>币种</th><th>应付</th><th>实付</th><th>状态</th><th>付款地址</th><th>收款地址</th><th>交易哈希</th><th>创建时间</th><th>付款时间</th><th>操作</th></tr></thead>
+            <thead><tr><th>订单号</th><th>外部订单号</th><th>币种</th><th>应付</th><th>实付</th><th>状态</th><th>付款地址</th><th>收款地址</th><th>交易哈希</th><th>创建时间</th><th>付款时间</th><th>操作</th></tr></thead>
         <tbody>
         @foreach (var item in Model.Items)
         {
@@ -34,6 +34,7 @@
             var supplementUrl = Url.Action("Orders", new { listRoute.page, listRoute.pageSize, listRoute.keyword, listRoute.status, listRoute.currency, listRoute.startDate, listRoute.endDate, supplement = item.Id });
             var closeSupplementUrl = Url.Action("Orders", listRoute);
             <tr>
+                        <td class="text-nowrap">@item.Id <button type="button" class="copy-icon-button" data-copy="@item.Id" title="复制Id" aria-label="复制Id"></button></td>
                 <td class="text-nowrap fw-semibold">@if (redirectUrl != null) { <a class="order-link" href="@redirectUrl" target="_blank" rel="noopener noreferrer" title="打开订单跳转地址">@item.OutOrderId <span aria-hidden="true">↗</span></a> } else { @item.OutOrderId }</td><td><span class="currency-chip" title="@item.Currency">@displayCurrency</span></td><td class="text-nowrap">@item.Amount <small>@displayCurrency</small></td><td class="text-nowrap">@if (item.PayAmount.HasValue) { <span>@item.PayAmount.Value <small>@displayCurrency</small></span> } else { <span class="unpaid-label">未付款</span> }</td>
                 <td><span class="status-badge status-@item.Status.ToString().ToLowerInvariant()">@item.Status</span></td>
                 <td class="resource-cell">@if (fromAddressUrl == null) { <span>-</span> } else { <a href="@fromAddressUrl" target="_blank" rel="noopener noreferrer">@item.FromAddress</a><button type="button" class="copy-icon-button" data-copy="@item.FromAddress" title="复制付款地址" aria-label="复制付款地址"></button> }</td>

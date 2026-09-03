@@ -128,7 +128,7 @@ Content-Type: application/json
 
 `ActualAmount=15&Currency=TRX&NotifyUrl=http://localhost:1011/pay/tokenpay/notify_url&OrderUserKey=admin@qq.com&OutOrderId=AJIHK72N34BR2CWG&RedirectUrl=http://localhost:1011/pay/tokenpay/return_url?order_id=AJIHK72N34BR2CWG666`
 
-### ③计算 MD5
+### ③计算签名
 
 `e9765880db6081496456283678e70152`
 
@@ -264,7 +264,7 @@ Content-Type: application/json
 
 `ActualAmount=15&Amount=34.91&BaseCurrency=CNY&BlockChainName=TRON&BlockTransactionId=375859c36dc5f5d227b10912b5ec70d36dd34446028064956cb60cdbb74432f5&Currency=TRX&CurrencyName=TRX&FromAddress=TYYjzt6AWhe9hAg9DrhiYXEWKDksyohgQa&Id=63234df7-55bf-93fc-0010-67be493c0c27&OutOrderId=E6COE6FGZMO5AXSK&PayTime=2022-09-15 16:08:39&Status=1&ToAddress=TKGTx4pCKiKQbk8evXHTborfZn754TGViP666`
 
-### ③计算 MD5
+### ③计算签名
 
 `e5eaa888cd9e80b5c09a0698981757c8`
 
@@ -306,12 +306,14 @@ GET /Query?Id={TokenPay订单Id}&Signature={签名}
 {
     "success": true,
     "message": "订单信息获取成功！",
-    "data": {
+    "data": { //查单返回data数据字段与异步回调数据相同
         "id": "66f9d5a8-d9c7-0224-004f-a16a1c068e08",
         ......
     }
 }
 ```
+
+### **查单返回data数据字段与异步回调数据相同**
 
 生产环境会验证签名。签名只包含 `Id`。
 
@@ -331,7 +333,7 @@ GET /Query?Id={TokenPay订单Id}&Signature={签名}
 
 `Id=66f9d5a8-d9c7-0224-004f-a16a1c068e08666`
 
-### ③计算 MD5
+### ③计算签名
 
 `baa261cc6af3f5efbed15e17a285f653`
 
@@ -341,15 +343,7 @@ GET /Query?Id={TokenPay订单Id}&Signature={签名}
 
 实际请求时应对查询参数进行 URL 编码。
 
-查单返回 `TokenOrders` 的订单字段。枚举由当前 JSON 配置输出为名称，例如 `Pending`、`Paid`、`Expired`。调用方应兼容新增字段，不要依赖 JSON 字段顺序。
-
-## 订单状态与接入建议
-
-| 状态 | 数值 | 含义 |
-| --- | --- | --- |
-| `Pending` | 0 | 等待支付。 |
-| `Paid` | 1 | 已识别付款，将执行或已经执行异步通知。 |
-| `Expired` | 2 | 超过订单有效期。不要仅凭前端跳转判断付款失败，必要时结合查单和链上记录处理。 |
+## 接入建议
 
 - 商户应以验签成功的异步回调为主要到账依据，以查单接口作为主动补偿手段。
 - `RedirectUrl` 仅用于浏览器跳转，用户可以伪造或中断跳转，不能据此发货。

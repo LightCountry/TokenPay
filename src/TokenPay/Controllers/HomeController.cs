@@ -148,11 +148,11 @@ namespace TokenPay.Controllers
                     Message = "订单不存在！"
                 });
             }
-            return Json(new ReturnData<TokenOrders>
+            return Json(new ReturnData<object>
             {
                 Success = true,
                 Message = "订单信息获取成功！",
-                Data = order,
+                Data = order.ToDic(_configuration),
             });
         }
         [Route("/{action}/{id}")]
