@@ -26,6 +26,9 @@ jobs:
           dotnet publish -c Release -p:Version=$VERSION -r linux-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/linux-x64
           dotnet publish -c Release -p:Version=$VERSION -r win-x64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/win-x64
           dotnet publish -c Release -p:Version=$VERSION -r linux-arm64 --self-contained -p:PublishTrimmed=true -p:PublishSingleFile=true -o app/linux-arm64
+          dotnet publish -c Release -p:Version=$VERSION -r linux-x64 --self-contained false -p:PublishTrimmed=false -p:PublishSingleFile=true -o app/linux-x64-framework-dependent
+          dotnet publish -c Release -p:Version=$VERSION -r win-x64 --self-contained false -p:PublishTrimmed=false -p:PublishSingleFile=true -o app/win-x64-framework-dependent
+          dotnet publish -c Release -p:Version=$VERSION -r linux-arm64 --self-contained false -p:PublishTrimmed=false -p:PublishSingleFile=true -o app/linux-arm64-framework-dependent
           cd app
           find . -type f -name 'appsettings.Example.json' -execdir mv {} appsettings.json \;
           find . -maxdepth 1 -type d ! -name '.' | xargs -I {} sh -c 'cd "{}" && zip -r "../${{ github.event.repository.name }}-${{ github.ref_name }}-$(basename {}).zip" *'

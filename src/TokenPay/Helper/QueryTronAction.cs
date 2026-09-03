@@ -33,8 +33,9 @@ namespace TokenPay.Helper
         /// 获取USDT余额
         /// </summary>
         /// <param name="Address"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<decimal> GetUsdtAmountAsync(string Address)
+        public static async Task<decimal> GetUsdtAmountAsync(string Address, CancellationToken cancellationToken = default)
         {
             var hex = Address.Base58ToHex();
             var encoded = new FunctionCallEncoder().EncodeParameters(new Parameter[] {
@@ -60,7 +61,7 @@ namespace TokenPay.Helper
                 function_selector = "balanceOf(address)",
                 parameter = encodedHex,
                 visible = true
-            }).ReceiveJson<BalanceOfModel>();
+            }, cancellationToken: cancellationToken).ReceiveJson<BalanceOfModel>();
 
             if (result.Result.Result)
             {
@@ -268,8 +269,9 @@ namespace TokenPay.Helper
         /// 获取账户资源
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<GetAccountResourceModel> GetAccountResourceAsync(string address)
+        public static async Task<GetAccountResourceModel> GetAccountResourceAsync(string address, CancellationToken cancellationToken = default)
         {
             var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
@@ -285,7 +287,7 @@ namespace TokenPay.Helper
             {
                 address,
                 visible = true
-            }).ReceiveJson<GetAccountResourceModel>();
+            }, cancellationToken: cancellationToken).ReceiveJson<GetAccountResourceModel>();
             return result;
         }
 
@@ -293,8 +295,9 @@ namespace TokenPay.Helper
         /// 获取账户信息
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<GetAccountModel> GetAccountAsync(string address)
+        public static async Task<GetAccountModel> GetAccountAsync(string address, CancellationToken cancellationToken = default)
         {
             var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
@@ -310,15 +313,16 @@ namespace TokenPay.Helper
             {
                 address,
                 visible = true
-            }).ReceiveJson<GetAccountModel>();
+            }, cancellationToken: cancellationToken).ReceiveJson<GetAccountModel>();
             return result;
         }
         /// <summary>
         /// 获取TRX余额
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static async Task<decimal> GetTRXAsync(string address)
+        public static async Task<decimal> GetTRXAsync(string address, CancellationToken cancellationToken = default)
         {
             var BaseUrl = configuration.GetValue("TronApiHost", "https://api.trongrid.io");
             var request = BaseUrl
@@ -334,7 +338,7 @@ namespace TokenPay.Helper
             {
                 address,
                 visible = true
-            }).ReceiveJson<GetAccountModel>();
+            }, cancellationToken: cancellationToken).ReceiveJson<GetAccountModel>();
             return (result?.Balance ?? 0) / 1_000_000m;
         }
 

@@ -1,0 +1,25 @@
+@model AdminPageModel<AdminTokenRowModel>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "钱包记录"; }
+<div class="page-heading mb-4"><div><div class="page-kicker">WALLET OVERVIEW</div><h1 class="h3 mb-1">钱包记录</h1><p class="text-secondary mb-0">查看收款钱包余额及最近检查时间。</p></div><div class="record-count">共 <strong>@Model.Total</strong> 条</div></div>
+@if (TempData["AdminSuccess"] is string success) { <div class="alert alert-success">@success</div> }
+@if (TempData["AdminError"] is string error) { <div class="alert alert-danger">@error</div> }
+<div class="alert alert-info py-2">出于安全考虑，私钥字段不会在后台显示或载入内存。</div>
+<form asp-action="CheckTronAddress" method="post" class="d-flex justify-content-end align-items-center gap-2 mb-2">
+    <input type="hidden" name="page" value="@Model.Page" />
+    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+    @foreach (var item in Model.Items.Where(x => x.Currency == TokenPay.Domains.TokenCurrency.TRX))
+    {
+        <input type="hidden" name="addresses" value="@item.Address" />
+    }
+    <span class="text-secondary small">检查需要逐个请求区块链 API，本页地址越多耗时越长，请耐心等待且不要重复点击。</span>
+    <button class="btn btn-primary btn-sm flex-shrink-0" type="submit">检查本页TRON地址余额</button>
+</form>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize }" />
+<div class="admin-table-card"><div class="table-responsive"><table class="table admin-table table-hover align-middle mb-0"><thead><tr><th>唯一识别码</th><th>地址</th><th>币种</th><th>主币余额</th><th>USDT 余额</th><th>最后检查时间</th><th>操作</th></tr></thead><tbody>
+@foreach (var item in Model.Items)
+{
+    var addressUrl = $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.Address)}";
+    <tr><td>@item.Id</td><td class="resource-cell"><a href="@addressUrl" target="_blank" rel="noopener noreferrer" title="在 OKLink 查看地址">@item.Address</a><button type="button" class="copy-icon-button" data-copy="@item.Address" title="复制钱包地址" aria-label="复制钱包地址"></button></td><td>@item.Currency</td><td>@item.Value</td><td>@item.USDT</td><td>@item.LastCheckTime?.ToString("yyyy-MM-dd HH:mm:ss")</td><td>@if (item.Currency == TokenPay.Domains.TokenCurrency.TRX) { <form asp-action="CheckTronAddress" method="post"><input type="hidden" name="address" value="@item.Address" /><input type="hidden" name="page" value="@Model.Page" /><input type="hidden" name="pageSize" value="@Model.PageSize" /><button class="btn btn-outline-primary btn-sm" type="submit">检查余额</button></form> }</td></tr>
+}
+</tbody></table></div></div>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize }" />

@@ -126,7 +126,7 @@ namespace TokenPay.Controllers
         [ApiExplorerSettings(IgnoreApi = false)]
         public async Task<IActionResult> Query(Guid Id, string Signature)
         {
-            if (_env.IsProduction())
+            if (ShouldVerifySignature())
             {
                 if (!VerifySignature(new
                 {
@@ -182,10 +182,7 @@ namespace TokenPay.Controllers
             {
                 dic.Remove("Signature");
                 var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
-                var ApiToken = _configuration.GetValue<string>("ApiToken");
-                SignatureStr += ApiToken;
-                var md5 = SignatureStr.ToMD5();
-                return Signature == md5;
+                return SignatureHelper.Verify(SignatureStr, Signature, _configuration);
             }
             return false;
         }
@@ -210,7 +207,7 @@ namespace TokenPay.Controllers
                     Message = messages
                 });
             }
-            if (_env.IsProduction())
+            if (ShouldVerifySignature())
             {
                 if (!VerifySignature(model))
                 {
@@ -328,6 +325,7 @@ namespace TokenPay.Controllers
         /// <returns></returns>
         public async Task<IActionResult> GetQrCode(Guid Id, int Size = 300)
         {
+            if (Size is < 100 or > 1000) return BadRequest("二维码尺寸必须在 100 到 1000 之间。");
             var order = await _repository.Where(x => x.Id == Id).FirstAsync();
             if (order == null)
             {
@@ -515,21 +513,8 @@ namespace TokenPay.Controllers
             return (UseTokenAdress, Amount);
         }
 
-        [Route("/CheckTron/{address}")]
-        [Route("/{action}/{address}")]
-        public async Task<IActionResult> CheckTronAddress(string address)
-        {
-            var item = await _tokenRepository.Where(x => x.Address == address && x.Currency == TokenCurrency.TRX).FirstAsync();
-            if (item == null)
-            {
-                _logger.LogWarning("检查的地址[{address}]不存在！", address);
-                return Content("ok");
-            }
-            item.Value = await QueryTronAction.GetTRXAsync(address);
-            item.USDT = await QueryTronAction.GetUsdtAmountAsync(address);
-            await _tokenRepository.UpdateAsync(item);
-            return Content("ok");
-        }
+        private bool ShouldVerifySignature() =>
+            _env.IsProduction() || !_configuration.GetValue("Signature:AllowInsecureDevelopment", false);
         [Route("/error-development")]
         public IActionResult HandleErrorDevelopment([FromServices] IHostEnvironment hostEnvironment)
         {

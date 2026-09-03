@@ -1,0 +1,39 @@
+@using FreeSql
+@using Microsoft.Extensions.Configuration
+@using TokenPay.Domains
+@inject IConfiguration Configuration
+@inject IFreeSql FreeSql
+@{
+    var showWalletMenu = Configuration.GetValue("UseDynamicAddress", true) || await FreeSql.Select<Tokens>().AnyAsync();
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - TokenPay 后台</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand navbar-dark admin-navbar mb-4 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" asp-controller="Admin" asp-action="Orders">TokenPay 后台</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" asp-controller="Admin" asp-action="Orders">订单</a>
+                @if (showWalletMenu)
+                {
+                    <a class="nav-link" asp-controller="Admin" asp-action="Tokens">钱包</a>
+                }
+                <a class="nav-link" asp-controller="Admin" asp-action="Rates">汇率</a>
+            </div>
+            <form asp-controller="Admin" asp-action="Logout" method="post">
+                <button class="btn btn-outline-light btn-sm" type="submit">退出</button>
+            </form>
+        </div>
+    </nav>
+    <main class="container-fluid px-4 pb-4">@RenderBody()</main>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+</body>
+</html>

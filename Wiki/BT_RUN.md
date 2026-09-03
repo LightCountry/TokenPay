@@ -1,31 +1,64 @@
-# 宝塔运行
+# 使用宝塔面板运行 TokenPay
 
-**务必保存好`TokenPay.db`文件，此文件内保存了系统生成的收款地址和私钥，一旦丢失，你将损失所收取的款项**
+本文说明使用宝塔面板的进程管理功能运行 TokenPay，并通过网站反向代理提供 HTTPS 访问。
 
-### 1. 下载release对应平台的包，解压到指定目录
-### 2. 重命名`appsettings.Example.json`为`appsettings.json`，并修改配置文件
-> `appsettings.json`说明参见：[appsettings.json](appsettings.md)
-### 3. 重命名`EVMChains.Example.json`为`EVMChains.json`，并配置需要支持的区块链。
-# 只需修改配置中的`Enable`和`ApiKey`，其他配置项请勿修改！！！
->配置文件中已添加`ETH`、`BSC`、`Polygon`三条区块链，如需其他ETH系的区块链可自由拓展。每条区块链配置都带有一个`Enable`参数，表示是否启用此区块链，默认的三条区块链的此项配置都为`false`，请将需要启用的区块链`Enable`参数更改为`true`
-> `EVMChains.json`说明参见：[EVMChains.json](EVMChains.md)
-### 4. 为二进制文件`TokenPay`增加可执行权限
-### 5. `宝塔应用管理器`或`Supervisor管理器`添加应用
-> 应用名称：TokenPay  
-> 运行身份：root
-> 应用环境：无 （`Supervisor管理器`无此项）  
-> 执行目录：/xxx (你解压文件的目录)  
-> 启动文件：/xxx/TokenPay  
-> 如有其他选项保持默认
+> **资产安全警告：** `TokenPay.db` 可能保存动态钱包私钥。请定期加密备份，限制目录权限，不要使用递归 `777`，也不要让网站或其他系统用户读取数据库。
 
-如需修改项目启动端口 可以增加启动参数 --urls=http://+:5001
-如：
-./xxx/xxx/TokenPay --urls=http://+:5001
+## 1. 上传并配置
 
-5001可以改为任意未被占用的端口，建议大于5000
+1. 下载与服务器 CPU 架构匹配的 Linux Release 包。普通用户建议选择不带 `framework-dependent` 的自包含包；如果服务器已经安装 .NET 8 ASP.NET Core Runtime，也可选择体积更小的 `linux-x64-framework-dependent` 或 `linux-arm64-framework-dependent` 包。
+2. 解压到独立目录，例如 `/opt/tokenpay`。
+3. 将 `appsettings.Example.json` 复制为 `appsettings.json`，参考 [主配置说明](appsettings.md) 完成配置。
+4. 将 `EVMChains.Example.json` 复制为 `EVMChains.json`，参考 [EVM 配置说明](EVMChains.md) 启用需要的链并填写 API Key。
+5. 为程序所有者增加执行权限：
 
+```bash
+chmod u+x /opt/tokenpay/TokenPay
+```
 
-### 6. 添加一个纯静态网站，配置反向代理 `http://127.0.0.1:5000`
+不要修改不理解的链参数，尤其是 Chain ID、精度和合约地址。
 
-**如启动失败，可尝试将整个`TokenPay目录`循环设置`777`权限，再重新尝试启动**
+如果使用 `framework-dependent` 包，请先执行 `dotnet --list-runtimes`，确认输出中存在 `Microsoft.AspNetCore.App 8.0.x`。该发布包仍可通过上面的 `./TokenPay` 命令直接启动，无需改成 DLL 启动方式。
 
+## 2. 添加守护进程
+
+在“进程守护管理器”或“Supervisor 管理器”中添加：
+
+| 项目 | 示例 |
+| --- | --- |
+| 名称 | `TokenPay` |
+| 运行用户 | 专门创建的低权限用户，不建议 root |
+| 工作目录 | `/opt/tokenpay` |
+| 启动命令 | `/opt/tokenpay/TokenPay --urls=http://127.0.0.1:8080` |
+| 自动重启 | 开启 |
+
+如果使用没有平台启动程序的 DLL 包，启动命令改为：
+
+```bash
+dotnet /opt/tokenpay/TokenPay.dll --urls=http://127.0.0.1:8080
+```
+
+示例使用 `8080` 端口。先启动一次并查看日志；如果该端口已被占用，请将启动命令中的 `8080` 改为其他未占用端口，后续反向代理也必须使用相同端口。
+
+## 3. 添加网站与 HTTPS
+
+1. 在宝塔中添加站点并绑定域名。
+2. 申请并启用有效的 TLS 证书，强制使用 HTTPS。
+3. 添加反向代理，目标 URL 设置为 `http://127.0.0.1:8080`；如果启动时更换了端口，此处也要使用更换后的端口。
+4. 将 `appsettings.json` 中的 `WebSiteUrl` 设置为实际 HTTPS 域名。
+5. 如开启后台，保持 `Admin:RequireHttps=true`，详见 [后台管理说明](admin.md)。
+
+TokenPay 本身只监听本机地址即可，无需在防火墙开放 8080 端口。
+
+## 4. 文件权限建议
+
+- 程序文件：运行用户可读、可执行。
+- `TokenPay.db`、配置和日志：仅运行用户及管理员可访问。
+- 不要使用 `chmod -R 777`。权限问题应通过正确的文件所有者和最小权限解决。
+- 不要把真实配置或数据库放在网站静态根目录中。
+
+## 5. 验证与更新
+
+完成后创建小额订单，检查支付页、链上识别、异步回调和 Telegram 通知。更新程序前先停止守护进程并备份 `TokenPay.db`、`appsettings.json`、`EVMChains.json`，替换程序文件后再启动。
+
+更多通用检查见 [手动运行说明](manual_RUN.md)。

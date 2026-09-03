@@ -44,7 +44,7 @@ namespace TokenPay.BgServices
                     var Currency = $"EVM_{chain.ChainNameEN}_{erc20.Name}_{chain.ERC20Name}";
                     try
                     {
-                        await ERC20(_repository, Currency, chain, erc20);
+                        await ERC20(_repository, Currency, chain, erc20, stoppingToken);
                     }
                     catch (Exception e)
                     {
@@ -59,7 +59,7 @@ namespace TokenPay.BgServices
         /// 查询交易记录
         /// </summary>
         /// <returns></returns>
-        private async Task ERC20(IBaseRepository<TokenOrders> _repository, string Currency, EVMChain chain, EVMErc20 erc20)
+        private async Task ERC20(IBaseRepository<TokenOrders> _repository, string Currency, EVMChain chain, EVMErc20 erc20, CancellationToken stoppingToken)
         {
             var Address = await _repository
                 .Where(x => x.Status == OrderStatus.Pending)
@@ -101,7 +101,7 @@ namespace TokenPay.BgServices
                     .SetQueryParams(query)
                     .WithTimeout(15);
                 var result = await req
-                    .GetJsonAsync<BaseResponseList<ERC20Transaction>>();
+                    .GetJsonAsync<BaseResponseList<ERC20Transaction>>(cancellationToken: stoppingToken);
 
                 if (result.Status == "1" && result.Result?.Count > 0)
                 {
@@ -135,7 +135,7 @@ namespace TokenPay.BgServices
                             order.PayAmount = item.RealAmount;
                             await _repository.UpdateAsync(order);
                             orders.Remove(order);
-                            await SendAdminMessage(order);
+                            await SendAdminMessage(order, stoppingToken);
                         }
                         else
                         {
@@ -163,9 +163,9 @@ namespace TokenPay.BgServices
                 }
             }
         }
-        private async Task SendAdminMessage(TokenOrders order)
+        private async Task SendAdminMessage(TokenOrders order, CancellationToken stoppingToken)
         {
-            await _channel.Writer.WriteAsync(order);
+            await _channel.Writer.WriteAsync(order, stoppingToken);
         }
     }
 }

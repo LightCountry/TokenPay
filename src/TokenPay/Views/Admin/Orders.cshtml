@@ -1,0 +1,70 @@
+@model AdminOrderPageModel
+@using TokenPay.Domains
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "订单记录";
+}
+<div class="page-heading mb-4"><div><div class="page-kicker">PAYMENT MANAGEMENT</div><h1 class="h3 mb-1">订单记录</h1><p class="text-secondary mb-0">查看支付订单状态，并处理确实已付款但系统未自动识别的订单。</p></div><div class="record-count">共 <strong>@Model.Total</strong> 条</div></div>
+@if (TempData["AdminSuccess"] is string success) { <div class="alert alert-success">@success</div> }
+@if (TempData["AdminError"] is string error) { <div class="alert alert-danger">@error</div> }
+<form method="get" class="search-panel compact-search mb-3">
+    <div class="search-grid">
+        <div class="search-keyword"><label class="form-label">关键词</label><input class="form-control form-control-sm" name="keyword" value="@Model.Keyword" maxlength="200" placeholder="订单号 / 用户 / 地址 / TxID" /></div>
+        <div><label class="form-label">状态</label><select class="form-select form-select-sm" name="status"><option value="">全部</option>@foreach (var value in Enum.GetValues<OrderStatus>()) { <option value="@value" selected="@(Model.Status == value)">@value</option> }</select></div>
+        <div><label class="form-label">币种</label><select class="form-select form-select-sm" name="currency"><option value="">全部</option>@foreach (var value in Model.Currencies) { <option value="@value" selected="@(Model.Currency == value)">@AdminCurrencyDisplay.GetName(value)</option> }</select></div>
+        <div><label class="form-label">创建时间从</label><input class="form-control form-control-sm" type="datetime-local" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-ddTHH:mm")" /></div>
+        <div><label class="form-label">创建时间至</label><input class="form-control form-control-sm" type="datetime-local" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-ddTHH:mm")" /></div>
+        <div class="search-actions"><input type="hidden" name="pageSize" value="@Model.PageSize" /><button class="btn btn-primary btn-sm" type="submit">搜索</button><a class="btn btn-outline-secondary btn-sm" asp-action="Orders" asp-route-pageSize="@Model.PageSize">重置</a></div>
+    </div>
+</form>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize, Keyword = Model.Keyword, Status = Model.Status, Currency = Model.Currency, StartDate = Model.StartDate, EndDate = Model.EndDate }" />
+<div class="admin-table-card">
+<div class="table-responsive">
+    <table class="table admin-table table-hover align-middle mb-0">
+        <thead><tr><th>外部订单号</th><th>币种</th><th>应付</th><th>实付</th><th>状态</th><th>付款地址</th><th>收款地址</th><th>交易哈希</th><th>创建时间</th><th>付款时间</th><th>操作</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            var displayCurrency = AdminCurrencyDisplay.GetName(item.Currency);
+            var fromAddressUrl = string.IsNullOrWhiteSpace(item.FromAddress) ? null : $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.FromAddress)}";
+            var toAddressUrl = $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.ToAddress)}";
+            var transactionUrl = string.IsNullOrWhiteSpace(item.BlockTransactionId) ? null : $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.BlockTransactionId)}";
+            var redirectUrl = AdminLinkDisplay.GetSafeHttpUrl(item.RedirectUrl);
+            var listRoute = new { page = Model.Page, pageSize = Model.PageSize, keyword = Model.Keyword, status = Model.Status, currency = Model.Currency, startDate = Model.StartDate?.ToString("yyyy-MM-ddTHH:mm"), endDate = Model.EndDate?.ToString("yyyy-MM-ddTHH:mm") };
+            var supplementUrl = Url.Action("Orders", new { listRoute.page, listRoute.pageSize, listRoute.keyword, listRoute.status, listRoute.currency, listRoute.startDate, listRoute.endDate, supplement = item.Id });
+            var closeSupplementUrl = Url.Action("Orders", listRoute);
+            <tr>
+                <td class="text-nowrap fw-semibold">@if (redirectUrl != null) { <a class="order-link" href="@redirectUrl" target="_blank" rel="noopener noreferrer" title="打开订单跳转地址">@item.OutOrderId <span aria-hidden="true">↗</span></a> } else { @item.OutOrderId }</td><td><span class="currency-chip" title="@item.Currency">@displayCurrency</span></td><td class="text-nowrap">@item.Amount <small>@displayCurrency</small></td><td class="text-nowrap">@if (item.PayAmount.HasValue) { <span>@item.PayAmount.Value <small>@displayCurrency</small></span> } else { <span class="unpaid-label">未付款</span> }</td>
+                <td><span class="status-badge status-@item.Status.ToString().ToLowerInvariant()">@item.Status</span></td>
+                <td class="resource-cell">@if (fromAddressUrl == null) { <span>-</span> } else { <a href="@fromAddressUrl" target="_blank" rel="noopener noreferrer">@item.FromAddress</a><button type="button" class="copy-icon-button" data-copy="@item.FromAddress" title="复制付款地址" aria-label="复制付款地址"></button> }</td>
+                <td class="resource-cell"><a href="@toAddressUrl" target="_blank" rel="noopener noreferrer">@item.ToAddress</a><button type="button" class="copy-icon-button" data-copy="@item.ToAddress" title="复制收款地址" aria-label="复制收款地址"></button></td>
+                <td class="resource-cell">@if (transactionUrl == null) { <span>-</span> } else { <a href="@transactionUrl" target="_blank" rel="noopener noreferrer">@item.BlockTransactionId</a><button type="button" class="copy-icon-button" data-copy="@item.BlockTransactionId" title="复制交易哈希" aria-label="复制交易哈希"></button> }</td><td class="text-nowrap">@item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td class="text-nowrap">@item.PayTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@if (item.Status == OrderStatus.Expired) { <a class="btn btn-warning btn-sm" href="@supplementUrl">补单</a> }</td>
+            </tr>
+            @if (item.Status == OrderStatus.Expired && Model.SupplementOrderId == item.Id)
+            {
+                <tr class="supplement-row"><td colspan="11" class="p-0">
+                  <div class="supplement-panel">
+                    <div class="supplement-title"><span class="supplement-icon">!</span><div><h2 class="h5 mb-1">人工补单</h2><p class="mb-0">仅当用户已经在区块链上真实付款，但订单因超时或未匹配而显示为 Expired 时使用。</p></div><a class="btn btn-sm btn-outline-secondary ms-auto align-self-start" href="@closeSupplementUrl">关闭</a></div>
+                    <div class="supplement-guide">
+                        <div><strong>补单会发生什么？</strong><p>提交后订单将立即变为 Paid，系统会进入原有商户回调流程，并向管理员发送到账消息。此操作不是创建一笔链上转账，也不会替用户付款。</p></div>
+                        <div><strong>提交前请核对</strong><ul><li>在对应区块浏览器中确认交易已成功且已确认。</li><li>收款地址与本订单一致，币种及网络与订单一致。</li><li>交易哈希未用于其他订单，实付金额与链上记录完全一致。</li></ul></div>
+                    </div>
+                    <form asp-action="Supplement" method="post" class="row g-3 align-items-end mt-1">
+                        <input type="hidden" name="Id" value="@item.Id" />
+                        <div class="col-xl-3 col-md-6"><label class="form-label fw-semibold">付款地址</label><input class="form-control" name="FromAddress" required maxlength="200" placeholder="链上交易的转出地址" /><div class="form-text">填写用户实际付款的钱包地址。</div></div>
+                        <div class="col-xl-3 col-md-6"><label class="form-label fw-semibold">交易哈希（TxID）</label><input class="form-control" name="TransactionId" required maxlength="200" placeholder="从区块浏览器复制完整哈希" /><div class="form-text">每个交易哈希只能补单一次。</div></div>
+                        <div class="col-xl-2 col-md-6"><label class="form-label fw-semibold">付款时间</label><input class="form-control" type="datetime-local" name="PayTime" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required /><div class="form-text">以区块浏览器显示时间为准。</div></div>
+                        <div class="col-xl-2 col-md-6"><label class="form-label fw-semibold">实付金额</label><div class="input-group"><input class="form-control" type="number" step="0.00000001" min="0.00000001" name="PayAmount" value="@item.Amount" aria-label="实付金额" required /><span class="input-group-text currency-unit" title="@item.Currency">@displayCurrency</span></div><div class="form-text">填写链上实际到账数量。</div></div>
+                    <div class="supplement-warning mt-3"><strong>请勿仅凭用户截图补单：</strong>截图可能伪造，必须亲自在区块浏览器查询交易哈希。填错订单或金额可能导致商户错误发货。</div>
+                        <div class="col-xl-2"><button class="btn btn-danger w-100" type="submit" onclick="return confirm('补单后订单将变为已支付并触发回调，确认所有链上信息均已核对无误？')">我已核对，确认补单</button></div>
+                    </form>
+                  </div>
+                </td></tr>
+            }
+        }
+        </tbody>
+    </table>
+</div></div>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize, Keyword = Model.Keyword, Status = Model.Status, Currency = Model.Currency, StartDate = Model.StartDate, EndDate = Model.EndDate }" />

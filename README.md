@@ -25,7 +25,7 @@ USDT、TRX交易监控机器人：[USDT、TRX交易监控](https://t.me/CoinList
 > 波场能量租用，有能量时转账USDT不扣TRX，为你节省50-70%的TRX
 
 TG会员秒开机器人：[TG会员秒开-全自动发货](https://t.me/BuyYourPremiumBot)
-> 24小时自动开通Telegram Premium会员，只需一个用户名即可开通。
+> 24小时自动开通Telegram Premium会员、也可以购买telegram星星，只需提供接收方用户名(username)即可。
 
 +888匿名号码租用机器人：[+888匿名号码租用机器人](https://t.me/Zu888Bot)
 > Telegram +888 匿名号码租用机器人。
@@ -45,6 +45,7 @@ TG会员秒开机器人：[TG会员秒开-全自动发货](https://t.me/BuyYourP
 - `C#语言`跨平台实现，支持x86和arm芯片架构的win/linux/mac设备😁
 - 支持每单一个收款地址，或每个用户一个收款地址，解决了单一地址收款，容易导致错误完成订单的痛点。
 - 无需额外环境配置，仅运行一个编译后二进制文件即可使用
+- 内置可配置启停的只读后台管理页面，可安全查看订单、钱包和汇率记录，并支持对已确认链上到账的过期订单进行人工补单
 
 ## 项目结构
 ```
@@ -62,11 +63,16 @@ TokenPay
 
 ## 系统对接
 - `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
+- 后台管理页面配置与使用👉🏻[后台管理说明](Wiki/admin.md)
 - **也可参考仓库内现有插件**
 
 ## 教程：
+- Release 同时提供自包含包和名称带 `framework-dependent` 的轻量包；后者需要预先安装 .NET 8 ASP.NET Core Runtime，选择方法见[手动运行说明](Wiki/manual_RUN.md)
 - 宝塔运行`TokenPay`教程👉🏻[宝塔运行TokenPay](Wiki/BT_RUN.md)
 - 手动运行`TokenPay`教程👉🏻[手动运行TokenPay](Wiki/manual_RUN.md)
+- Docker运行`TokenPay`教程👉🏻[Docker运行TokenPay](Wiki/Docker-RUN.md)
+- 后台管理页面教程👉🏻[后台管理说明](Wiki/admin.md)
+- 页面内置与运行时自定义👉🏻[页面覆盖说明](Wiki/ViewCustomization.md)
 - 小白也可查看用户贡献的搭建视频：[TokenPay详细搭建教程 对接易支付和独角数卡](https://www.youtube.com/watch?v=w75mTOAnLDw)
 
 

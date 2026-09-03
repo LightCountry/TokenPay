@@ -1,8 +1,15 @@
-version: "3.8"
 services:
   app:
-    container_name: token-pay
+    image: mcr.microsoft.com/dotnet/aspnet:8.0
+    container_name: TokenPay
     restart: always
-    build:
-      context: .
-    image: token-pay:lastest
+    entrypoint: ["./TokenPay"]
+    working_dir: /app
+    environment:
+      TZ: Asia/Shanghai
+      LC_ALL: zh_CN.UTF-8
+      LANG: zh_CN.UTF-8
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./publish:/app

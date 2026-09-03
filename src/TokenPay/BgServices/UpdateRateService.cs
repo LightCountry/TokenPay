@@ -86,7 +86,7 @@ namespace TokenPay.BgServices
                             quoteCurrency = BaseCurrency.ToString(),
                             baseCurrency = item,
                         })
-                        .GetJsonAsync<Root>();
+                        .GetJsonAsync<Root>(cancellationToken: stoppingToken);
                     if (result.code == 0)
                     {
                         list.Add(new TokenRate
@@ -102,6 +102,10 @@ namespace TokenPay.BgServices
                     {
                         _logger.LogWarning("{item} 汇率获取失败！错误信息：{msg}", item, result.msg ?? result.error_message);
                     }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {

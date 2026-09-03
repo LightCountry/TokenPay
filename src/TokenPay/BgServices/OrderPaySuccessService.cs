@@ -39,6 +39,10 @@ namespace TokenPay.BgServices
                     {
                         await SendAdminMessage(item, stoppingToken);
                     }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         _logger.LogError(e, "发送新订单通知失败！");

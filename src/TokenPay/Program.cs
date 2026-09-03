@@ -2,6 +2,9 @@ using Flurl.Http;
 using Flurl.Http.Newtonsoft;
 using FreeSql;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Data.Sqlite;
 using Serilog;
 using Serilog.Events;
@@ -13,11 +16,18 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
+using System.Threading.RateLimiting;
 using TokenPay.BgServices;
 using TokenPay.Controllers;
 using TokenPay.Domains;
 using TokenPay.Helper;
 using TokenPay.Models.EthModel;
+
+if (args.Length == 2 && args[0] == "--hash-admin-password")
+{
+    Console.WriteLine(new PasswordHasher<object>().HashPassword(new object(), args[1]));
+    return;
+}
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -88,21 +98,53 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
                     .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
                     .WriteTo.Console()
                     );
-builder.Services.AddControllersWithViews()
-    .AddRazorRuntimeCompilation()
+var mvcBuilder = builder.Services.AddControllersWithViews()
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+var externalViewsPath = Path.Combine(builder.Environment.ContentRootPath, "Views");
+if (Directory.Exists(externalViewsPath))
+{
+    mvcBuilder.AddRazorRuntimeCompilation();
+    Log.Information("检测到外置 Views 目录，已启用 Razor 运行时编译");
+}
+
+Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "TokenPay.Admin";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = Configuration.GetValue("Admin:RequireHttps", true)
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
+        options.LoginPath = "/admin/login";
+        options.AccessDeniedPath = "/admin/login";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(Configuration.GetValue("Admin:SessionMinutes", 30));
+        options.SlidingExpiration = true;
+    });
+Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("admin-login", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0
+        }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 var connectionString = Configuration.GetConnectionString("DB");
 IFreeSql fsql = new FreeSqlBuilder()
         .UseConnectionString(DataType.Sqlite, connectionString)
         .UseAutoSyncStructure(true) //自动同步实体结构
         .UseAdoConnectionPool(true)
-        .UseNoneCommandParameter(true)
+        //.UseNoneCommandParameter(true)
         .Build();
 
 Services.AddSingleton(fsql);
@@ -117,12 +159,16 @@ Services.AddHostedService<OrderCheckTRXService>();
 Services.AddHostedService<OrderCheckEVMBaseService>();
 Services.AddHostedService<OrderCheckEVMERC20Service>();
 Services.AddHostedService<CollectionTRONService>();
+Services.AddHostedService<TelegramInitializationService>();
 Services.AddHttpContextAccessor();
-Services.AddEndpointsApiExplorer();
-Services.AddSwaggerGen(c =>
+if (builder.Environment.IsDevelopment())
 {
-    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
-});
+    Services.AddEndpointsApiExplorer();
+    Services.AddSwaggerGen(c =>
+    {
+        c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
+    });
+}
 Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new List<CultureInfo>
@@ -136,20 +182,7 @@ Services.Configure<RequestLocalizationOptions>(options =>
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
 });
-Services.AddSingleton(s =>
-{
-    var bot = new TelegramBot(Configuration);
-    try
-    {
-        var me = bot.GetMeAsync().GetAwaiter().GetResult();
-    }
-    catch (Exception e)
-    {
-        Log.Logger.Error(e, "机器人连接失败！");
-        throw;
-    }
-    return bot;
-});
+Services.AddSingleton(new TelegramBot(Configuration));
 // 订单广播 
 var channel = Channel.CreateUnbounded<TokenOrders>();
 Services.AddSingleton(channel);
@@ -180,6 +213,24 @@ else
 app.UseStaticFiles();
 app.UseRouting();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/admin"))
+    {
+        if (!Configuration.GetValue("Admin:Enabled", false))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers.XFrameOptions = "DENY";
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    }
+    await next();
+});
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseRequestLocalization();
 app.MapControllerRoute(

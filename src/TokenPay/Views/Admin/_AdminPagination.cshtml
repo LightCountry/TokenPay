@@ -1,0 +1,53 @@
+@model AdminPaginationModel
+@{
+    var firstPage = Math.Max(1, Model.Page - 2);
+    var lastPage = Math.Min(Model.TotalPages, Model.Page + 2);
+    string PageUrl(int page) => Url.Action(null, new
+    {
+        page,
+        pageSize = Model.PageSize,
+        keyword = Model.Keyword,
+        status = Model.Status,
+        currency = Model.Currency,
+        startDate = Model.StartDate?.ToString("yyyy-MM-ddTHH:mm"),
+        endDate = Model.EndDate?.ToString("yyyy-MM-ddTHH:mm")
+    })!;
+}
+<nav class="admin-pagination mt-3" aria-label="分页导航">
+    <form method="get" class="page-size-form me-auto">
+        <input type="hidden" name="page" value="1" />
+        @if (Model.Keyword != null) { <input type="hidden" name="keyword" value="@Model.Keyword" /> }
+        @if (Model.Status.HasValue) { <input type="hidden" name="status" value="@Model.Status" /> }
+        @if (Model.Currency != null) { <input type="hidden" name="currency" value="@Model.Currency" /> }
+        @if (Model.StartDate.HasValue) { <input type="hidden" name="startDate" value="@Model.StartDate.Value.ToString("yyyy-MM-ddTHH:mm")" /> }
+        @if (Model.EndDate.HasValue) { <input type="hidden" name="endDate" value="@Model.EndDate.Value.ToString("yyyy-MM-ddTHH:mm")" /> }
+        <label>每页
+            <select name="pageSize" class="form-select form-select-sm" onchange="this.form.submit()">
+                @foreach (var size in new[] { 10, 20, 50, 100 })
+                {
+                    <option value="@size" selected="@(size == Model.PageSize)">@size</option>
+                }
+            </select>
+            条
+        </label>
+    </form>
+    <a class="btn btn-outline-secondary btn-sm @(Model.Page <= 1 ? "disabled" : null)" href="@PageUrl(Model.Page - 1)" aria-disabled="@(Model.Page <= 1)">← 上一页</a>
+    <div class="page-numbers mx-2">
+        @if (firstPage > 1)
+        {
+            <a class="page-number" href="@PageUrl(1)">1</a>
+            @if (firstPage > 2) { <span class="page-ellipsis">…</span> }
+        }
+        @for (var pageNumber = firstPage; pageNumber <= lastPage; pageNumber++)
+        {
+            <a class="page-number @(pageNumber == Model.Page ? "active" : null)" href="@PageUrl(pageNumber)" aria-current="@(pageNumber == Model.Page ? "page" : null)">@pageNumber</a>
+        }
+        @if (lastPage < Model.TotalPages)
+        {
+            @if (lastPage < Model.TotalPages - 1) { <span class="page-ellipsis">…</span> }
+            <a class="page-number" href="@PageUrl(Model.TotalPages)">@Model.TotalPages</a>
+        }
+    </div>
+    <a class="btn btn-outline-secondary btn-sm @(Model.Page >= Model.TotalPages ? "disabled" : null)" href="@PageUrl(Model.Page + 1)" aria-disabled="@(Model.Page >= Model.TotalPages)">下一页 →</a>
+    <span class="page-summary ms-3">第 @Model.Page / @Model.TotalPages 页</span>
+</nav>

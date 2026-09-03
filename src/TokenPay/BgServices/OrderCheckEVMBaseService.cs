@@ -77,7 +77,7 @@ namespace TokenPay.BgServices
                             .SetQueryParams(queryBlockNumber)
                             .WithTimeout(15);
                         var resultBlockNumber = await reqBlockNumber
-                            .GetJsonAsync<BaseResponse<string>>();
+                            .GetJsonAsync<BaseResponse<string>>(cancellationToken: stoppingToken);
                         var NowBlockNumber = 0;
                         try
                         {
@@ -106,7 +106,7 @@ namespace TokenPay.BgServices
                                 order.PayAmount = RealAmount;
                                 await _repository.UpdateAsync(order);
                                 orders.Remove(order);
-                                await SendAdminMessage(order);
+                                await SendAdminMessage(order, stoppingToken);
                             }
                             else
                             {
@@ -152,7 +152,7 @@ namespace TokenPay.BgServices
                             .SetQueryParams(query)
                             .WithTimeout(15);
                         var result = await req
-                            .GetJsonAsync<BaseResponseList<EthTransaction>>();
+                            .GetJsonAsync<BaseResponseList<EthTransaction>>(cancellationToken: stoppingToken);
 
                         if (result.Status == "1" && result.Result?.Count > 0)
                         {
@@ -198,7 +198,7 @@ namespace TokenPay.BgServices
                             .SetQueryParams(queryInternal)
                             .WithTimeout(15);
                         var resultInternal = await reqInternal
-                            .GetJsonAsync<BaseResponseList<EthTransaction>>();
+                            .GetJsonAsync<BaseResponseList<EthTransaction>>(cancellationToken: stoppingToken);
                         if (resultInternal.Status == "1" && resultInternal.Result?.Count > 0)
                         {
                             foreach (var item in resultInternal.Result)
@@ -230,9 +230,9 @@ namespace TokenPay.BgServices
                 }
             }
         }
-        private async Task SendAdminMessage(TokenOrders order)
+        private async Task SendAdminMessage(TokenOrders order, CancellationToken stoppingToken)
         {
-            await _channel.Writer.WriteAsync(order);
+            await _channel.Writer.WriteAsync(order, stoppingToken);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace TokenPay.Helper
             this._configuration = configuration;
         }
         public static TelegramBotInfo BotInfo = null!;
-        public async Task<TelegramResult<TelegramBotInfo>?> GetMeAsync(string? TelegramApiHost = null)
+        public async Task<TelegramResult<TelegramBotInfo>?> GetMeAsync(string? TelegramApiHost = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(_botToken) || _userId == 0)
             {
@@ -31,10 +31,10 @@ namespace TokenPay.Helper
                     .WithTimeout(5)
                     .AppendPathSegment($"bot{_botToken}/getMe")
                     .WithTimeout(10);
-            var result = await request.GetJsonAsync<TelegramResult<TelegramBotInfo>>();
+            var result = await request.GetJsonAsync<TelegramResult<TelegramBotInfo>>(cancellationToken: cancellationToken);
             Log.Logger.Information("机器人启动成功！我是{@result}。", result.Result.FirstName);
             BotInfo = result.Result;
-            await SendTextMessageAsync("你好呀~我是TokenPay通知机器人！");
+            await SendTextMessageAsync("你好呀~我是TokenPay通知机器人！", cancellationToken: cancellationToken);
             return result;
         }
         public async Task<TelegramResult<SendMessageResult>?> SendTextMessageAsync(string Message, string? TelegramApiHost = null, CancellationToken? cancellationToken = null)
@@ -62,6 +62,10 @@ namespace TokenPay.Helper
                 var result = await request.GetJsonAsync<TelegramResult<SendMessageResult>>(cancellationToken: cancellationToken ?? default);
                 Log.Logger.Information("机器人消息发送结果：{result}", result.Ok);
                 return result;
+            }
+            catch (OperationCanceledException) when (cancellationToken?.IsCancellationRequested == true)
+            {
+                throw;
             }
             catch (Exception e)
             {

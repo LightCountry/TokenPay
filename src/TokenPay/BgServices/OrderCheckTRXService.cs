@@ -75,7 +75,7 @@ namespace TokenPay.BgServices
                 if (_env.IsProduction())
                     req = req.WithHeader("TRON-PRO-API-KEY", _configuration.GetValue<string>("TRON-PRO-API-KEY"));
                 var result = await req
-                    .GetJsonAsync<BaseResponse<TrxTransaction>>();
+                    .GetJsonAsync<BaseResponse<TrxTransaction>>(cancellationToken: stoppingToken);
 
                 if (result.Success && result.Data?.Count > 0)
                 {
@@ -115,7 +115,7 @@ namespace TokenPay.BgServices
                             order.PayAmount = raw.RealAmount;
                             await _repository.UpdateAsync(order);
                             orders.Remove(order);
-                            await SendAdminMessage(order);
+                            await SendAdminMessage(order, stoppingToken);
                         }
                         else
                         {
@@ -143,9 +143,9 @@ namespace TokenPay.BgServices
                 }
             }
         }
-        private async Task SendAdminMessage(TokenOrders order)
+        private async Task SendAdminMessage(TokenOrders order, CancellationToken stoppingToken)
         {
-            await _channel.Writer.WriteAsync(order);
+            await _channel.Writer.WriteAsync(order, stoppingToken);
         }
     }
 }

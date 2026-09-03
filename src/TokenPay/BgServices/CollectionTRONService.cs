@@ -48,7 +48,7 @@ namespace TokenPay.BgServices
         /// <summary>
         /// 当前能量单价（请勿修改）
         /// </summary>
-        private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 210m);
+        private decimal EnergyPrice => _configuration.GetValue("Collection:EnergyPrice", 100m);
         /// <summary>
         /// 租赁能量时长（请勿修改）
         /// </summary>
@@ -107,7 +107,7 @@ namespace TokenPay.BgServices
 <b>请向此地址转入TRX用于归集USDT</b>
 ");
             }
-            var mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address);
+            var mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address, stoppingToken);
             _logger.LogInformation("手续费钱包当前TRX余额：{trx}", mainTrx);
             if (mainTrx < 1)
             {
@@ -116,7 +116,7 @@ namespace TokenPay.BgServices
                     var TrxCheckTime = 10;
                     _logger.LogInformation("手续费钱包地址为：{a}", mainWallet.Address);
                     _logger.LogInformation("等待向手续费钱包充值TRX");
-                    mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address);
+                    mainTrx = await QueryTronAction.GetTRXAsync(mainWallet.Address, stoppingToken);
                     if (mainTrx > 1)
                         _logger.LogInformation("充值完成，当前TRX余额：{trx}", mainTrx);
                     else
@@ -131,7 +131,7 @@ namespace TokenPay.BgServices
 
 如无需使用归集功能，请将配置文件中的<b>Collection:Enable</b>配置为<b>false</b>");
                     }
-                    await Task.Delay(TrxCheckTime * 1000);
+                    await Task.Delay(TrxCheckTime * 1000, stoppingToken);
                 }
             }
             try
@@ -146,7 +146,7 @@ namespace TokenPay.BgServices
 归集收款地址：<code>{Address}</code>");
                 return;
             }
-            var usdt = await QueryTronAction.GetUsdtAmountAsync(Address);
+            var usdt = await QueryTronAction.GetUsdtAmountAsync(Address, stoppingToken);
             if (usdt <= 0)
             {
                 _logger.LogError("归集收款地址{a}必须有USDT！", Address);
@@ -157,7 +157,7 @@ namespace TokenPay.BgServices
             }
             else
             {
-                var trx = await QueryTronAction.GetTRXAsync(Address);
+                var trx = await QueryTronAction.GetTRXAsync(Address, stoppingToken);
                 _logger.LogInformation("归集收款地址，当前TRX余额：{trx}，当前USDT余额：{usdt}", trx, usdt);
                 await _bot.SendTextMessageAsync(@$"归集收款地址余额
 
@@ -166,26 +166,30 @@ namespace TokenPay.BgServices
 当前USDT余额：{usdt} USDT");
             }
             var _repository = freeSql.GetRepository<Tokens>();
-            var list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => ForceCheckAllAddress || (x.USDT > MinUSDT || x.Value > 0.5m)).ToListAsync();
+            var list = await _repository.Where(x => x.Currency == TokenCurrency.TRX)
+                .Where(x => ForceCheckAllAddress || (x.USDT > MinUSDT || x.Value > 0.5m))
+                .ToListAsync();
             var count = 0;
             foreach (var item in list)
             {
                 if (stoppingToken.IsCancellationRequested) return;
-                if (item.LastCheckTime.HasValue && (DateTime.Now - item.LastCheckTime.Value).TotalHours <= 1)
+                if (item.LastCheckTime.HasValue && (DateTime.Now - item.LastCheckTime.Value).TotalHours <= 24)
                 {
-                    //避免短时间重复检查余额
+                    //24小时内检查过余额则跳过，避免短时间重复检查余额
                     continue;
                 }
-                var TRX = await QueryTronAction.GetTRXAsync(item.Address);
-                var USDT = await QueryTronAction.GetUsdtAmountAsync(item.Address);
+                var TRX = await QueryTronAction.GetTRXAsync(item.Address, stoppingToken);
+                var USDT = await QueryTronAction.GetUsdtAmountAsync(item.Address, stoppingToken);
                 item.Value = TRX;
                 item.USDT = USDT;
                 item.LastCheckTime = DateTime.Now;
                 await _repository.UpdateAsync(item);
                 _logger.LogInformation("更新地址余额数据：{a}/{b}，TRX：{TRX}，USDT：{USDT}", ++count, list.Count, TRX, USDT);
-                await Task.Delay(1500);
+                await Task.Delay(1500, stoppingToken);
             }
-            list = await _repository.Where(x => x.Currency == TokenCurrency.TRX).Where(x => x.USDT > MinUSDT || x.Value > 0.5m).ToListAsync();
+            list = await _repository.Where(x => x.Currency == TokenCurrency.TRX)
+                .Where(x => x.USDT > MinUSDT || x.Value > 0.5m)
+                .ToListAsync();
             _logger.LogInformation(@"共计查询到{count}个需要归集的地址，有TRX的地址有{a}个，共有 {b} TRX，有USDT的地址有{c}个，共有 {d} USDT",
                 list.Count,
                 list.Where(x => x.Value > 0.5m).Count(),
@@ -194,7 +198,7 @@ namespace TokenPay.BgServices
                 list.Where(x => x.USDT > MinUSDT).Sum(x => x.USDT));
             Func<int, Task<(decimal, string)>> GetPrice = async (int ResourceValue) =>
             {
-                var resp = await energyApi.OrderPrice(ResourceValue, RentDuration, RentTimeUnit);
+                var resp = await energyApi.OrderPrice(ResourceValue, RentDuration, RentTimeUnit, stoppingToken);
                 _logger.LogInformation("能量价格预估：{@result}", resp);
                 if (resp != null && resp.Code == 0)
                 {
@@ -205,7 +209,7 @@ namespace TokenPay.BgServices
                 _logger.LogError("能量价格预估失败！");
                 await _bot.SendTextMessageAsync(@$"能量价格预估失败！
 
-能量数量：{ResourceValue}");
+能量数量：{ResourceValue}", cancellationToken: stoppingToken);
                 return (0, string.Empty);
             };
             _logger.LogInformation("------------------------------");
@@ -218,7 +222,7 @@ namespace TokenPay.BgServices
                 if (stoppingToken.IsCancellationRequested) return;
                 var wallet = new TronWallet(item.Key);
 
-                var account = await QueryTronAction.GetAccountResourceAsync(wallet.Address);
+                var account = await QueryTronAction.GetAccountResourceAsync(wallet.Address, stoppingToken);
                 if (account.FreeNetLimit - account.FreeNetUsed < 280)
                 {
                     continue;
@@ -249,7 +253,7 @@ namespace TokenPay.BgServices
             {
                 if (stoppingToken.IsCancellationRequested) return;
                 var wallet = new TronWallet(item.Key);
-                var account = await QueryTronAction.GetAccountAsync(wallet.Address);
+                var account = await QueryTronAction.GetAccountAsync(wallet.Address, stoppingToken);
                 if (account.CreateTime == 0)
                 {
                     _logger.LogInformation("地址未激活，激活：{a}", wallet.Address);
@@ -270,7 +274,7 @@ namespace TokenPay.BgServices
                     }
                 }
                 var NeedEnergy = DefaultNeedEnergy;
-                var accountResource = await QueryTronAction.GetAccountResourceAsync(wallet.Address);
+                var accountResource = await QueryTronAction.GetAccountResourceAsync(wallet.Address, stoppingToken);
                 var needNet = accountResource.FreeNetLimit - accountResource.FreeNetUsed < 400;
                 var energy = accountResource.EnergyLimit - accountResource.EnergyUsed;
                 NeedEnergy -= energy;
@@ -283,7 +287,7 @@ namespace TokenPay.BgServices
                         {
                             trx += 0.5m;
                         }
-                        var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
+                        var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address, stoppingToken);
                         if (nowTrx < trx)
                         {
                             if (!await CheckMainWalletTrx(mainWallet, trx - nowTrx + NetUsedTrx))
@@ -307,7 +311,7 @@ namespace TokenPay.BgServices
                         if (needNet)
                         {
                             var trx = 0.5m;
-                            var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
+                            var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address, stoppingToken);
                             if (nowTrx < trx)
                             {
                                 if (!await CheckMainWalletTrx(mainWallet, trx + NetUsedTrx))
@@ -361,12 +365,12 @@ namespace TokenPay.BgServices
                             if (feeResult.Code == 0)
                             {
                                 var count2 = 0;
-                                await Task.Delay(3000);
+                            await Task.Delay(3000, stoppingToken);
                                 while (!stoppingToken.IsCancellationRequested && count2 < 30)
                                 {
                                     try
                                     {
-                                        var feeResult2 = await energyApi.OrderQuery(feeResult.Data.OrderNo);
+                                        var feeResult2 = await energyApi.OrderQuery(feeResult.Data.OrderNo, stoppingToken);
                                         if (feeResult2.Code == 0)
                                         {
                                             if (feeResult2.Data.Status == FeeeOrderStatus.已质押)
@@ -380,7 +384,7 @@ namespace TokenPay.BgServices
                                                 {
                                                     try
                                                     {
-                                                        accountResource = await QueryTronAction.GetAccountResourceAsync(wallet.Address);
+                                                        accountResource = await QueryTronAction.GetAccountResourceAsync(wallet.Address, stoppingToken);
                                                         energy = accountResource.EnergyLimit - accountResource.EnergyUsed;
                                                         if (energy >= DefaultNeedEnergy)
                                                         {
@@ -396,7 +400,7 @@ namespace TokenPay.BgServices
                                                     finally
                                                     {
                                                         if (count3 < 5)
-                                                            await Task.Delay(3000);
+                                                            await Task.Delay(3000, stoppingToken);
                                                         count3++;
                                                     }
                                                 }
@@ -416,7 +420,7 @@ namespace TokenPay.BgServices
                                     finally
                                     {
                                         if (count2 < 30)
-                                            await Task.Delay(1000 * 3);
+                                            await Task.Delay(1000 * 3, stoppingToken);
                                         count2++;
                                     }
                                 }
@@ -440,7 +444,7 @@ namespace TokenPay.BgServices
                     if (needNet)
                     {
                         var trx = 0.5m;
-                        var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address);
+                        var nowTrx = await QueryTronAction.GetTRXAsync(wallet.Address, stoppingToken);
                         if (nowTrx < trx)
                         {
                             if (!await CheckMainWalletTrx(mainWallet, trx - nowTrx + NetUsedTrx))

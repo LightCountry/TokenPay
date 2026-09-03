@@ -18,7 +18,7 @@ namespace TokenPay.BgServices
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Service {JobName} is starting.", jobName);
-            await Task.Delay(3000);//延迟3秒再启动任务
+            await Task.Delay(3000, stoppingToken);//延迟3秒再启动任务
             _timer = new PeriodicTimer(period);
             try
             {
@@ -27,6 +27,10 @@ namespace TokenPay.BgServices
                     try
                     {
                         await ExecuteAsync(DateTime.Now, stoppingToken);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        throw;
                     }
                     catch (Flurl.Http.FlurlHttpException ex) when (ex.StatusCode == 401 || ex.StatusCode == 403)
                     {

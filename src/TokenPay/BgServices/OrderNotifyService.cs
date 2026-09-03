@@ -3,6 +3,7 @@ using FreeSql;
 using System.Net;
 using TokenPay.Domains;
 using TokenPay.Extensions;
+using TokenPay.Helper;
 
 namespace TokenPay.BgServices
 {
@@ -51,7 +52,7 @@ namespace TokenPay.BgServices
                 order.CallbackNum++;
                 order.LastNotifyTime = DateTime.Now;
                 await _repository.UpdateAsync(order);
-                var result = await Notify(order);
+                var result = await Notify(order, stoppingToken);
                 if (result)
                 {
                     order.CallbackConfirm = true;
@@ -62,7 +63,7 @@ namespace TokenPay.BgServices
         }
 
 
-        private async Task<bool> Notify(TokenOrders order)
+        private async Task<bool> Notify(TokenOrders order, CancellationToken stoppingToken)
         {
             if (!string.IsNullOrEmpty(order.NotifyUrl))
             {
@@ -70,12 +71,10 @@ namespace TokenPay.BgServices
                 {
                     var dic = order.ToDic(_configuration);
                     var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
-                    var ApiToken = _configuration.GetValue<string>("ApiToken");
-                    SignatureStr += ApiToken;
-                    var Signature = SignatureStr.ToMD5();
+                    var Signature = SignatureHelper.Create(SignatureStr, _configuration);
                     dic.Add(nameof(Signature), Signature);
-                    var result = await client.Request(order.NotifyUrl).PostJsonAsync(dic);
-                    var message = await result.GetStringAsync();
+                    var result = await client.Request(order.NotifyUrl).PostJsonAsync(dic, cancellationToken: stoppingToken);
+                    var message = await result.GetStringAsync().WaitAsync(stoppingToken);
                     if (result.StatusCode == 200 && message == "ok")
                     {
                         _logger.LogInformation("订单异步通知成功！\n{msg}", message);
@@ -85,6 +84,10 @@ namespace TokenPay.BgServices
                     {
                         _logger.LogInformation("订单异步通知失败：{msg}", message);
                     }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {

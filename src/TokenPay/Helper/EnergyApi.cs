@@ -44,7 +44,7 @@ namespace TokenPay.Helper
         /// 价格估算
         /// </summary>
         /// <returns></returns>
-        public async Task<EnergyResponse<OrderPriceData>> OrderPrice(int resource_value, int rent_duration = 10, string rent_time_unit = "m")
+        public async Task<EnergyResponse<OrderPriceData>> OrderPrice(int resource_value, int rent_duration = 10, string rent_time_unit = "m", CancellationToken cancellationToken = default)
         {
             var result = await client
                 .Request("OrderPrice")
@@ -53,7 +53,7 @@ namespace TokenPay.Helper
                     resource_value,
                     rent_duration,
                     rent_time_unit
-                })
+                }, cancellationToken: cancellationToken)
                 .ReceiveJson<EnergyResponse<OrderPriceData>>();
             return result;
         }
@@ -61,10 +61,10 @@ namespace TokenPay.Helper
         /// 查询订单
         /// </summary>
         /// <returns></returns>
-        public async Task<EnergyResponse<OrderData>> OrderQuery(string order_no)
+        public async Task<EnergyResponse<OrderData>> OrderQuery(string order_no, CancellationToken cancellationToken = default)
         {
             var result = await client.Request($"OrderQuery/{order_no}")
-                .GetJsonAsync<EnergyResponse<OrderData>>();
+                .GetJsonAsync<EnergyResponse<OrderData>>(cancellationToken: cancellationToken);
             return result;
         }
         /// <summary>

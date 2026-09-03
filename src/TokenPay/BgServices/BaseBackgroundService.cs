@@ -21,7 +21,7 @@ namespace TokenPay.BgServices
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Background Service {JobName} is stopping.", jobName);
-            return base.StartAsync(cancellationToken);
+            return base.StopAsync(cancellationToken);
         }
     }
 

@@ -1,0 +1,8 @@
+@model AdminPageModel<TokenPay.Domains.TokenRate>
+@{ Layout = "_AdminLayout"; ViewData["Title"] = "汇率记录"; }
+<div class="page-heading mb-4"><div><div class="page-kicker">EXCHANGE RATES</div><h1 class="h3 mb-1">汇率记录</h1><p class="text-secondary mb-0">查看系统当前使用的币种兑法币汇率。</p></div><div class="record-count">共 <strong>@Model.Total</strong> 条</div></div>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize }" />
+<div class="admin-table-card"><div class="table-responsive"><table class="table admin-table table-hover align-middle mb-0"><thead><tr><th>币对</th><th>币种</th><th>法币</th><th>汇率换算</th><th>最后更新时间</th></tr></thead><tbody>
+@foreach (var item in Model.Items) { var displayCurrency = AdminCurrencyDisplay.GetName(item.Currency); <tr><td>@item.Id</td><td title="@item.Currency">@displayCurrency</td><td>@item.FiatCurrency</td><td class="rate-equation">1 @displayCurrency = <strong>@item.Rate</strong> @item.FiatCurrency</td><td>@item.LastUpdateTime.ToString("yyyy-MM-dd HH:mm:ss")</td></tr> }
+</tbody></table></div></div>
+<partial name="_AdminPagination" model="new AdminPaginationModel { Page = Model.Page, TotalPages = Model.TotalPages, PageSize = Model.PageSize }" />
