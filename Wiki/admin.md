@@ -28,8 +28,13 @@ TokenPay 内置一个默认关闭的后台管理页面，用于只读查看订�
 
 先构建或下载 TokenPay，然后在程序所在目录执行：
 
+自行构建可使用此命令
 ```bash
 dotnet TokenPay.dll --hash-admin-password "在这里填写你的强密码"
+```
+下载release包可使用
+```bash
+.\TokenPay --hash-admin-password "在这里填写你的强密码"
 ```
 
 如果使用 Windows 可执行文件，也可以执行：
