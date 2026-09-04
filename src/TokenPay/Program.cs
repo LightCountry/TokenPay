@@ -222,7 +222,6 @@ app.Use(async (context, next) =>
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
-        context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.XFrameOptions = "DENY";
         context.Response.Headers.XContentTypeOptions = "nosniff";
         context.Response.Headers["Referrer-Policy"] = "no-referrer";

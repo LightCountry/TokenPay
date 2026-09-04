@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using TokenPay.Domains;
 using TokenPay.Models;
 using TokenPay.Helper;
+using TokenPay.Models.EthModel;
+using TokenPay.BgServices;
 
 namespace TokenPay.Controllers;
 
@@ -23,17 +25,21 @@ public sealed class AdminController : Controller
     private const int BalanceCheckMaxConcurrency = 3;
     private static readonly int[] AllowedPageSizes = [10, 20, 50, 100];
     private static readonly SemaphoreSlim SupplementLock = new(1, 1);
+    private static readonly SemaphoreSlim CallbackRetryLock = new(1, 1);
     private readonly IFreeSql _freeSql;
     private readonly IConfiguration _configuration;
     private readonly Channel<TokenOrders> _channel;
     private readonly ILogger<AdminController> _logger;
+    private readonly List<EVMChain> _chains;
 
-    public AdminController(IFreeSql freeSql, IConfiguration configuration, Channel<TokenOrders> channel, ILogger<AdminController> logger)
+    public AdminController(IFreeSql freeSql, IConfiguration configuration, Channel<TokenOrders> channel,
+        ILogger<AdminController> logger, List<EVMChain> chains)
     {
         _freeSql = freeSql;
         _configuration = configuration;
         _channel = channel;
         _logger = logger;
+        _chains = chains;
     }
 
     [AllowAnonymous]
@@ -120,7 +126,7 @@ public sealed class AdminController : Controller
 
         var total = await select.CountAsync();
         var items = await select.OrderByDescending(x => x.CreateTime).Page(page, pageSize).ToListAsync();
-        var currencies = await _freeSql.Select<TokenOrders>().Distinct().OrderBy(x => x.Currency).ToListAsync(x => x.Currency);
+        var currencies = HomeController.GetActiveCurrency(_chains);
         return View(new AdminOrderPageModel
         {
             Items = items,
@@ -181,6 +187,42 @@ public sealed class AdminController : Controller
         return RedirectToAction(nameof(Orders));
     }
 
+    [HttpPost("orders/retry-callback")]
+    public async Task<IActionResult> RetryCallback(Guid id)
+    {
+        if (!IsEnabled()) return NotFound();
+
+        await CallbackRetryLock.WaitAsync(HttpContext.RequestAborted);
+        try
+        {
+            var repository = _freeSql.GetRepository<TokenOrders>();
+            var order = await repository.Where(x => x.Id == id).FirstAsync();
+            if (order == null || order.Status != OrderStatus.Paid || order.CallbackConfirm || order.CallbackNum < 3 ||
+                !Uri.TryCreate(order.NotifyUrl, UriKind.Absolute, out var notifyUri) ||
+                (notifyUri.Scheme != Uri.UriSchemeHttp && notifyUri.Scheme != Uri.UriSchemeHttps))
+            {
+                TempData["AdminError"] = "该订单不满足手动重试回调的条件。";
+                return RedirectToAction(nameof(Orders));
+            }
+            var notifyService = ActivatorUtilities.CreateInstance<OrderNotifyService>(HttpContext.RequestServices);
+            var succeeded = await notifyService.ProgressOrderAsync(order, HttpContext.RequestAborted);
+            if (succeeded)
+            {
+                TempData["AdminSuccess"] = "回调重试成功。";
+            }
+            else
+            {
+                TempData["AdminError"] = "回调重试失败，请检查商户回调地址和日志。";
+            }
+            _logger.LogWarning("后台用户 {User} 手动重试订单 {OrderId} 的回调，结果：{Result}",
+                User.Identity?.Name, order.Id, succeeded ? "成功" : "失败");
+        }
+        finally
+        {
+            CallbackRetryLock.Release();
+        }
+        return RedirectToAction(nameof(Orders));
+    }
     [HttpGet("tokens")]
     public async Task<IActionResult> Tokens(int page = 1, int pageSize = DefaultPageSize)
     {

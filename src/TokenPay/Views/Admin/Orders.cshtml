@@ -11,7 +11,7 @@
     <div class="search-grid">
         <div class="search-keyword"><label class="form-label">关键词</label><input class="form-control form-control-sm" name="keyword" value="@Model.Keyword" maxlength="200" placeholder="订单号 / 用户 / 地址 / TxID" /></div>
         <div><label class="form-label">状态</label><select class="form-select form-select-sm" name="status"><option value="">全部</option>@foreach (var value in Enum.GetValues<OrderStatus>()) { <option value="@value" selected="@(Model.Status == value)">@value</option> }</select></div>
-        <div><label class="form-label">币种</label><select class="form-select form-select-sm" name="currency"><option value="">全部</option>@foreach (var value in Model.Currencies) { <option value="@value" selected="@(Model.Currency == value)">@AdminCurrencyDisplay.GetName(value)</option> }</select></div>
+        <div><label class="form-label">币种</label><select class="form-select form-select-sm" name="currency"><option value="">全部</option>@foreach (var value in Model.Currencies) { <option value="@value" selected="@(Model.Currency == value)">@AdminCurrencyDisplay.GetBlockchainCurrencyName(value)</option> }</select></div>
         <div><label class="form-label">创建时间从</label><input class="form-control form-control-sm" type="datetime-local" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-ddTHH:mm")" /></div>
         <div><label class="form-label">创建时间至</label><input class="form-control form-control-sm" type="datetime-local" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-ddTHH:mm")" /></div>
         <div class="search-actions"><input type="hidden" name="pageSize" value="@Model.PageSize" /><button class="btn btn-primary btn-sm" type="submit">搜索</button><a class="btn btn-outline-secondary btn-sm" asp-action="Orders" asp-route-pageSize="@Model.PageSize">重置</a></div>
@@ -21,11 +21,12 @@
 <div class="admin-table-card">
 <div class="table-responsive">
     <table class="table admin-table table-hover align-middle mb-0">
-            <thead><tr><th>订单号</th><th>外部订单号</th><th>币种</th><th>应付</th><th>实付</th><th>状态</th><th>付款地址</th><th>收款地址</th><th>交易哈希</th><th>创建时间</th><th>付款时间</th><th>操作</th></tr></thead>
+            <thead><tr><th>订单号</th><th>外部订单号</th><th>区块链</th><th>币种</th><th>应付</th><th>实付</th><th>状态</th><th>付款地址</th><th>收款地址</th><th>交易哈希</th><th>创建时间</th><th>付款时间</th><th>异步回调</th><th>操作</th></tr></thead>
         <tbody>
         @foreach (var item in Model.Items)
         {
             var displayCurrency = AdminCurrencyDisplay.GetName(item.Currency);
+            var displayBlockchain = AdminCurrencyDisplay.GetBlockchainName(item.Currency);
             var fromAddressUrl = string.IsNullOrWhiteSpace(item.FromAddress) ? null : $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.FromAddress)}";
             var toAddressUrl = $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.ToAddress)}";
             var transactionUrl = string.IsNullOrWhiteSpace(item.BlockTransactionId) ? null : $"https://www.oklink.com/zh-hans/multi-search#key={Uri.EscapeDataString(item.BlockTransactionId)}";
@@ -33,19 +34,23 @@
             var listRoute = new { page = Model.Page, pageSize = Model.PageSize, keyword = Model.Keyword, status = Model.Status, currency = Model.Currency, startDate = Model.StartDate?.ToString("yyyy-MM-ddTHH:mm"), endDate = Model.EndDate?.ToString("yyyy-MM-ddTHH:mm") };
             var supplementUrl = Url.Action("Orders", new { listRoute.page, listRoute.pageSize, listRoute.keyword, listRoute.status, listRoute.currency, listRoute.startDate, listRoute.endDate, supplement = item.Id });
             var closeSupplementUrl = Url.Action("Orders", listRoute);
+            var canRetryCallback = item.Status == OrderStatus.Paid && !item.CallbackConfirm && item.CallbackNum >= 3 &&
+                Uri.TryCreate(item.NotifyUrl, UriKind.Absolute, out var notifyUri) &&
+                (notifyUri.Scheme == Uri.UriSchemeHttp || notifyUri.Scheme == Uri.UriSchemeHttps);
             <tr>
-                        <td class="text-nowrap">@item.Id <button type="button" class="copy-icon-button" data-copy="@item.Id" title="复制Id" aria-label="复制Id"></button></td>
-                <td class="text-nowrap fw-semibold">@if (redirectUrl != null) { <a class="order-link" href="@redirectUrl" target="_blank" rel="noopener noreferrer" title="打开订单跳转地址">@item.OutOrderId <span aria-hidden="true">↗</span></a> } else { @item.OutOrderId }</td><td><span class="currency-chip" title="@item.Currency">@displayCurrency</span></td><td class="text-nowrap">@item.Amount <small>@displayCurrency</small></td><td class="text-nowrap">@if (item.PayAmount.HasValue) { <span>@item.PayAmount.Value <small>@displayCurrency</small></span> } else { <span class="unpaid-label">未付款</span> }</td>
+                <td class="text-nowrap">@item.Id <button type="button" class="copy-icon-button" data-copy="@item.Id" title="复制Id" aria-label="复制Id"></button></td>
+                <td class="text-nowrap fw-semibold">@if (redirectUrl != null) { <a class="order-link" href="@redirectUrl" target="_blank" rel="noopener noreferrer" title="打开订单跳转地址">@item.OutOrderId <span aria-hidden="true">↗</span></a> } else { @item.OutOrderId }</td><td><span class="blockchain-chip" title="@item.Currency">@displayBlockchain</span></td><td><span class="currency-chip" title="@item.Currency">@displayCurrency</span></td><td class="text-nowrap">@item.Amount <small>@displayCurrency</small></td><td class="text-nowrap">@if (item.PayAmount.HasValue) { <span>@item.PayAmount.Value <small>@displayCurrency</small></span> } else { <span class="unpaid-label">未付款</span> }</td>
                 <td><span class="status-badge status-@item.Status.ToString().ToLowerInvariant()">@item.Status</span></td>
                 <td class="resource-cell">@if (fromAddressUrl == null) { <span>-</span> } else { <a href="@fromAddressUrl" target="_blank" rel="noopener noreferrer">@item.FromAddress</a><button type="button" class="copy-icon-button" data-copy="@item.FromAddress" title="复制付款地址" aria-label="复制付款地址"></button> }</td>
                 <td class="resource-cell"><a href="@toAddressUrl" target="_blank" rel="noopener noreferrer">@item.ToAddress</a><button type="button" class="copy-icon-button" data-copy="@item.ToAddress" title="复制收款地址" aria-label="复制收款地址"></button></td>
                 <td class="resource-cell">@if (transactionUrl == null) { <span>-</span> } else { <a href="@transactionUrl" target="_blank" rel="noopener noreferrer">@item.BlockTransactionId</a><button type="button" class="copy-icon-button" data-copy="@item.BlockTransactionId" title="复制交易哈希" aria-label="复制交易哈希"></button> }</td><td class="text-nowrap">@item.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
                 <td class="text-nowrap">@item.PayTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                <td>@if (item.Status == OrderStatus.Expired) { <a class="btn btn-warning btn-sm" href="@supplementUrl">补单</a> }</td>
+                <td>@if (item.Status == OrderStatus.Paid) { @if (item.CallbackConfirm) { <span class="status-badge status-paid">回调成功</span> } else { <span class="status-badge status-expired">回调失败 @item.CallbackNum 次</span> } }</td>
+                <td class="text-nowrap">@if (item.Status == OrderStatus.Expired) { <a class="btn btn-warning btn-sm" href="@supplementUrl">补单</a> } @if (canRetryCallback) { <form asp-action="RetryCallback" method="post" class="d-inline" data-notify-url="@item.NotifyUrl"><input type="hidden" name="id" value="@item.Id" /><button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('该订单已自动回调 @item.CallbackNum 次且仍未确认。将向以下 URL 重试回调：\n' + this.form.dataset.notifyUrl + '\n\n确定立即重试？')">重试回调</button></form> }</td>
             </tr>
             @if (item.Status == OrderStatus.Expired && Model.SupplementOrderId == item.Id)
             {
-                <tr class="supplement-row"><td colspan="11" class="p-0">
+                <tr class="supplement-row"><td colspan="14" class="p-0">
                   <div class="supplement-panel">
                     <div class="supplement-title"><span class="supplement-icon">!</span><div><h2 class="h5 mb-1">人工补单</h2><p class="mb-0">仅当用户已经在区块链上真实付款，但订单因超时或未匹配而显示为 Expired 时使用。</p></div><a class="btn btn-sm btn-outline-secondary ms-auto align-self-start" href="@closeSupplementUrl">关闭</a></div>
                     <div class="supplement-guide">

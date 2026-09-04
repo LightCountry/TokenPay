@@ -1,5 +1,10 @@
 ## `dujiaoka`对接`TokenPay`
 
+> ## ⚠️ 警告！！！
+> # 独角数卡老版本(PHP版本)已停止维护，缺乏后续安全更新，请不要继续使用
+> # 建议切换到作者新项目 [dujiao-next](https://github.com/dujiao-next)
+> # `dujiao-next` 项目已由作者内置对TokenPay的支持
+
 ### 1. 将插件复制到`dujiaoka`对应目录
 ### 2. 将`database`内的`add.sql`内的sql语句，复制到你的mysql执行（也可以跳过这一步手动添加）
 ### 3. 到`dujiaoka`后台-**配置**-**支付配置**中`添加/编辑`支付方式

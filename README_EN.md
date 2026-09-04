@@ -38,11 +38,11 @@ TokenPay
 
 ## Available integrations
 
-- [Dujiaoka plugin](Plugs/dujiaoka/) | [Dujiaoka](https://github.com/assimon/dujiaoka) ![GitHub stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
+- [New dujiao-next plugin](https://github.com/dujiao-next), built into the project by its developer
+- [Rainbow Epay Pro plugin](Plugs/epay-pro/) and [Rainbow Epay plugin](Plugs/epay/) | [Rainbow Epay website](https://pay.cccyun.cc)
+- [Dujiaoka plugin](Plugs/dujiaoka/) (the project is no longer maintained and is not recommended) | [Dujiaoka](https://github.com/assimon/dujiaoka) ![GitHub stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
 - [v2board plugin](Plugs/v2board/) | [v2board](https://github.com/v2board/v2board) ![GitHub stars](https://img.shields.io/github/stars/v2board/v2board?style=social)
 - [card-system plugin](Plugs/card-system/) | [card-system](https://github.com/Tai7sy/card-system) ![GitHub stars](https://img.shields.io/github/stars/Tai7sy/card-system?style=social)
-- [Epay plugin](Plugs/epay/) | [Epay website](https://pay.cccyun.cc)
-- [Community-maintained WHMCS plugin](https://doc.whmcscn.com/web/#/5/30), contributed by [@ninetian](https://github.com/ninetian) in [issue #13](https://github.com/LightCountry/TokenPay/issues/13). Review community-contributed code before using it in production. | [WHMCS](https://www.whmcs.com/)
 
 ## Integration and documentation
 
@@ -138,4 +138,4 @@ The author develops and publishes the source code only and does not participate 
 >
 > Blockchain tokens referenced by this project are included for educational purposes. The author does not endorse their financial or speculative attributes and does not encourage or support illegal activities involving mining, token speculation, or ICOs. Digital-asset markets can be volatile and may not be subject to conventional regulatory protections. Exercise caution and comply with all applicable laws.
 
-[![Stargazers over time](https://starchart.cc/LightCountry/TokenPay.svg)](https://starchart.cc/LightCountry/TokenPay)
+[![Star History Chart](https://api.star-history.com/svg?repos=LightCountry/TokenPay&type=Date)](https://www.star-history.com/#LightCountry/TokenPay&Date)

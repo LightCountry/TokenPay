@@ -23,6 +23,7 @@ body { color: var(--admin-ink); background: #f4f6fa !important; }
 .copy-icon-button.copied::after { display: none; }
 .currency-chip, .currency-unit { color: #3445a3; background: #eef0ff; font-size: .72rem; font-weight: 700; white-space: nowrap; }
 .currency-chip { display: inline-block; padding: .25rem .5rem; border-radius: 999px; }
+.blockchain-chip { display: inline-block; padding: .25rem .5rem; border-radius: 999px; color: #087443; background: #e7f8ef; font-size: .72rem; font-weight: 700; white-space: nowrap; }
 .status-badge { display: inline-block; min-width: 64px; padding: .3rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; text-align: center; }
 .status-paid { color: #087443; background: #e7f8ef; }
 .status-pending { color: #8a5a00; background: #fff4d8; }

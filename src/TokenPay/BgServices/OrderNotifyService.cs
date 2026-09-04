@@ -48,20 +48,25 @@ namespace TokenPay.BgServices
                 .ToListAsync();
             foreach (var order in Orders)
             {
-                _logger.LogInformation("开始异步通知订单: {c}", order.Id);
-                order.CallbackNum++;
-                order.LastNotifyTime = DateTime.Now;
-                await _repository.UpdateAsync(order);
-                var result = await Notify(order, stoppingToken);
-                if (result)
-                {
-                    order.CallbackConfirm = true;
-                    await _repository.UpdateAsync(order);
-                }
-                _logger.LogInformation("订单: {c}，通知结果：{d}", order.Id, result ? "成功" : "失败");
+                await ProgressOrderAsync(order, stoppingToken);
             }
         }
-
+        public async Task<bool> ProgressOrderAsync(TokenOrders order, CancellationToken stoppingToken)
+        {
+            var _repository = freeSql.GetRepository<TokenOrders>();
+            _logger.LogInformation("开始异步通知订单: {c}", order.Id);
+            order.CallbackNum++;
+            order.LastNotifyTime = DateTime.Now;
+            await _repository.UpdateAsync(order); 
+            var result = await Notify(order, stoppingToken);
+            if (result)
+            {
+                order.CallbackConfirm = true;
+                await _repository.UpdateAsync(order);
+            }
+            _logger.LogInformation("订单: {c}，通知结果：{d}", order.Id, result ? "成功" : "失败");
+            return result;
+        }
 
         private async Task<bool> Notify(TokenOrders order, CancellationToken stoppingToken)
         {

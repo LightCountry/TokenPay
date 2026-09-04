@@ -5,12 +5,32 @@ namespace TokenPay.Models;
 
 public static class AdminCurrencyDisplay
 {
+    public static string GetBlockchainName(string currency)
+    {
+        if (currency.StartsWith("EVM_", StringComparison.OrdinalIgnoreCase))
+        {
+            var parts = currency.Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return parts.Length >= 3 ? parts[1] : currency;
+        }
+
+        if (currency.Equals("TRX", StringComparison.OrdinalIgnoreCase) ||
+            currency.EndsWith("_TRC20", StringComparison.OrdinalIgnoreCase))
+            return "TRON";
+
+        return currency;
+    }
+
     public static string GetName(string currency)
     {
+        if (currency.EndsWith("_TRC20", StringComparison.OrdinalIgnoreCase))
+            return currency[..^"_TRC20".Length];
         if (!currency.StartsWith("EVM_", StringComparison.OrdinalIgnoreCase)) return currency;
         var parts = currency.Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return parts.Length >= 3 ? parts[2] : currency;
     }
+
+    public static string GetBlockchainCurrencyName(string currency) =>
+        $"{GetBlockchainName(currency)}-{GetName(currency)}";
 }
 
 public static class AdminLinkDisplay

@@ -1,0 +1,49 @@
+{
+    "name": "tokenpay",
+    "title": "TokenPay",
+    "author": "LightCountry",
+    "link": "https://github.com/LightCountry/TokenPay",
+    "version": "1.0",
+    "icon": "",
+    "desc": "通过 TokenPay 创建加密货币收款订单",
+    "pay_types": [
+        "TRX",
+        "USDT_TRC20",
+        "EVM_ETH_ETH",
+        "EVM_ETH_USDT_ERC20",
+        "EVM_ETH_USDC_ERC20",
+        "EVM_BSC_BNB",
+        "EVM_BSC_USDT_BEP20",
+        "EVM_BSC_USDC_BEP20",
+        "EVM_Polygon_POL",
+        "EVM_Polygon_USDT_ERC20",
+        "EVM_Polygon_USDC_ERC20"
+    ],
+    "trans_types": [],
+    "inputs": {
+        "api_url": {
+            "name": "TokenPay 地址",
+            "type": "input",
+            "required": true,
+            "note": "例如：https://pay.example.com（不含 /CreateOrder）"
+        },
+        "api_token": {
+            "name": "ApiToken",
+            "type": "input",
+            "required": true,
+            "note": "TokenPay 的共享签名密钥"
+        },
+        "signature_algorithm": {
+            "name": "签名算法",
+            "type": "radio",
+            "required": true,
+            "options": ["MD5（兼容模式）", "HMAC-SHA256（推荐）"],
+            "value": "0",
+            "note": "必须与 TokenPay 的 Signature:UseHmacSha256 配置一致"
+        }
+    },
+    "select": null,
+    "note": "请将 TokenPay 的签名算法设为与本通道一致。切换算法后，双方必须同时更新。",
+    "bindwxmp": false,
+    "bindwxa": false
+}

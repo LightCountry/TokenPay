@@ -55,11 +55,11 @@ TokenPay
     └── src ---> (项目核心目录)
 ```
 ## 现有插件
-- [独角数卡插件](Plugs/dujiaoka/) | [独角数卡](https://github.com/assimon/dujiaoka) ![Github stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
+- [新版dujiao-next插件](https://github.com/dujiao-next) 已由开发者内置在项目中
+- [彩虹易支付Pro插件](Plugs/epay-pro/) 和 [彩虹易支付插件](Plugs/epay/) | [彩虹易支付官网](https://pay.cccyun.cc)
+- [独角数卡插件](Plugs/dujiaoka/) (项目停止维护，不再推荐) | [独角数卡](https://github.com/assimon/dujiaoka) ![Github stars](https://img.shields.io/github/stars/assimon/dujiaoka?style=social)
 - [v2board插件](Plugs/v2board/) | [v2board](https://github.com/v2board/v2board) ![Github stars](https://img.shields.io/github/stars/v2board/v2board?style=social)
 - [card-system插件](Plugs/card-system/) | [card-system](https://github.com/Tai7sy/card-system) ![Github stars](https://img.shields.io/github/stars/Tai7sy/card-system?style=social)
-- [彩虹易支付插件](Plugs/epay/) | [彩虹易支付官网](https://pay.cccyun.cc)
-- [用户贡献的WHMCS插件](https://doc.whmcscn.com/web/#/5/30)，感谢 [@ninetian](https://github.com/ninetian) [#13](https://github.com/LightCountry/TokenPay/issues/13)，使用者自行检查代码安全情况 | [WHMCS官网](https://www.whmcs.com/)
 
 ## 系统对接
 - `TokenPay`接口文档👉🏻[TokenPay接口文档](Wiki/docs.md)
