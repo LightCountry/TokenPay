@@ -24,6 +24,8 @@ public class ThemeViewLocationExpander : IViewLocationExpander
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase)!
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        _allowedThemes.UnionWith(["v1-cyber-dark", "v2-apple-minimal", "v3-neo-crypto", "v4-swiss-editorial"]);
     }
     private bool IsAllowedTheme(string? theme)
     {

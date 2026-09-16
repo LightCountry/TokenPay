@@ -75,7 +75,8 @@ namespace TokenPay.BgServices
                 try
                 {
                     var dic = order.ToDic(_configuration);
-                    var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
+                    var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={(x.Value is bool b ? (b ? "true" : "false") : x.Value)}"));//特殊处理bool类型，确保和json布尔字面量保持一致。
+                    _logger.LogInformation("待签名参数：{SignatureStr}", SignatureStr);
                     var Signature = SignatureHelper.Create(SignatureStr, _configuration);
                     dic.Add(nameof(Signature), Signature);
                     var result = await client.Request(order.NotifyUrl).PostJsonAsync(dic, cancellationToken: stoppingToken);

@@ -1,4 +1,4 @@
-## `dujiaoka`对接`TokenPay`
+## `dujiaoka`对接`TokenPay` 
 
 > ## ⚠️ 警告！！！
 > # 独角数卡老版本(PHP版本)已停止维护，缺乏后续安全更新，请不要继续使用
@@ -12,6 +12,7 @@
 1. API地址末尾请不要有斜线，如`https://token-pay.xxx.com`  
 2. 商户KEY字段请填写币种，支持的币种请参考[币种说明](../../Wiki/Currency.md) 
 3. 如果你要同时支持USDT和TRX付款，你需要添加两条支付方式，依此类推 (已经执行了`add.sql`的会自动给你添加支持的所有支付方式，直接修改即可)  
+4. 新版TokenPay支持HmacSha256验证签名，在`TokenPayController.php`顶部增加了`SIGNATURE_ALGORITHM`定义加密方式，如有需要可自行修改
 
 请参考此图填写
 <img src="../../Wiki/imgs/dujiaoka-payment.png" alt="dujiaoka支付方式配置"/>

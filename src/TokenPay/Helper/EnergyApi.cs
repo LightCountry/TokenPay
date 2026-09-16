@@ -81,13 +81,24 @@ public sealed class EnergyApi : IDisposable
                 return result.Data;
             logger.LogWarning("能量平台请求失败：HTTP {Status}，{Code}，{Message}，requestId={RequestId}",
                 response.StatusCode, result?.Code, result?.Message, result?.RequestId);
-            throw new InvalidOperationException($"能量平台：{result?.Code} {result?.Message} (requestId={result?.RequestId})");
+            throw new EnergyApiException(result?.Code, result?.Message, result?.RequestId);
         }
     }
 
     public void Dispose() => client.Dispose();
 }
 
+
+public sealed class EnergyApiException : InvalidOperationException
+{
+    public string? Code { get; }
+
+    public EnergyApiException(string? code, string? message, string? requestId)
+        : base($"能量平台：{code} {message} (requestId={requestId})")
+    {
+        Code = code;
+    }
+}
 
 public sealed class EnergyResponse<T>
 {

@@ -17,108 +17,151 @@ class Api implements ApiInterface
         $this->url_return = SYS_URL . '/pay/return/' . $id;
     }
 
-
-    /**
-     * @param array $config 配置信息
-     * @param string $out_trade_no 发卡系统订单号
-     * @param string $subject 商品名称
-     * @param string $body 商品介绍
-     * @param int $amount_cent 支付金额, 单位:分
-     * @throws \Exception
-     */
     function goPay($config, $out_trade_no, $subject, $body, $amount_cent)
     {
         try {
-            // 加载网关
             $payway = $config['payway'];
             $gateway = $config['gateway'];
             $api_key = $config['api_key'];
+            $algorithm = $this->getSignatureAlgorithm($config);
+
             $order = \App\Order::whereOrderNo($out_trade_no)->first();
-            //构造要请求的参数数组，无需改动
+
             $parameter = [
-                "ActualAmount" => $amount_cent/100,
-                "OutOrderId" => $out_trade_no, 
-                "OrderUserKey" => $order->contact, 
-                "Currency" => $payway,
-                'RedirectUrl' => $this->url_return.'/'.$out_trade_no,
+                'ActualAmount' => $amount_cent / 100,
+                'OutOrderId' => $out_trade_no,
+                'OrderUserKey' => $order->contact,
+                'Currency' => $payway,
+                'RedirectUrl' => $this->url_return . '/' . $out_trade_no,
                 'NotifyUrl' => $this->url_notify,
             ];
-            $parameter['Signature'] = $this->tokenPaySign($parameter, $api_key );
+
+            $parameter['Signature'] = $this->tokenPaySign($parameter, $api_key, $algorithm);
+
             $client = new Client([
-                'headers' => [ 'Content-Type' => 'application/json' ]
+                'headers' => ['Content-Type' => 'application/json']
             ]);
-            $response = $client->post($gateway.'/CreateOrder', ['body' => json_encode($parameter)]);
-            $body = json_decode($response->getBody()->getContents(), true);
-            if (!isset($body['success']) || !$body['success']) {
-                throw new \Exception('支付网关异常' . $body['message']);
+
+            $response = $client->post($gateway . '/CreateOrder', [
+                'body' => json_encode($parameter)
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+
+            if (!isset($result['success']) || !$result['success']) {
+                throw new \Exception('支付网关异常' . (isset($result['message']) ? $result['message'] : ''));
             }
-            header('Location: '.$body['data']);
+
+            header('Location: ' . $result['data']);
             exit;
         } catch (GuzzleException $exception) {
             throw new \Exception($exception->getMessage());
         }
     }
-    private function tokenPaySign(array $parameter, string $signKey)
+
+    private function getSignatureAlgorithm(array $config)
     {
-        ksort($parameter);
-        reset($parameter); //内部指针指向数组中的第一个元素
-        $sign = '';
-        $urls = '';
-        foreach ($parameter as $key => $val) {
-            if ($val == '') continue;
-            if ($key != 'Signature') {
-                if ($sign != '') {
-                    $sign .= "&";
-                    $urls .= "&";
-                }
-                $sign .= "$key=$val"; //拼接为url参数形式
-                $urls .= "$key=" . urlencode($val); //拼接为url参数形式
-            }
-        }
-        $sign = md5($sign . $signKey);//密码追加进入开始MD5签名
-        return $sign;
+        $value = isset($config['signature_algorithm']) ? (string)$config['signature_algorithm'] : '0';
+
+        return $value === '1' ? 'HmacSha256' : 'MD5';
     }
-    /**
-     * @param $config
-     * @param callable $successCallback
-     * @return bool|string
-     * @throws \Exception
-     */
+
+    private function buildCanonicalParameters(array $parameter)
+    {
+        unset($parameter['Signature']);
+        ksort($parameter, SORT_STRING);
+
+        $pairs = [];
+
+        foreach ($parameter as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            if (is_bool($value)) {
+                $value = $value ? 'true' : 'false';
+            }
+
+            $pairs[] = $key . '=' . $value;
+        }
+
+        return implode('&', $pairs);
+    }
+
+    private function tokenPaySign(array $parameter, string $signKey, $algorithm = 'MD5')
+    {
+        $canonicalParameters = $this->buildCanonicalParameters($parameter);
+
+        if (
+            strcasecmp($algorithm, 'HmacSha256') === 0 ||
+            strcasecmp($algorithm, 'HMAC-SHA256') === 0 ||
+            strcasecmp($algorithm, 'HMACSHA256') === 0 ||
+            (string)$algorithm === '1'
+        ) {
+            return hash_hmac('sha256', $canonicalParameters, $signKey);
+        }
+
+        return md5($canonicalParameters . $signKey);
+    }
+
     function verify($config, $successCallback)
     {
         $isNotify = isset($config['isNotify']) && $config['isNotify'];
-        // 如果是异步通知
+
         if ($isNotify) {
             $api_key = $config['api_key'];
-            $data = \Request()->all();
-            if ($this->tokenPaySign($_POST,$api_key)) {
-                $order_no = $data['OutOrderId'];  // 发卡系统内交易单号
-                $total_fee = $data['ActualAmount']*100; // 实际支付金额, 单位, 分
-                $pay_trade_no = $data['Id']; // 支付系统内订单号/流水号
-                $successCallback($order_no, $total_fee, $pay_trade_no); 
-                echo 'ok';
-                return true;
-            } else {
+            $algorithm = $this->getSignatureAlgorithm($config);
+
+            $raw = file_get_contents('php://input');
+            $data = json_decode($raw, true);
+
+            if (!is_array($data) || !isset($data['Signature']) || !is_string($data['Signature'])) {
                 echo 'error';
                 return false;
             }
+
+            $receivedSignature = strtolower($data['Signature']);
+            $expectedSignature = $this->tokenPaySign($data, $api_key, $algorithm);
+
+            if (!hash_equals($expectedSignature, $receivedSignature)) {
+                echo 'error';
+                return false;
+            }
+
+            if (!array_key_exists('Status', $data) || $data['Status'] != 1) {
+                echo 'error';
+                return false;
+            }
+
+            if (!isset($data['OutOrderId'], $data['ActualAmount'], $data['Id'])) {
+                echo 'error';
+                return false;
+            }
+
+            $order_no = $data['OutOrderId'];
+            $total_fee = $data['ActualAmount'] * 100;
+            $pay_trade_no = $data['Id'];
+
+            $successCallback($order_no, $total_fee, $pay_trade_no);
+
+            echo 'ok';
+            return true;
         }
+
         if (!empty($_GET['OutOrderId'])) {
             sleep(2);
+
             $order_id = $_GET['OutOrderId'];
             $order = \App\Order::whereOrderNo($order_id)->first();
-            if($order->status>0) return true;
+
+            if ($order && $order->status > 0) {
+                return true;
+            }
         }
+
         return false;
     }
-    /**
-     * 退款操作
-     * @param array $config 支付渠道配置
-     * @param string $order_no 订单号
-     * @param string $pay_trade_no 支付渠道流水号
-     * @param int $amount_cent 金额/分
-     * @return true|string true 退款成功  string 失败原因
-     */
+
     function refund($config, $order_no, $pay_trade_no, $amount_cent)
     {
         return '此支付渠道不支持发起退款, 请手动操作';

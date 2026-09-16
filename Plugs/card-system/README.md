@@ -9,5 +9,14 @@
 4. 在**前台支付**中添加一个支付方式，子渠道中选中刚刚添加的子渠道
 5. 如果你要同时支持USDT和TRX付款，你需要添加两条前台支付方式，并分别选中对应的子渠道
 
+json参考
+> signature_algorithm参数说明： 0 = MD5（兼容模式），1 = HMAC-SHA256（推荐）
+`
+{
+  "gateway": "https://你的TokenPay地址",
+  "api_key": "你的api token",
+  "signature_algorithm": "1"
+}
+`
 请参考此图填写
 <img src="../../Wiki/imgs/card-system-payment.png" alt="card-system支付方式配置"/>

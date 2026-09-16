@@ -38,6 +38,8 @@
 3. 按字段名进行区分大小写的升序排列。
 4. 拼接为 `key1=value1&key2=value2`，不进行 URL 编码。
 5. 根据配置的算法生成签名，输出小写十六进制字符串。
+6. 确保 bool 类型对应 true/false，部分编程语言默认可能转为1/0或者True/False
+7. 异步回调参数后续可能增减，建议使用动态解析 JSON 的方式获取字段，避免使用固定字段数量判断签名。
 
 伪代码：
 
@@ -50,6 +52,75 @@ Signature = md5Utf8(canonicalParameters + ApiToken).toLowerHex()
 
 # 推荐安全模式：Signature:UseHmacSha256=true
 Signature = hmacSha256Utf8(key=ApiToken, message=canonicalParameters).toLowerHex()
+```
+
+C# 签名相关参考代码：
+```cshap
+// 生成签名
+var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={(x.Value is bool b ? (b ? "true" : "false") : x.Value)}"));
+var ApiToken = _configuration.GetValue<string>("USDT:ApiToken");
+var Signature = SignatureHelper.Create(SignatureStr, ApiToken!);
+
+// 验证签名
+[HttpPost]
+public async Task<IActionResult> TokenPayNotify([FromBody] Dictionary<string, object?> model){
+    var OutOrderId = model.GetValueOrDefault("OutOrderId")?.ToString();
+    
+    // 查询系统内订单数据是否存在，并检查订单状态是否为等待支付状态（是否允许过期订单回调取决于你的业务设计）
+
+    var dic = new SortedDictionary<string, object?>(
+    model
+        .Where(x =>
+            x.Value is not null &&
+            (x.Value is not string s || !string.IsNullOrEmpty(s)))
+        .ToDictionary(x => x.Key, x => bool.TryParse(x.Value?.ToString(), out var b) ? (b ? "true" : "false") : x.Value)
+    );
+    var SignatureStr = string.Join("&", dic.Where(x => x.Key != "Signature").Select(x => $"{x.Key}={x.Value}"));
+    var ApiToken = _configuration.GetValue<string>("USDT:ApiToken");
+    var Signature = dic.GetValueOrDefault("Signature")?.ToString();
+    if (SignatureHelper.Verify(SignatureStr, Signature, ApiToken!)){
+        // 签名验证成功
+        // 你的业务代码
+        return Content("ok");
+    }else{
+        // 签名验证失败
+        _logger.LogWarning("订单号：{no}支付回调失败！", OutOrderId);
+        return Content("fail");
+    }
+}
+
+// 签名工具类代码
+public class SignatureHelper
+{
+    public static string Create(string canonicalParameters, string apiToken, bool UseHmacSha256 = true)
+    {
+        if (!UseHmacSha256)
+        {
+            return (canonicalParameters + apiToken).ToMD5();
+        }
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(apiToken));
+        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(canonicalParameters))).ToLowerInvariant();
+    }
+
+    public static bool Verify(string canonicalParameters, string? providedSignature, string apiToken, bool UseHmacSha256 = true)
+    {
+        if (string.IsNullOrWhiteSpace(providedSignature)) return false;
+        var expected = Create(canonicalParameters, apiToken, UseHmacSha256);
+        var actual = providedSignature.Trim();
+        if (expected.Length != actual.Length) return false;
+        try
+        {
+            return CryptographicOperations.FixedTimeEquals(
+                Convert.FromHexString(expected),
+                Convert.FromHexString(actual));
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+}
 ```
 
 字段名、日期、数值和布尔值的字符串格式必须与实际发送内容一致。建议先构造最终请求对象，再基于该对象生成签名，避免签名后修改字段。

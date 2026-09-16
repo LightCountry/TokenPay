@@ -24,27 +24,25 @@ namespace TokenPay.Extensions
                 { nameof(order.ToAddress), order.ToAddress },
                 { nameof(order.Status), (int)order.Status },
                 { nameof(order.PassThroughInfo), order.PassThroughInfo },
-                { nameof(order.IsCustomAmount), order.IsCustomAmount },
-                { nameof(order.MinCustomAmount), order.MinCustomAmount },
-                { nameof(order.MaxCustomAmount), order.MaxCustomAmount },
                 { "BaseCurrency", BaseCurrency },
                 { "BlockChainName", order.Currency.ToBlockchainEnglishName(EVMChains) },
                 { "CurrencyName", order.Currency.ToCurrency(EVMChains) },
                 { nameof(order.PayAmount), order.PayAmount?.ToString() },
-                { nameof(order.IsDynamicAmount), order.IsDynamicAmount ? 1 : 0 }
+                { nameof(order.IsDynamicAmount), order.IsDynamicAmount },
+                { nameof(order.IsCustomAmount), order.IsCustomAmount },
+                { nameof(order.MinCustomAmount), order.MinCustomAmount },
+                { nameof(order.MaxCustomAmount), order.MaxCustomAmount },
+                { "SignatureType",  configuration.GetValue("Signature:UseHmacSha256", false) ? "HmacSha256" : "MD5"},
             };
-            //此处从回调中移除为Null的字段
-            var nullKey = new List<string>();
-            foreach (var item in dic)
+            // 移除 null 或空字符串
+            foreach (var key in dic
+                .Where(x => x.Value is null || x.Value is string s && string.IsNullOrEmpty(s))
+                .Select(x => x.Key)
+                .ToList())
             {
-                if (item.Value == null || item.Value is string s && string.IsNullOrEmpty(s))
-                    nullKey.Add(item.Key);
+                dic.Remove(key);
             }
-            foreach (var item in nullKey)
-            {
-                if (dic.ContainsKey(item))
-                    dic.Remove(item);
-            }
+
             return dic;
         }
     }
