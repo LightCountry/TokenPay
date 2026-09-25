@@ -27,12 +27,16 @@ namespace TokenPay.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly IConfiguration _configuration;
         private FiatCurrency BaseCurrency => Enum.Parse<FiatCurrency>(_configuration.GetValue("BaseCurrency", "CNY")!);
+        // 创建订单需要先检查订单号、“地址+金额”是否已被占用再写入，并发请求可能同时通过检查，
+        // 导致重复订单或多个订单分配到相同的地址和金额，因此串行执行这一过程
+        // 由于使用Sqlite没有网络开销，查询耗时很短，实际对下单性能影响不大
+        private static readonly SemaphoreSlim CreateOrderLock = new(1, 1);
         public static int GetDecimals(string currency, IConfiguration _configuration)
         {
             var decimals = currency switch
             {
                 "TRX" => _configuration.GetValue("Decimals:TRX", 2),
-                "EVM_ETH" => _configuration.GetValue("Decimals:ETH", 5),
+                "EVM_ETH_ETH" => _configuration.GetValue<int?>($"Decimals:{currency}") ?? _configuration.GetValue("Decimals:ETH", 5),
                 _ => _configuration.GetValue($"Decimals:{currency}", 4)
             };
 
@@ -168,23 +172,13 @@ namespace TokenPay.Controllers
         private bool VerifySignature(object model)
         {
             if (model == null) return false;
-            var dic = new SortedDictionary<string, string?>();
             PropertyInfo[] properties = model.GetType().GetProperties();
             if (properties.Length <= 0) { return false; }
-            foreach (PropertyInfo item in properties)
-            {
-                string name = item.Name;
-                string? value = item.GetValue(model, null)?.ToString();
-                if (string.IsNullOrEmpty(value)) continue;
-                dic.Add(name, value);
-            }
-            if (dic.TryGetValue("Signature", out var Signature))
-            {
-                dic.Remove("Signature");
-                var SignatureStr = string.Join("&", dic.Select(x => $"{x.Key}={x.Value}"));
-                return SignatureHelper.Verify(SignatureStr, Signature, _configuration);
-            }
-            return false;
+            var parameters = properties.ToDictionary(x => x.Name, x => x.GetValue(model, null));
+            var Signature = parameters.GetValueOrDefault("Signature")?.ToString();
+            if (string.IsNullOrEmpty(Signature)) return false;
+            var SignatureStr = SignatureHelper.BuildCanonicalParameters(parameters);
+            return SignatureHelper.Verify(SignatureStr, Signature, _configuration);
         }
         /// <summary>
         /// 创建订单
@@ -232,7 +226,7 @@ namespace TokenPay.Controllers
                     Message = "金额有误！"
                 });
             }
-            var UseDynamicAddress = _configuration.GetValue("UseDynamicAddress", true);
+            var UseDynamicAddress = _configuration.GetValue("UseDynamicAddress", false);
             if (!UseDynamicAddress && IsCustomAmount)
             {
                 return Json(new ReturnData
@@ -250,6 +244,22 @@ namespace TokenPay.Controllers
                     });
                 }
             }
+            await CreateOrderLock.WaitAsync(HttpContext.RequestAborted);
+            try
+            {
+                return await CreateOrderCoreAsync(model, UseDynamicAddress, IsCustomAmount);
+            }
+            finally
+            {
+                CreateOrderLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// 检查订单号、分配收款地址与金额并写入订单，调用方需持有 CreateOrderLock
+        /// </summary>
+        private async Task<IActionResult> CreateOrderCoreAsync(CreateOrderViewModel model, bool UseDynamicAddress, bool IsCustomAmount)
+        {
             //订单号已存在
             var hasOrder = await _repository.Where(x => x.OutOrderId == model.OutOrderId && x.Currency == model.Currency)
                 .Where(x => x.Status != OrderStatus.Expired)

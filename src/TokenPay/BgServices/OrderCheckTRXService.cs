@@ -97,9 +97,10 @@ namespace TokenPay.BgServices
                             continue;
                         }
                         var token = await _TokensRepository.Where(x => x.Currency == TokenCurrency.TRX && x.Address == raw.ToAddressBase58).FirstAsync();
-                        if (token != null)
+                        // 同一笔交易在查询窗口内会被反复检测，不能累加金额；只标记余额待刷新，由归集任务从链上读取实际余额
+                        if (token != null && token.LastCheckTime != null)
                         {
-                            token.Value += raw.RealAmount;
+                            token.LastCheckTime = null;
                             await _TokensRepository.UpdateAsync(token);
                         }
                         var order = orders.Where(x => x.Amount == raw.RealAmount && x.ToAddress == raw.ToAddressBase58 && x.CreateTime < item.BlockTimestamp.ToDateTime())

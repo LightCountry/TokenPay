@@ -23,6 +23,27 @@
 - `v3-neo-crypto` 渐变极客风 
 - `v4-swiss-editorial` 瑞士杂志/新丑风
 
+## 支付页语言
+
+TokenPay 根据访客浏览器的语言（`Accept-Language`）自动选择页面语言。默认只支持中文和英文：
+
+| 访客语言 | 显示的页面 |
+| --- | --- |
+| 中文（`zh`、`zh-CN`、`zh-TW` 等） | 中文页面，例如 `Pay.cshtml` |
+| 英文，或其他任何语言 | 英文页面，例如 `Pay.en.cshtml` |
+
+如需增加其他语言，在配置文件中添加 `ExtraLanguages`，填写语言代码：
+
+```json
+"ExtraLanguages": [ "ru", "ja" ]
+```
+
+> 还需要提供对应语言的页面，例如 `Views/Home/Pay.ru.cshtml`、`Views/Home/OrderExpired.ru.cshtml`；启用了 `ThemeName` 时还需要 `Views/Home/<主题名>/Pay.ru.cshtml`。缺少对应页面时，该语言的访客会看到英文页面。页面命名和制作方法见 [页面内置与运行时覆盖](ViewCustomization.md#多语言页面)。
+
+- 语言代码使用 [ISO 639-1](https://zh.wikipedia.org/wiki/ISO_639-1代码列表) 两位代码，例如 `ru` 俄语、`ja` 日语、`ko` 韩语、`de` 德语、`fr` 法语、`es` 西班牙语。
+- 无效的语言代码会在启动日志中提示并被忽略；启动日志中的“支付页语言”一行会列出最终生效的语言。
+- 此配置在启动时读取，修改后需要重启 TokenPay。
+
 ## 基础配置
 
 | 配置项 | 类型 | 默认值/示例 | 说明 |
@@ -31,6 +52,7 @@
 | `ConnectionStrings:DB` | string | `Data Source=TokenPay.db;` | SQLite 数据库连接字符串。相对路径以程序工作目录为基准。 |
 | `BaseCurrency` | string | `CNY` | 法币基准，支持 `CNY`、`USD`、`EUR`、`GBP`、`AUD`、`HKD`、`TWD`、`SGD`。 |
 | `ExpireTime` | int | `1800` | 订单有效期，单位为秒。 |
+| `ExtraLanguages` | string[] | `[]` | 中文、英文以外的额外页面语言，需要配套提供对应语言页面，见 [支付页语言](#支付页语言)。 |
 | `OnlyConfirmed` | bool | `true` | TRON 查询是否只读取已确认交易。设为 `false` 回调可能更快，但需要自行承担未确认交易风险。 |
 | `NotifyTimeOut` | number | `3` | 商户异步通知 HTTP 超时时间，单位为秒。 |
 | `ApiToken` | string | 无安全默认值 | 创建订单、查单和回调签名使用的共享密钥。 |
@@ -73,6 +95,14 @@
   "USDT_TRC20": 4
 }
 ```
+
+| 币种 | 配置键 | 默认值 |
+| --- | --- | --- |
+| TRX | `TRX` | 2 |
+| Ethereum 原生 ETH（`EVM_ETH_ETH`） | `ETH`（也兼容 `EVM_ETH_ETH`，两者同时存在时以 `EVM_ETH_ETH` 为准） | 5 |
+| 其他币种 | 完整币种标识，如 `USDT_TRC20`、`EVM_BSC_BNB`、`EVM_ETH_USDT_ERC20` | 4 |
+
+启动日志中的“币种小数点位数”会列出每个币种最终生效的位数。
 
 ## API 签名算法
 

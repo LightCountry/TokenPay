@@ -3,6 +3,8 @@
     ViewData["Title"] = "Pay";
     var Now = DateTime.Now.ToUniversalTime();
     var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
+    var ExpireTimestamp = new DateTimeOffset(ExpireTime).ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var ServerTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 @using TokenPay.Domains;
 @using TokenPay.Extensions
@@ -263,7 +265,7 @@ else
 
           <div class="meta">
             <div class="mcell"><div class="k">Order No.</div><div class="v">@Model.OutOrderId</div></div>
-            <div class="mcell"><div class="k">Expires at</div><div class="v">@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</div></div>
+            <div class="mcell"><div class="k">Expires at</div><div class="v"><span data-expire-time>@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</span></div></div>
           </div>
 
           <div class="buy">
@@ -289,19 +291,22 @@ else
   var active = document.querySelector('.stage');
   if(!active) return;
 
-  var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
+  var EndTime = @ExpireTimestamp; // expiry as a UTC timestamp (ms), independent of culture and time zone
+  var ClockOffset = @ServerTimestamp - Date.now(); // corrects a wrong clock on the visitor's device
+  function fmtTime(t){ var d=new Date(t), z=function(n){return n<10?'0'+n:''+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds()); }
+  document.querySelectorAll('[data-expire-time]').forEach(function(el){ el.textContent = fmtTime(EndTime); }); // show in the visitor's local time zone
   var els = { d:document.querySelector('[data-u="d"]'), h:document.querySelector('[data-u="h"]'),
               m:document.querySelector('[data-u="m"]'), s:document.querySelector('[data-u="s"]') };
   var dBox = document.getElementById('dBox');
   function p(n){ return n<10?'0'+n:''+n; }
   function timer(){
-    var intDiff = (EndTime - new Date(new Date().toISOString().replace('T',' ').replace('Z',''))) / 1000;
+    var intDiff = (EndTime - (Date.now() + ClockOffset)) / 1000;
     if(intDiff <= 0) return;
     intDiff = Math.floor(intDiff);
     var day = Math.floor(intDiff/86400);
     els.d.textContent = p(day);
     els.h.textContent = p(Math.floor(intDiff/3600) - day*24);
-    els.m.textContent = p(Math.floor(intDiff/60) - day*1440 - Math.floor(intDiff/3600)*60);
+    els.m.textContent = p(Math.floor(intDiff/60) % 60);
     els.s.textContent = p(intDiff % 60);
     dBox.classList.toggle('off', day<=0);
   }

@@ -142,7 +142,7 @@ class TokenpayPlugin extends BasePayment
         ksort($data, SORT_STRING);
         $canonical = implode('&', array_map(static fn ($key, $value): string => $key . '=' . (is_bool($value) ? ($value ? 'true' : 'false') : (string) $value), array_keys($data), $data));
         $token = $this->config('api_token');
-        return ($this->channel['signature_algorithm'] ?? '0') === '1'
+        return (string) ($this->channel['signature_algorithm'] ?? '0') === '1'
             ? hash_hmac('sha256', $canonical, $token)
             : md5($canonical . $token);
     }

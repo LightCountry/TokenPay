@@ -119,6 +119,17 @@ var mvcBuilder = Services.AddControllersWithViews()
         o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+// 缺少访客语言对应的页面时回退到英文页面，而不是不带后缀的中文页面
+Services.PostConfigure<RazorViewEngineOptions>(options =>
+{
+    for (var i = 0; i < options.ViewLocationExpanders.Count; i++)
+    {
+        if (options.ViewLocationExpanders[i] is LanguageViewLocationExpander)
+        {
+            options.ViewLocationExpanders[i] = new LanguageFallbackViewLocationExpander();
+        }
+    }
+});
 var externalViewsPath = Path.Combine(builder.Environment.ContentRootPath, "Views");
 if (Directory.Exists(externalViewsPath))
 {
@@ -183,36 +194,30 @@ if (builder.Environment.IsDevelopment())
         c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"));
     });
 }
+// 默认只注册英文和中文，未注册的语言访问时显示英文页面
+// 额外语言通过 ExtraLanguages 配置，并提供对应的 Pay.{语言}.cshtml 等页面；缺少对应页面时显示英文页面
+var supportedCultures = new List<CultureInfo>
+{
+    new("en"),     // English / 英语
+    new("zh"),     // Chinese / 中文
+};
+foreach (var language in Configuration.GetSection("ExtraLanguages").Get<string[]>() ?? [])
+{
+    if (string.IsNullOrWhiteSpace(language)) continue;
+    try
+    {
+        var culture = new CultureInfo(language.Trim());
+        if (supportedCultures.Any(x => x.Name.Equals(culture.Name, StringComparison.OrdinalIgnoreCase))) continue;
+        supportedCultures.Add(culture);
+    }
+    catch (CultureNotFoundException)
+    {
+        Log.Warning("ExtraLanguages 中的语言代码无效，已忽略：{value}", language);
+    }
+}
+Log.Information("支付页语言：{value}", string.Join(", ", supportedCultures.Select(x => x.Name)));
 Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var supportedCultures = new List<CultureInfo>
-    {
-        new("en"),     // English / 英语
-        new("zh"),     // Chinese / 中文
-        new("hi"),     // Hindi / 印地语
-        new("ur"),     // Urdu / 乌尔都语
-        new("vi"),     // Vietnamese / 越南语
-        new("pt"),     // Portuguese / 葡萄牙语
-        new("es"),     // Spanish / 西班牙语
-        new("ru"),     // Russian / 俄语
-        new("id"),     // Indonesian / 印度尼西亚语
-        new("uk"),     // Ukrainian / 乌克兰语
-        new("tl"),     // Filipino (Tagalog) / 菲律宾语（他加禄语）
-        new("tr"),     // Turkish / 土耳其语
-        new("ko"),     // Korean / 韩语
-        new("th"),     // Thai / 泰语
-        new("ja"),     // Japanese / 日语
-        new("bn"),     // Bengali / 孟加拉语
-        new("ar"),     // Arabic / 阿拉伯语
-        new("de"),     // German / 德语
-        new("fr"),     // French / 法语
-        new("it"),     // Italian / 意大利语
-        new("nl"),     // Dutch / 荷兰语
-        new("pl"),     // Polish / 波兰语
-        new("cs"),     // Czech / 捷克语
-        new("ro"),     // Romanian / 罗马尼亚语
-    };
-
     options.SetDefaultCulture("en");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;

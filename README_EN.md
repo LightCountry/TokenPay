@@ -15,7 +15,7 @@ TokenPay is an open-source, self-hosted payment solution that accepts `TRX`, `US
 ## Overview
 
 - TokenPay is written in C# and is designed for private, self-hosted deployments.
-- Payment pages are available in Simplified Chinese, English, and Russian. The interface follows the visitor's device language and falls back to English when the language is unsupported.
+- Payment pages are available in Simplified Chinese and English. The interface follows the visitor's device language and falls back to English for any other language. More languages can be added via the `ExtraLanguages` setting together with matching localized pages.
 - No separate database server or Redis instance is required. TokenPay uses an embedded SQLite database.
 - It can be integrated with any system that needs to accept TRX, USDT-TRC20, EVM-native coins, or ERC-20 tokens.
 - TokenPay is distributed under the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.html).

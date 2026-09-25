@@ -2,6 +2,8 @@
     ViewData["Title"] = "Pay";
     var Now = DateTime.Now.ToUniversalTime();
     var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
+    var ExpireTimestamp = new DateTimeOffset(ExpireTime).ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var ServerTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 @using TokenPay.Domains;
 @using TokenPay.Extensions
@@ -96,7 +98,7 @@ else
                 Order No：<span class="text-danger">@Model.OutOrderId</span>
             </div>
             <div class="mb-2">
-                Expiration：<span class="text-danger">@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
+                Expiration：<span class="text-danger"><span data-expire-time>@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</span></span>
             </div>
             <div class="mt-4 text-start">
                 <div>You can buy blockchain currency at</div>
@@ -109,10 +111,13 @@ else
     @section Scripts {
     <script>
         let Time;
-        var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
+        var EndTime = @ExpireTimestamp; // expiry as a UTC timestamp (ms), independent of culture and time zone
+        var ClockOffset = @ServerTimestamp - Date.now(); // corrects a wrong clock on the visitor's device
+        function fmtTime(t){ var d=new Date(t), z=function(n){return n<10?'0'+n:''+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds()); }
+        document.querySelectorAll('[data-expire-time]').forEach(function(el){ el.textContent = fmtTime(EndTime); }); // show in the visitor's local time zone
             function timer() {
                 window.setInterval(function () {
-                    var intDiff = (EndTime - new Date(new Date().toISOString().replace('T', ' ').replace('Z', ''))) / 1000
+                    var intDiff = (EndTime - (Date.now() + ClockOffset)) / 1000
                     if (intDiff <= 0) return;
                     $(".time").removeClass("invisible")
                     var day = 0,

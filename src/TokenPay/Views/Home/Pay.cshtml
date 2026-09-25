@@ -2,6 +2,8 @@
     ViewData["Title"] = "支付页";
     var Now = DateTime.Now.ToUniversalTime();
     var ExpireTime = ViewData.ContainsKey("ExpireTime") ? Convert.ToDateTime(ViewData["ExpireTime"]).ToUniversalTime() : Now;
+    var ExpireTimestamp = new DateTimeOffset(ExpireTime).ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var ServerTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
 @using TokenPay.Domains;
 @using TokenPay.Extensions
@@ -97,7 +99,7 @@ else
                 订单编号：<span class="text-danger">@Model.OutOrderId</span>
             </div>
             <div class="mb-2">
-                过期时间：<span class="text-danger">@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
+                过期时间：<span class="text-danger"><span data-expire-time>@ExpireTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</span></span>
             </div>
             <div class="mt-4 text-start">
                 <div>区块链货币购买地址</div>
@@ -110,10 +112,13 @@ else
     @section Scripts {
         <script>
             let Time;
-            var EndTime = new Date('@ExpireTime.ToUniversalTime().ToString("yyyy/MM/dd HH:mm:ss")');
+            var EndTime = @ExpireTimestamp; // 过期时间的 UTC 毫秒时间戳，不受 Culture 与时区影响
+            var ClockOffset = @ServerTimestamp - Date.now(); // 修正访客设备时钟偏差
+            function fmtTime(t){ var d=new Date(t), z=function(n){return n<10?'0'+n:''+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds()); }
+            document.querySelectorAll('[data-expire-time]').forEach(function(el){ el.textContent = fmtTime(EndTime); }); // 按访客本地时区显示过期时间
             function timer() {
                 window.setInterval(function() {
-                    var intDiff = (EndTime - new Date(new Date().toISOString().replace('T', ' ').replace('Z', ''))) / 1000
+                    var intDiff = (EndTime - (Date.now() + ClockOffset)) / 1000
                     if (intDiff <= 0) return;
                     $(".time").removeClass("invisible")
                     var day = 0,
