@@ -34,7 +34,7 @@ dotnet TokenPay.dll --hash-admin-password "在这里填写你的强密码"
 ```
 下载release包可使用
 ```bash
-.\TokenPay --hash-admin-password "在这里填写你的强密码"
+./TokenPay --hash-admin-password "在这里填写你的强密码"
 ```
 
 如果使用 Windows 可执行文件，也可以执行：
